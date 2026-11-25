@@ -13,7 +13,7 @@ import {
 } from '../theory'
 import { at } from '../theory/util'
 import type { Rng } from './rng'
-import type { Question } from './types'
+import type { Question, QuestionGenerator } from './types'
 
 export interface NoteNameOptions {
   /** Clefs to draw from. Must not be empty. */
@@ -90,14 +90,24 @@ export function generateNoteNameQuestion(rng: Rng, options: NoteNameOptions): Qu
   return {
     id: noteNameItemId(clef, pitch),
     type: 'note-name',
+    topic: 'notes',
     category: clefLabel(clef),
     itemLabel: `${formatPitch(pitch)} in ${clefLabel(clef).toLowerCase()}`,
     tags: tagsFor(clef),
     prompt: 'Which note is this?',
-    notation: { clef, notes: [pitch] },
+    notation: { staves: [{ clef, items: [{ kind: 'notes', pitches: [pitch] }] }] },
     audio: null,
-    input: { kind: 'multiple-choice', choices: CHOICES },
+    input: { kind: 'multiple-choice', choices: CHOICES, layout: 'letters' },
     correct: pitch.letter,
+    answerText: `It is ${pitch.letter}.`,
     explanation: explainNoteName(clef, pitch),
   }
+}
+
+export const noteNameGenerator: QuestionGenerator = {
+  type: 'note-name',
+  topic: 'notes',
+  label: 'Note names',
+  generate: (ctx) =>
+    generateNoteNameQuestion(ctx.rng, { clefs: ctx.clefs, maxLedgerLines: ctx.maxLedgerLines, avoidItemId: ctx.avoidItemId }),
 }

@@ -95,3 +95,29 @@ export function spaceNotes(clef: ClefName): Pitch[] {
 export function clefLabel(clef: ClefName): string {
   return `${at(['Treble', 'Bass', 'Alto', 'Tenor'], CLEF_NAMES.indexOf(clef))} clef`
 }
+
+const ORDINAL = ['1st', '2nd', '3rd', '4th', '5th']
+
+/**
+ * Plain-words description of where a staff position is, for explanations:
+ * "the middle line", "the 3rd space", "the 1st ledger line below the staff".
+ */
+export function describeStaffPosition(position: StaffPosition): string {
+  if (!Number.isInteger(position)) throw new RangeError('Staff position must be a whole number')
+  if (position >= 0 && position <= 8) {
+    if (position % 2 === 0) {
+      const line = position / 2
+      return line === 0 ? 'the bottom line' : line === 4 ? 'the top line' : line === 2 ? 'the middle line' : `the ${ORDINAL[line]} line`
+    }
+    const space = (position - 1) / 2
+    return space === 0 ? 'the bottom space' : space === 3 ? 'the top space' : `the ${ORDINAL[space]} space`
+  }
+  const below = position < 0
+  const distance = below ? -position : position - 8 // 1 = space just outside the staff
+  const side = below ? 'below' : 'above'
+  if (distance === 1) return `the space ${side} the ${below ? 'bottom' : 'top'} line`
+  const ledger = Math.floor(distance / 2)
+  return distance % 2 === 0
+    ? `the ${ORDINAL[ledger - 1] ?? `${ledger}th`} ledger line ${side} the staff`
+    : `the space ${side} the ${ORDINAL[ledger - 1] ?? `${ledger}th`} ledger line`
+}
