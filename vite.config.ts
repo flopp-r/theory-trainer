@@ -6,6 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 // sub-path (GitHub Pages serves it from /<repo-name>/).
 export default defineConfig({
   base: './',
+  build: {
+    // VexFlow (the music drawing library) is one big chunk that loads only on question screens.
+    chunkSizeWarningLimit: 1100,
+  },
   define: {
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
