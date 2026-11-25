@@ -135,7 +135,7 @@ export function formatPitch(p: Pitch, style: AccidentalStyle = 'ascii'): string 
   return formatNote(p, style) + String(p.octave)
 }
 
-const ACCIDENTAL_PATTERN = '([#♯]*|[b♭]*|x)'
+const ACCIDENTAL_PATTERN = '((?:[#♯]+|[b♭]+|x)?)'
 const NOTE_RE = new RegExp(`^([A-G])${ACCIDENTAL_PATTERN}$`)
 const PITCH_RE = new RegExp(`^([A-G])${ACCIDENTAL_PATTERN}(-?\\d+)$`)
 
