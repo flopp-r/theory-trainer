@@ -1,8 +1,20 @@
+import { clefCompareGenerator, noteAccidentalGenerator, placeNoteGenerator } from './notes'
 import { noteNameGenerator } from './noteName'
+import { noteBeatsGenerator, noteValueGenerator, restValueGenerator, timeSigBeatsGenerator, timeSigTypeGenerator } from './rhythm'
 import type { Question, QuestionContext, QuestionGenerator, Topic } from './types'
 
 /** Every question type the app can ask. Each generator lives in its own file. */
-export const GENERATORS: readonly QuestionGenerator[] = [noteNameGenerator]
+export const GENERATORS: readonly QuestionGenerator[] = [
+  noteNameGenerator,
+  noteAccidentalGenerator,
+  clefCompareGenerator,
+  placeNoteGenerator,
+  noteValueGenerator,
+  restValueGenerator,
+  noteBeatsGenerator,
+  timeSigBeatsGenerator,
+  timeSigTypeGenerator,
+]
 
 export function generatorsForTopics(topics: readonly Topic[]): QuestionGenerator[] {
   return GENERATORS.filter((g) => topics.includes(g.topic))

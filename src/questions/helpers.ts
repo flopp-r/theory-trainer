@@ -10,6 +10,11 @@ export interface ChoiceOptions {
    * Default: shuffled.
    */
   fixedOrder?: boolean
+  /**
+   * Wrong answers that must be included if they are among the candidates (up to the number of wrong answers
+   * needed). Use this for the tempting mistakes, such as the undotted value of a dotted note.
+   */
+  prefer?: readonly string[]
 }
 
 /**
@@ -23,13 +28,15 @@ export function multipleChoice(
   candidates: readonly string[],
   options: ChoiceOptions = {},
 ): { input: Extract<QuestionInput, { kind: 'multiple-choice' }>; correct: string } {
-  const { count = 4, layout = 'grid', fixedOrder = false } = options
+  const { count = 4, layout = 'grid', fixedOrder = false, prefer = [] } = options
   const unique = [...new Set([...candidates, correct])]
   const wrong = unique.filter((c) => c !== correct)
   if (wrong.length < count - 1) {
     throw new Error(`Need ${count - 1} wrong answers for "${correct}" but only have ${wrong.length}`)
   }
-  const picked = new Set(rng.shuffle(wrong).slice(0, count - 1))
+  const preferred = [...new Set(prefer)].filter((p) => wrong.includes(p)).slice(0, count - 1)
+  const rest = rng.shuffle(wrong.filter((w) => !preferred.includes(w)))
+  const picked = new Set([...preferred, ...rest].slice(0, count - 1))
   picked.add(correct)
   const ordered = fixedOrder ? unique.filter((c) => picked.has(c)) : rng.shuffle([...picked])
   const choices: Choice[] = ordered.map((label) => ({ id: label, label }))
