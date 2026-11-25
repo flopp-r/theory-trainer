@@ -9,12 +9,15 @@ const builtAt = new Date(__BUILD_TIME__).toLocaleString('en-GB', {
   timeStyle: 'short',
 })
 
-export function HelloScreen() {
+export function HomeScreen() {
   const online = useOnline()
   return (
     <main className="screen">
-      <h1>Hello</h1>
-      <p className="lede">Music Theory Trainer</p>
+      <h1>Music Theory Trainer</h1>
+      <p className="lede">Read notes in treble, bass, alto and tenor clef.</p>
+      <a className="btn primary wide" href="#/practice">
+        Practice
+      </a>
       <ul className="status" aria-label="App status">
         <li data-ok={online}>{online ? 'Online' : 'Offline'}</li>
         <li data-ok={standalone}>{standalone ? 'Running as installed app' : 'Running in browser'}</li>

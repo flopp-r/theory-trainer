@@ -1,0 +1,10 @@
+/** Music theory engine: pure TypeScript, no UI. Import from here. */
+export * from './cadence'
+export * from './chord'
+export * from './clef'
+export * from './instruments'
+export * from './interval'
+export * from './key'
+export * from './pitch'
+export * from './roman'
+export * from './scale'

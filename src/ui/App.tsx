@@ -1,11 +1,21 @@
-import { HelloScreen } from './HelloScreen'
-import { useHashRoute } from './useHashRoute'
+import { HomeScreen } from './HomeScreen'
+import { PracticeSession } from './practice/PracticeSession'
+import { PracticeSetup } from './practice/PracticeSetup'
+import { parsePracticeConfig } from './practice/practiceConfig'
+import { parseHash, parseHashQuery } from './route'
+import { useHash } from './useHashRoute'
 
 export function App() {
-  const route = useHashRoute()
-  switch (route) {
+  const hash = useHash()
+  const path = parseHash(hash)
+  const query = parseHashQuery(hash)
+  switch (path) {
     case '/':
-      return <HelloScreen />
+      return <HomeScreen />
+    case '/practice':
+      return <PracticeSetup key={query.toString()} initial={parsePracticeConfig(query)} />
+    case '/practice/play':
+      return <PracticeSession key={query.toString()} config={parsePracticeConfig(query)} />
     default:
       return (
         <main className="screen">

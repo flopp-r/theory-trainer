@@ -7,3 +7,9 @@ export function parseHash(hash: string): string {
   const clean = path.replace(/\/+$/, '')
   return clean.startsWith('/') ? clean : '/' + clean
 }
+
+/** The query part of the hash, e.g. "#/practice/play?clefs=alto" gives clefs=alto. */
+export function parseHashQuery(hash: string): URLSearchParams {
+  const queryStart = hash.indexOf('?')
+  return new URLSearchParams(queryStart < 0 ? '' : hash.slice(queryStart + 1))
+}

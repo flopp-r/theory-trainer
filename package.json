@@ -12,13 +12,15 @@
   },
   "dependencies": {
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "vexflow": "^5.11.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.7",
     "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "jsdom": "^31.0.1",
     "oxlint": "^1.95.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

@@ -21,10 +21,10 @@ npm run build    # production build into dist/
 | `src/questions/` | One generator per question type |
 | `src/audio/` | `AudioEngine` interface and implementations |
 | `src/progress/` | Stats, spaced repetition, storage |
-| `src/ui/` | Screens and components |
+| `src/ui/` | Screens and components (staff drawing uses VexFlow) |
 | `src/content/` | Path units, intro cards and vocabulary as data |
 | `src/platform/` | Platform services (notifications) |
-| `docs/` | Notes, including `aqa-coverage.md` |
+| `docs/` | Notes, including `theory-engine.md` and `aqa-coverage.md` |
 
 ## Deployment
 
