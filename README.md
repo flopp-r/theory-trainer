@@ -1,0 +1,33 @@
+# Music Theory Trainer
+
+A mobile-first music theory trainer (notation, clefs, intervals, chords, cadences and ear training).
+Installable as a PWA and works offline. Static site: no backend.
+
+## Develop
+
+```bash
+npm install
+npm run dev      # local dev server
+npm test         # unit tests
+npm run lint
+npm run build    # production build into dist/
+```
+
+## Layout
+
+| Folder | Purpose |
+| --- | --- |
+| `src/theory/` | Pure TypeScript music theory, no UI |
+| `src/questions/` | One generator per question type |
+| `src/audio/` | `AudioEngine` interface and implementations |
+| `src/progress/` | Stats, spaced repetition, storage |
+| `src/ui/` | Screens and components |
+| `src/content/` | Path units, intro cards and vocabulary as data |
+| `src/platform/` | Platform services (notifications) |
+| `docs/` | Notes, including `aqa-coverage.md` |
+
+## Deployment
+
+Pushing to the default branch runs `.github/workflows/deploy.yml`, which lints, tests, builds and
+publishes `dist/` to GitHub Pages. Other branches are built and tested but not published.
+Routing is hash-based and asset paths are relative, so the site works from the Pages sub-path.
