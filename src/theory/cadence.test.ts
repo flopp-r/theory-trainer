@@ -84,7 +84,7 @@ describe('classifyCadence', () => {
   })
 
   it('the same two chords mean different things in different keys', () => {
-    // G then C: perfect in C major, but in G major it is IV-I... wait, C-G in G major is plagal.
+    // The same two chords are read against the key: G-C is V-I in C major; C-G is IV-I in G major.
     expect(classifyCadence(parseKey('C major'), chord('G', 'major'), chord('C', 'major'))).toBe('perfect')
     expect(classifyCadence(parseKey('G major'), chord('C', 'major'), chord('G', 'major'))).toBe('plagal')
     expect(classifyCadence(parseKey('C major'), chord('C', 'major'), chord('G', 'major'))).toBe('imperfect')
@@ -105,7 +105,7 @@ describe('classifyCadence', () => {
   })
 
   it('is not fooled by enharmonic respellings', () => {
-    // A#-major spelled Bb: in C major, Bb is bVII, not a cadence chord.
+    // F-Bb in C major is IV-bVII, not a cadence. Spelling is checked, not just sound.
     expect(classifyCadence(parseKey('C major'), chord('F', 'major'), chord('Bb', 'major'))).toBeNull()
     expect(chordSymbol(cadence(parseKey('Gb major'), 'perfect').chords[0])).toBe('Db')
   })
