@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { VOCABULARY } from '../../content/vocabulary'
 import { DIFFICULTY_LABELS, type Difficulty, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
 import { type PracticeConfig, TOPICS_USING_CLEFS, practiceConfigToQuery } from './practiceConfig'
@@ -18,7 +19,7 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
   const [clefs, setClefs] = useState<readonly ClefName[]>(initial.clefs)
   const [ledger, setLedger] = useState(initial.maxLedgerLines)
   const [level, setLevel] = useState<Difficulty>(initial.difficulty)
-  const [vocab] = useState<readonly string[]>(initial.vocabCategories)
+  const [vocab, setVocab] = useState<readonly string[]>(initial.vocabCategories)
 
   function toggleTopic(topic: Topic) {
     setTopics((current) => {
@@ -34,6 +35,11 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
       // Always keep at least one clef selected.
       return current.length > 1 ? current.filter((c) => c !== clef) : current
     })
+  }
+
+  function toggleVocab(category: string) {
+    // None selected means all categories.
+    setVocab((current) => (current.includes(category) ? current.filter((c) => c !== category) : VOCABULARY.map((v) => v.category).filter((c) => c === category || current.includes(c))))
   }
 
   const allSelected = topics.length === ALL_TOPICS.length
@@ -108,6 +114,23 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
               <p className="hint">Ledger lines are the short extra lines used for notes above or below the staff.</p>
             </fieldset>
           )}
+        </section>
+      )}
+
+      {topics.includes('vocabulary') && (
+        <section className="panel">
+          <fieldset>
+            <legend>Vocabulary categories</legend>
+            <div className="chips">
+              {VOCABULARY.map((c) => (
+                <label key={c.category} className="chip">
+                  <input type="checkbox" checked={vocab.includes(c.category)} onChange={() => toggleVocab(c.category)} />
+                  <span>{c.label.replace(/ \(.*\)$/, '')}</span>
+                </label>
+              ))}
+            </div>
+            <p className="hint">Leave all unticked to use every category.</p>
+          </fieldset>
         </section>
       )}
 

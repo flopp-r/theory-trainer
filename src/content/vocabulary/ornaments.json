@@ -1,7 +1,7 @@
 {
   "category": "ornaments",
   "label": "Ornaments",
-  "askTerm": "What is a “{term}”?",
+  "askTerm": "What is the ornament “{term}”?",
   "askMeaning": "Which ornament is “{meaning}”?",
   "entries": [
     {

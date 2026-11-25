@@ -66,6 +66,11 @@ describe('note-accidental', () => {
     }
   })
 
+  it('the explanation names the letter first and then applies the sign', () => {
+    const q = many(noteAccidentalGenerator, 50, 1)[0]!
+    expect(q.explanation).toMatch(/The letter name is [A-G]\. The (sharp|flat) sign in front changes it, so the note is [A-G][♯♭]\.$/)
+  })
+
   it('stays within one ledger line', () => {
     for (const q of many(noteAccidentalGenerator, 300, 2, CLEF_NAMES, 3)) {
       const staff = q.notation!.staves[0]!
@@ -81,7 +86,7 @@ describe('clef-compare', () => {
         const top = notesOf(q, 0)[0]!
         const bottom = notesOf(q, 1)[0]!
         const diff = midi(bottom) - midi(top)
-        const expected = diff === 0 ? 'Yes, the same pitch' : diff > 0 ? 'No, the lower staff’s note is higher' : 'No, the lower staff’s note is lower'
+        const expected = diff === 0 ? 'Yes, the same pitch' : diff > 0 ? 'No, the bottom note is higher' : 'No, the bottom note is lower'
         expect(q.correct).toBe(expected)
         expect(choicesOf(q)).toHaveLength(3)
       }

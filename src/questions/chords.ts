@@ -47,9 +47,17 @@ function chordWords(c: Chord): string {
   return `${noteLabel(c.root)} ${CHORD_QUALITY_LABELS[c.quality]}`
 }
 
-/** Highest accidental count allowed on any chord note at each level. */
-function maxAccidental(difficulty: Difficulty): number {
-  return difficulty === 3 ? 2 : 1
+/**
+ * Most sharps or flats allowed on any chord note. One keeps chords readable; only the diminished 7th
+ * genuinely needs a double flat (C E♭ G♭ B♭♭), so only it may have two.
+ */
+function maxAccidental(quality: ChordQuality): number {
+  return quality === 'diminished7' ? 2 : 1
+}
+
+/** Roots nobody writes chords on in practice (B♯, E♯, C♭, F♭), so they are not used as chord roots. */
+function isUnusualRoot(n: NoteName): boolean {
+  return (n.letter === 'B' && n.accidental === 1) || (n.letter === 'E' && n.accidental === 1) || (n.letter === 'C' && n.accidental === -1) || (n.letter === 'F' && n.accidental === -1)
 }
 
 /** A random chord for the level. Every note is within the accidental limit so it stays readable. */
@@ -60,7 +68,8 @@ function randomChord(rng: Rng, difficulty: Difficulty, qualities: readonly Chord
     const root = note(rng.pick(letters), difficulty === 1 ? 0 : rng.pick([0, 0, 0, 1, -1]))
     const quality = rng.pick(qualities)
     const chord: Chord = { root, quality }
-    if (chordNotes(chord).every((n) => Math.abs(n.accidental) <= maxAccidental(difficulty))) return chord
+    if (isUnusualRoot(root)) continue
+    if (chordNotes(chord).every((n) => Math.abs(n.accidental) <= maxAccidental(quality))) return chord
   }
   throw new Error('Could not build a chord within the accidental limit')
 }
@@ -157,7 +166,7 @@ function generateSeventhOnStaff(ctx: QuestionContext): Question {
   const pitches = chordOnStaff(chord, clef)
   const correct = SEVENTH_LABEL[chord.quality]!
   const labels = qualities.map((q) => SEVENTH_LABEL[q]!)
-  const { input } = multipleChoice(rng, correct, labels, { count: labels.length, layout: 'list', fixedOrder: true })
+  const { input } = multipleChoice(rng, correct, labels, { count: labels.length, layout: 'grid', fixedOrder: true })
   const top = intervalBetween(at(pitches, 0), at(pitches, 3)).interval
   return {
     id: `seventh-on-staff:${clef}:${symbolId(chord)}`,
@@ -280,7 +289,7 @@ function generateChordSymbol(ctx: QuestionContext): Question {
     tags: clefTags(clef),
     prompt:
       ctx.difficulty === 3
-        ? 'What is the chord symbol for this chord? (If the lowest note is not the root, add a slash and the bass note.)'
+        ? 'What is the chord symbol? (Add a slash and the bass note if it is not the root.)'
         : 'What is the chord symbol for this chord?',
     notation: { staves: [{ clef, items: [{ kind: 'notes', pitches }] }] },
     audio: null,

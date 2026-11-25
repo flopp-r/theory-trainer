@@ -50,7 +50,7 @@ function generateNoteAccidental(ctx: QuestionContext): Question {
     input,
     correct,
     answerText: `It is ${correct}.`,
-    explanation: `${explainNoteName(clef, natural)} The ${sign} sign in front changes it, so the note is ${correct}.`,
+    explanation: `${explainNoteName(clef, natural).replace(/The note is ([A-G])\.$/, 'The letter name is $1.')} The ${sign} sign in front changes it, so the note is ${correct}.`,
   }
 }
 
@@ -62,8 +62,8 @@ export const noteAccidentalGenerator: QuestionGenerator = {
 }
 
 const SAME = 'Yes, the same pitch'
-const HIGHER = 'No, the lower staff’s note is higher'
-const LOWER = 'No, the lower staff’s note is lower'
+const HIGHER = 'No, the bottom note is higher'
+const LOWER = 'No, the bottom note is lower'
 
 /** Two staves in different clefs: are the two notes the same pitch? */
 function generateClefCompare(ctx: QuestionContext): Question {
@@ -100,7 +100,7 @@ function generateClefCompare(ctx: QuestionContext): Question {
   const bottomName = pitchLabel(bottom)
   const verdict = same
     ? `They are the same pitch, ${topName}, written for two different clefs.`
-    : `They are different pitches: ${topName} on top and ${bottomName} below, so the lower staff’s note is ${midiNumber(bottom) > midiNumber(top) ? 'higher' : 'lower'}.`
+    : `They are different pitches: ${topName} on top and ${bottomName} below, so the bottom note is ${midiNumber(bottom) > midiNumber(top) ? 'higher' : 'lower'}.`
   return {
     id: `clef-compare:${first}:${formatPitch(top)}:${second}:${formatPitch(bottom)}`,
     type: 'clef-compare',
@@ -118,7 +118,7 @@ function generateClefCompare(ctx: QuestionContext): Question {
     audio: null,
     input,
     correct,
-    answerText: same ? 'They are the same pitch.' : `They are different: the lower staff’s note is ${midiNumber(bottom) > midiNumber(top) ? 'higher' : 'lower'}.`,
+    answerText: same ? 'They are the same pitch.' : `They are different: the bottom note is ${midiNumber(bottom) > midiNumber(top) ? 'higher' : 'lower'}.`,
     explanation: `Top staff (${first} clef): ${topName}. Bottom staff (${second} clef): ${bottomName}. ${verdict}`,
   }
 }

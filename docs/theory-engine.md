@@ -57,8 +57,17 @@ These are choices, not facts from the AQA specification. Check them against your
 11. **Viola range:** the low end (C3, the open C string) is a fact. The high end (A5) is a limit I chose to keep questions readable. It is easy to change.
 12. **Harmonic minor sevenths:** degrees 1 (minor-major 7th) and 3 (augmented major 7th) are left out because those chord types are not supported.
 
+## Added for questions (Phase 3)
+
+- `accidentals.ts`: which sharps, flats and naturals to print on notes, given a key signature and carry-over within a bar.
+- `rhythm.ts`: note and rest values (British names), dots, and simple and compound time signatures.
+- `describeStaffPosition` in `clef.ts`: plain-words position, e.g. "the 1st ledger line above the staff".
+
+Time signature conventions:
+- A top number of 2, 3 or 4 is simple time. 6, 9 or 12 is compound. Other top numbers are not supported.
+- In compound time the beat is three of the bottom-number notes, so 6/8 has 2 beats (dotted crotchets).
+
 ## Not in this phase
 
-- Where the sharps and flats sit on the staff for each clef. VexFlow draws key signatures, so I did not guess these.
-- Rhythm, note values, time signatures (Phase 3).
+- Where the sharps and flats sit on the staff for each clef. VexFlow draws key signatures, so I did not guess these (see `key-signature-layouts.md` for what it draws, to be checked against real music).
 - Anything marked as AQA content. Nothing has been written or tagged yet, so `docs/aqa-coverage.md` is unchanged.

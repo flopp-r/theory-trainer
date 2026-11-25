@@ -108,7 +108,7 @@ function generateIntervalOnStaff(ctx: QuestionContext): Question {
     correct = ORDINALS[number]!
     wrongPool = Object.values(ORDINALS)
     prefer = [ORDINALS[number - 1], ORDINALS[number + 1]].filter((x): x is string => x !== undefined)
-    explanation = `Count the letter names from ${lower.letter} up to ${upper.letter}, counting both: ${letters}. That is a ${number === 8 ? 'octave (8 letter names)' : ORDINALS[number]}.`
+    explanation = `The notes are ${noteLabel(lower)} and ${noteLabel(upper)}. Count the letter names from ${lower.letter} up to ${upper.letter}, counting both: ${letters}. That is a ${number === 8 ? 'octave (8 letter names)' : ORDINALS[number]}.`
   } else {
     correct = intervalName(interval)
     wrongPool = qualifiedIntervals(level).map(intervalName)
@@ -117,7 +117,7 @@ function generateIntervalOnStaff(ctx: QuestionContext): Question {
       .filter((i) => Math.abs(i.number - number) === 1 && i.quality === interval.quality)
       .map(intervalName)
     prefer = [...sameNumber.filter((n) => wrongPool.includes(n)), ...neighbours]
-    explanation = `Count the letter names from ${lower.letter} up to ${upper.letter}, counting both: ${letters}. That is a ${ORDINALS[number]}. The notes are ${intervalSemitones(interval)} semitones apart; ${semitoneFact(interval)} So it is ${withArticle(correct)}.`
+    explanation = `The notes are ${noteLabel(lower)} and ${noteLabel(upper)}. Count the letter names from ${lower.letter} up to ${upper.letter}, counting both: ${letters}. That is a ${ORDINALS[number]}. The notes are ${intervalSemitones(interval)} semitones apart; ${semitoneFact(interval)} So it is ${withArticle(correct)}.`
   }
   const { input } = multipleChoice(rng, correct, wrongPool, { layout: 'grid', prefer })
   const kind = harmonic ? 'harmonic' : 'melodic'

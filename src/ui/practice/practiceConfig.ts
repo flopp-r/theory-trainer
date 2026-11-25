@@ -1,3 +1,4 @@
+import { VOCAB_CATEGORY_IDS } from '../../content/vocabulary'
 import { DIFFICULTY_LABELS, type Difficulty, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
 
@@ -32,15 +33,15 @@ export function parsePracticeConfig(query: URLSearchParams): PracticeConfig {
   const clefs = CLEF_NAMES.filter((c) => wantedClefs.includes(c))
   const ledgerText = query.get('ledger')
   const levelText = query.get('level')
-  const vocab = (query.get('vocab') ?? '')
-    .split(',')
-    .filter((v) => /^[a-z-]{1,30}$/.test(v))
+  const wantedVocab = (query.get('vocab') ?? '').split(',')
+  // Only real category names, in the order they are shown.
+  const vocab = VOCAB_CATEGORY_IDS.filter((v) => wantedVocab.includes(v))
   return {
     topics: topics.length > 0 ? topics : DEFAULT_PRACTICE_CONFIG.topics,
     clefs: clefs.length > 0 ? clefs : DEFAULT_PRACTICE_CONFIG.clefs,
     maxLedgerLines: ledgerText !== null && /^[0-3]$/.test(ledgerText) ? Number(ledgerText) : DEFAULT_PRACTICE_CONFIG.maxLedgerLines,
     difficulty: levelText !== null && /^[1-3]$/.test(levelText) ? (Number(levelText) as Difficulty) : DEFAULT_PRACTICE_CONFIG.difficulty,
-    vocabCategories: [...new Set(vocab)],
+    vocabCategories: vocab,
   }
 }
 
@@ -48,13 +49,14 @@ export function parsePracticeConfig(query: URLSearchParams): PracticeConfig {
 export function practiceConfigToQuery(config: PracticeConfig): string {
   const topics = ALL_TOPICS.filter((t) => config.topics.includes(t))
   const clefs = CLEF_NAMES.filter((c) => config.clefs.includes(c))
+  const vocabIds = VOCAB_CATEGORY_IDS.filter((v) => config.vocabCategories.includes(v))
   const parts = [
     `topics=${topics.join(',')}`,
     `clefs=${clefs.join(',')}`,
     `ledger=${config.maxLedgerLines}`,
     `level=${config.difficulty}`,
   ]
-  if (config.vocabCategories.length > 0) parts.push(`vocab=${config.vocabCategories.join(',')}`)
+  if (vocabIds.length > 0) parts.push(`vocab=${vocabIds.join(',')}`)
   return parts.join('&')
 }
 

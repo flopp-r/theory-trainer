@@ -59,7 +59,7 @@ function generate(ctx: QuestionContext, direction: 'term' | 'meaning'): Question
     audio: null,
     input,
     correct,
-    answerText: direction === 'term' ? `${fact}` : `It is “${entry.term}”.`,
+    answerText: direction === 'term' ? (isFamily ? `It is a ${entry.meaning} instrument.` : `It means ${entry.meaning}.`) : `It is “${entry.term}”.`,
     explanation: `${fact}${alsoSee}`,
   }
 }

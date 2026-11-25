@@ -476,3 +476,7 @@ legend {
   display: block;
   height: auto;
 }
+
+.feedback-area {
+  min-height: 5.5rem;
+}

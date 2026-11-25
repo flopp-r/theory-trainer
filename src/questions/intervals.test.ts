@@ -98,6 +98,14 @@ describe('interval-on-staff', () => {
     expect(checked).toBeGreaterThan(100)
   })
 
+  it('the explanation names the actual notes, including their sharps and flats', () => {
+    for (const q of many(intervalOnStaffGenerator, 200, 3)) {
+      const [lower, upper] = pitchesOf(q)
+      const name = (p: Pitch) => `${p.letter}${p.accidental === 1 ? '♯' : p.accidental === -1 ? '♭' : ''}`
+      expect(q.explanation.startsWith(`The notes are ${name(lower)} and ${name(upper)}.`), q.explanation).toBe(true)
+    }
+  })
+
   it('ids differ for the number-only and quality versions of the same notes', () => {
     const ids1 = new Set(many(intervalOnStaffGenerator, 100, 1).map((q) => q.id))
     const ids2 = new Set(many(intervalOnStaffGenerator, 100, 2).map((q) => q.id))

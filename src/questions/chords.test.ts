@@ -307,3 +307,28 @@ describe('roman-numeral', () => {
     expect(many(romanNumeralGenerator, 600, 3).some((q) => q.id.endsWith('7'))).toBe(true)
   })
 })
+
+describe('chord roots', () => {
+  it('never uses roots that nobody writes chords on (B♯, E♯, C♭, F♭)', () => {
+    for (const g of [triadOnStaffGenerator, seventhOnStaffGenerator, chordNotesGenerator, chordSymbolGenerator, inversionGenerator]) {
+      for (const level of [1, 2, 3] as const) {
+        for (const q of many(g, 300, level)) {
+          expect(q.itemLabel, q.id).not.toMatch(/^(B♯|E♯|C♭|F♭)/)
+          expect(q.correct, q.id).not.toMatch(/^(B♯|E♯|C♭|F♭)/)
+        }
+      }
+    }
+  })
+})
+
+describe('chord readability', () => {
+  it('no chord has more than one sharp or flat on any note, except the diminished 7th (which needs double flats)', () => {
+    for (const g of [triadOnStaffGenerator, seventhOnStaffGenerator, chordSymbolGenerator, inversionGenerator]) {
+      for (const q of many(g, 400, 3)) {
+        const pitches = chordPitches(q)
+        const dim7 = q.id.includes('dim7')
+        for (const p of pitches) expect(Math.abs(p.accidental), `${q.id}`).toBeLessThanOrEqual(dim7 ? 2 : 1)
+      }
+    }
+  })
+})

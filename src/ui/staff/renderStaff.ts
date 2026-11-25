@@ -50,8 +50,8 @@ export function drawStaff(container: HTMLElement, spec: StaffSpec, options: Draw
   const width = stave.getNoteStartX() + ITEM_WIDTH * Math.max(minItems, spec.items.length) + SIDE * 2
   stave.setWidth(width - SIDE * 2)
 
-  // Crop to the staff plus room for the clef and the allowed ledger lines (10 units each).
-  const room = Math.max(24, 10 * ledgerLines + 15)
+  // Crop to the staff plus room for the clef (it sticks out about 16 units) and the allowed ledger lines (10 units each).
+  const room = Math.max(19, 10 * ledgerLines + 15)
   const top = stave.getYForLine(0) - room
   const height = stave.getYForLine(4) + room - top
 

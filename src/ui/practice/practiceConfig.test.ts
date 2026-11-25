@@ -29,8 +29,9 @@ describe('parsePracticeConfig', () => {
     expect(parse('level=0').difficulty).toBe(DEFAULT_PRACTICE_CONFIG.difficulty)
   })
 
-  it('ignores vocabulary names that are not plain lower-case words', () => {
-    expect(parse('vocab=tempo,<script>,,DYNAMICS,a_b').vocabCategories).toEqual(['tempo'])
+  it('ignores vocabulary names that are not real categories, and keeps the real ones in display order', () => {
+    expect(parse('vocab=tempo,<script>,,DYNAMICS,a_b,cooking').vocabCategories).toEqual(['tempo'])
+    expect(parse('vocab=tonality,tempo,form,tempo').vocabCategories).toEqual(['tempo', 'form', 'tonality'])
   })
 
   it('round-trips through the address', () => {

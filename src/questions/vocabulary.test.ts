@@ -170,6 +170,12 @@ describe('vocabulary questions', () => {
     expect(slug('piano (p)')).toBe('piano-p')
   })
 
+  it('the line shown after a wrong answer does not just repeat the explanation', () => {
+    for (const g of [vocabTermGenerator, vocabMeaningGenerator]) {
+      for (const q of many(g, 200, 2)) expect(q.explanation).not.toBe(q.answerText)
+    }
+  })
+
   it('every question is tagged for AQA checking', () => {
     for (const q of many(vocabTermGenerator, 100, 2)) expect(q.tags).toEqual(['aqa-candidate'])
   })
