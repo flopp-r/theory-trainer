@@ -1,0 +1,86 @@
+{
+  "category": "form",
+  "label": "Structure and form",
+  "askTerm": "What does “{term}” mean?",
+  "askMeaning": "Which term describes “{meaning}”?",
+  "entries": [
+    {
+      "term": "binary form",
+      "meaning": "two sections, A and B",
+      "level": 1,
+      "group": "binary"
+    },
+    {
+      "term": "ternary form",
+      "meaning": "three sections: A B A",
+      "level": 1,
+      "group": "ternary"
+    },
+    {
+      "term": "rondo",
+      "meaning": "a main theme (A) that keeps returning between contrasting sections, such as A B A C A",
+      "level": 1,
+      "group": "rondo"
+    },
+    {
+      "term": "strophic",
+      "meaning": "the same music repeated for each verse of a song",
+      "level": 1,
+      "group": "strophic"
+    },
+    {
+      "term": "through-composed",
+      "meaning": "new music for each verse, with no repeated sections",
+      "level": 2,
+      "group": "through"
+    },
+    {
+      "term": "theme and variations",
+      "meaning": "a theme followed by changed versions of it",
+      "level": 1,
+      "group": "variations"
+    },
+    {
+      "term": "ground bass",
+      "meaning": "a bass line that repeats over and over while the upper parts change",
+      "level": 2,
+      "group": "ground"
+    },
+    {
+      "term": "ostinato",
+      "meaning": "a short pattern that is repeated over and over",
+      "level": 2,
+      "group": "repeat"
+    },
+    {
+      "term": "riff",
+      "meaning": "a short repeated pattern, often used in rock and jazz",
+      "level": 3,
+      "group": "repeat"
+    },
+    {
+      "term": "call and response",
+      "meaning": "one phrase that is answered by another",
+      "level": 2,
+      "group": "callresp"
+    },
+    {
+      "term": "verse and chorus",
+      "meaning": "a song that alternates between verses and a repeating chorus",
+      "level": 2,
+      "group": "verse"
+    },
+    {
+      "term": "coda",
+      "meaning": "a closing section added at the end",
+      "level": 2,
+      "group": "coda"
+    },
+    {
+      "term": "sonata form",
+      "meaning": "exposition, development and recapitulation",
+      "level": 3,
+      "group": "sonata"
+    }
+  ]
+}

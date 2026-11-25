@@ -1,0 +1,80 @@
+{
+  "category": "tonality",
+  "label": "Tonality",
+  "askTerm": "What does “{term}” mean?",
+  "askMeaning": "Which term describes “{meaning}”?",
+  "entries": [
+    {
+      "term": "major",
+      "meaning": "based on a major scale",
+      "level": 1,
+      "group": "major"
+    },
+    {
+      "term": "minor",
+      "meaning": "based on a minor scale",
+      "level": 1,
+      "group": "minor"
+    },
+    {
+      "term": "modal",
+      "meaning": "based on a mode (such as Dorian) instead of a major or minor key",
+      "level": 3,
+      "group": "modal"
+    },
+    {
+      "term": "atonal",
+      "meaning": "music with no key and no home note",
+      "level": 2,
+      "group": "atonal"
+    },
+    {
+      "term": "diatonic",
+      "meaning": "using only the notes of the key",
+      "level": 2,
+      "group": "diatonic"
+    },
+    {
+      "term": "chromatic",
+      "meaning": "using notes that are not in the key, including the notes between the scale notes",
+      "level": 2,
+      "group": "chromatic"
+    },
+    {
+      "term": "pentatonic",
+      "meaning": "based on a scale of five notes",
+      "level": 2,
+      "group": "penta"
+    },
+    {
+      "term": "modulation",
+      "meaning": "changing from one key to another",
+      "level": 1,
+      "group": "modulation"
+    },
+    {
+      "term": "tonic",
+      "meaning": "the home note or chord of a key: the 1st note of the scale",
+      "level": 1,
+      "group": "tonic"
+    },
+    {
+      "term": "dominant",
+      "meaning": "the 5th note of the scale, or the chord built on it",
+      "level": 1,
+      "group": "dominant"
+    },
+    {
+      "term": "consonant",
+      "meaning": "notes that sound pleasant and settled together",
+      "level": 2,
+      "group": "consonant"
+    },
+    {
+      "term": "dissonant",
+      "meaning": "notes that sound tense and clashing together",
+      "level": 2,
+      "group": "dissonant"
+    }
+  ]
+}

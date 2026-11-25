@@ -1,0 +1,68 @@
+{
+  "category": "texture",
+  "label": "Texture",
+  "askTerm": "What does “{term}” mean?",
+  "askMeaning": "Which term describes “{meaning}”?",
+  "entries": [
+    {
+      "term": "monophonic",
+      "meaning": "a single melody line with no accompaniment",
+      "level": 1,
+      "group": "mono"
+    },
+    {
+      "term": "unison",
+      "meaning": "everyone plays the same notes at the same time (at the same pitch or in octaves)",
+      "level": 2,
+      "group": "unison"
+    },
+    {
+      "term": "homophonic",
+      "meaning": "a melody with chords or other parts supporting it, moving together",
+      "level": 1,
+      "group": "homo"
+    },
+    {
+      "term": "melody and accompaniment",
+      "meaning": "a tune supported by chords or other backing parts",
+      "level": 1,
+      "group": "homo"
+    },
+    {
+      "term": "polyphonic",
+      "meaning": "several independent melody lines at the same time",
+      "level": 1,
+      "group": "poly"
+    },
+    {
+      "term": "counterpoint",
+      "meaning": "two or more independent melodies combined",
+      "level": 2,
+      "group": "poly"
+    },
+    {
+      "term": "heterophonic",
+      "meaning": "different versions of the same melody played at the same time",
+      "level": 3,
+      "group": "hetero"
+    },
+    {
+      "term": "imitation",
+      "meaning": "a melody that is copied by another part soon after it first appears",
+      "level": 2,
+      "group": "imitate"
+    },
+    {
+      "term": "canon",
+      "meaning": "strict imitation: each part plays the same melody, starting at different times",
+      "level": 1,
+      "group": "imitate"
+    },
+    {
+      "term": "drone",
+      "meaning": "a long held or repeated note, often low, that continues under the music",
+      "level": 2,
+      "group": "drone"
+    }
+  ]
+}

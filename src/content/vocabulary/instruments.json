@@ -1,0 +1,170 @@
+{
+  "category": "instruments",
+  "label": "Instruments and families",
+  "askTerm": "Which family does the {term} belong to?",
+  "askMeaning": "Which of these instruments is in the {meaning} family?",
+  "entries": [
+    {
+      "term": "flute",
+      "meaning": "woodwind",
+      "level": 1,
+      "group": "woodwind"
+    },
+    {
+      "term": "oboe",
+      "meaning": "woodwind",
+      "level": 1,
+      "group": "woodwind"
+    },
+    {
+      "term": "clarinet",
+      "meaning": "woodwind",
+      "level": 1,
+      "group": "woodwind"
+    },
+    {
+      "term": "bassoon",
+      "meaning": "woodwind",
+      "level": 1,
+      "group": "woodwind"
+    },
+    {
+      "term": "piccolo",
+      "meaning": "woodwind",
+      "level": 2,
+      "group": "woodwind"
+    },
+    {
+      "term": "saxophone",
+      "meaning": "woodwind",
+      "level": 2,
+      "group": "woodwind"
+    },
+    {
+      "term": "recorder",
+      "meaning": "woodwind",
+      "level": 2,
+      "group": "woodwind"
+    },
+    {
+      "term": "cor anglais",
+      "meaning": "woodwind",
+      "level": 3,
+      "group": "woodwind"
+    },
+    {
+      "term": "trumpet",
+      "meaning": "brass",
+      "level": 1,
+      "group": "brass"
+    },
+    {
+      "term": "trombone",
+      "meaning": "brass",
+      "level": 1,
+      "group": "brass"
+    },
+    {
+      "term": "French horn",
+      "meaning": "brass",
+      "level": 1,
+      "group": "brass"
+    },
+    {
+      "term": "tuba",
+      "meaning": "brass",
+      "level": 1,
+      "group": "brass"
+    },
+    {
+      "term": "cornet",
+      "meaning": "brass",
+      "level": 3,
+      "group": "brass"
+    },
+    {
+      "term": "euphonium",
+      "meaning": "brass",
+      "level": 3,
+      "group": "brass"
+    },
+    {
+      "term": "violin",
+      "meaning": "string",
+      "level": 1,
+      "group": "string"
+    },
+    {
+      "term": "viola",
+      "meaning": "string",
+      "level": 1,
+      "group": "string"
+    },
+    {
+      "term": "cello",
+      "meaning": "string",
+      "level": 1,
+      "group": "string"
+    },
+    {
+      "term": "double bass",
+      "meaning": "string",
+      "level": 1,
+      "group": "string"
+    },
+    {
+      "term": "harp",
+      "meaning": "string",
+      "level": 2,
+      "group": "string"
+    },
+    {
+      "term": "guitar",
+      "meaning": "string",
+      "level": 2,
+      "group": "string"
+    },
+    {
+      "term": "timpani",
+      "meaning": "percussion",
+      "level": 1,
+      "group": "percussion"
+    },
+    {
+      "term": "snare drum",
+      "meaning": "percussion",
+      "level": 1,
+      "group": "percussion"
+    },
+    {
+      "term": "cymbals",
+      "meaning": "percussion",
+      "level": 1,
+      "group": "percussion"
+    },
+    {
+      "term": "triangle",
+      "meaning": "percussion",
+      "level": 2,
+      "group": "percussion"
+    },
+    {
+      "term": "xylophone",
+      "meaning": "percussion",
+      "level": 2,
+      "group": "percussion"
+    },
+    {
+      "term": "glockenspiel",
+      "meaning": "percussion",
+      "level": 3,
+      "group": "percussion"
+    },
+    {
+      "term": "tambourine",
+      "meaning": "percussion",
+      "level": 2,
+      "group": "percussion"
+    }
+  ]
+}

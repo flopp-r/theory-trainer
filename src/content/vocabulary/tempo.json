@@ -1,0 +1,122 @@
+{
+  "category": "tempo",
+  "label": "Tempo (Italian terms)",
+  "askTerm": "What does “{term}” mean?",
+  "askMeaning": "Which term means “{meaning}”?",
+  "entries": [
+    {
+      "term": "Grave",
+      "meaning": "very slow and serious",
+      "level": 3,
+      "group": "slow"
+    },
+    {
+      "term": "Largo",
+      "meaning": "very slow and broad",
+      "level": 2,
+      "group": "slow"
+    },
+    {
+      "term": "Lento",
+      "meaning": "slow",
+      "level": 1,
+      "group": "slow"
+    },
+    {
+      "term": "Adagio",
+      "meaning": "slow and relaxed",
+      "level": 2,
+      "group": "slow"
+    },
+    {
+      "term": "Andante",
+      "meaning": "at a walking pace",
+      "level": 1,
+      "group": "walking"
+    },
+    {
+      "term": "Moderato",
+      "meaning": "at a moderate speed",
+      "level": 1,
+      "group": "moderate"
+    },
+    {
+      "term": "Allegretto",
+      "meaning": "fairly fast, a little slower than allegro",
+      "level": 3,
+      "group": "fast"
+    },
+    {
+      "term": "Allegro",
+      "meaning": "fast and lively",
+      "level": 1,
+      "group": "fast"
+    },
+    {
+      "term": "Vivace",
+      "meaning": "lively and quick",
+      "level": 2,
+      "group": "fast"
+    },
+    {
+      "term": "Presto",
+      "meaning": "very fast",
+      "level": 1,
+      "group": "very fast"
+    },
+    {
+      "term": "Prestissimo",
+      "meaning": "as fast as possible",
+      "level": 3,
+      "group": "very fast"
+    },
+    {
+      "term": "Accelerando",
+      "meaning": "gradually getting faster",
+      "level": 1,
+      "group": "faster"
+    },
+    {
+      "term": "Rallentando",
+      "meaning": "gradually getting slower",
+      "level": 1,
+      "group": "slower"
+    },
+    {
+      "term": "Ritardando",
+      "meaning": "gradually getting slower",
+      "level": 2,
+      "group": "slower"
+    },
+    {
+      "term": "A tempo",
+      "meaning": "go back to the original speed",
+      "level": 2,
+      "group": "a tempo"
+    },
+    {
+      "term": "Rubato",
+      "meaning": "the speed bends a little, with some freedom",
+      "level": 3,
+      "group": "rubato"
+    },
+    {
+      "term": "Con moto",
+      "meaning": "with movement",
+      "level": 3,
+      "group": "con moto"
+    },
+    {
+      "term": "Meno mosso",
+      "meaning": "less movement: slower",
+      "level": 3,
+      "group": "meno"
+    },
+    {
+      "term": "Più mosso",
+      "meaning": "more movement: faster",
+      "level": 3,
+      "group": "piu"
+    }
+  ]
+}

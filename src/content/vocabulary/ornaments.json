@@ -1,0 +1,44 @@
+{
+  "category": "ornaments",
+  "label": "Ornaments",
+  "askTerm": "What is a “{term}”?",
+  "askMeaning": "Which ornament is “{meaning}”?",
+  "entries": [
+    {
+      "term": "trill",
+      "meaning": "a fast alternation between a note and the note above it",
+      "level": 1,
+      "group": "trill"
+    },
+    {
+      "term": "mordent",
+      "meaning": "a quick, single decoration: the main note, the note next to it, then the main note again",
+      "level": 1,
+      "group": "mordent"
+    },
+    {
+      "term": "turn",
+      "meaning": "a four-note decoration: the note above, the main note, the note below, then the main note again",
+      "level": 1,
+      "group": "turn"
+    },
+    {
+      "term": "acciaccatura",
+      "meaning": "a very short grace note played just before the main note (shown with a slash through its stem)",
+      "level": 1,
+      "group": "grace-short"
+    },
+    {
+      "term": "appoggiatura",
+      "meaning": "a “leaning” grace note that takes some of the length of the main note",
+      "level": 2,
+      "group": "grace-long"
+    },
+    {
+      "term": "grace note",
+      "meaning": "a small note that decorates the main note",
+      "level": 1,
+      "group": "grace"
+    }
+  ]
+}

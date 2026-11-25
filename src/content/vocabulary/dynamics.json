@@ -1,0 +1,92 @@
+{
+  "category": "dynamics",
+  "label": "Dynamics",
+  "askTerm": "What does “{term}” mean?",
+  "askMeaning": "Which term means “{meaning}”?",
+  "entries": [
+    {
+      "term": "piano (p)",
+      "meaning": "quiet",
+      "level": 1,
+      "group": "p"
+    },
+    {
+      "term": "forte (f)",
+      "meaning": "loud",
+      "level": 1,
+      "group": "f"
+    },
+    {
+      "term": "pianissimo (pp)",
+      "meaning": "very quiet",
+      "level": 1,
+      "group": "pp"
+    },
+    {
+      "term": "fortissimo (ff)",
+      "meaning": "very loud",
+      "level": 1,
+      "group": "ff"
+    },
+    {
+      "term": "mezzo piano (mp)",
+      "meaning": "moderately quiet",
+      "level": 2,
+      "group": "mp"
+    },
+    {
+      "term": "mezzo forte (mf)",
+      "meaning": "moderately loud",
+      "level": 2,
+      "group": "mf"
+    },
+    {
+      "term": "crescendo (cresc.)",
+      "meaning": "gradually getting louder",
+      "level": 1,
+      "group": "louder"
+    },
+    {
+      "term": "diminuendo (dim.)",
+      "meaning": "gradually getting quieter",
+      "level": 1,
+      "group": "quieter"
+    },
+    {
+      "term": "decrescendo (decresc.)",
+      "meaning": "gradually getting quieter",
+      "level": 2,
+      "group": "quieter"
+    },
+    {
+      "term": "sforzando (sfz)",
+      "meaning": "a sudden, strong accent",
+      "level": 2,
+      "group": "sfz"
+    },
+    {
+      "term": "fortepiano (fp)",
+      "meaning": "loud, then immediately quiet",
+      "level": 3,
+      "group": "fp"
+    },
+    {
+      "term": "subito (sub.)",
+      "meaning": "suddenly",
+      "level": 3,
+      "group": "subito"
+    },
+    {
+      "term": "pianississimo (ppp)",
+      "meaning": "as quiet as possible",
+      "level": 3,
+      "group": "ppp"
+    },
+    {
+      "term": "fortississimo (fff)",
+      "meaning": "as loud as possible",
+      "level": 3,
+      "group": "fff"
+    }
+  ]
+}
