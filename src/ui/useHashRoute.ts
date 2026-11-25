@@ -1,12 +1,11 @@
 import { useSyncExternalStore } from 'react'
-import { parseHash } from './route'
 
 function subscribe(callback: () => void) {
   window.addEventListener('hashchange', callback)
   return () => window.removeEventListener('hashchange', callback)
 }
 
-/** Current route path taken from the URL hash, e.g. "/" or "/practice". */
-export function useHashRoute(): string {
-  return useSyncExternalStore(subscribe, () => parseHash(window.location.hash))
+/** The raw URL hash, e.g. "#/practice/play?clefs=alto". Use parseHash and parseHashQuery to read it. */
+export function useHash(): string {
+  return useSyncExternalStore(subscribe, () => window.location.hash)
 }
