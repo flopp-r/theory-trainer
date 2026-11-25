@@ -43,6 +43,11 @@ export function multipleChoice(
   return { input: { kind: 'multiple-choice', choices, layout }, correct }
 }
 
+/** Capital first letter, for starting a sentence. */
+export function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
 /** "a", "an": the article for a word, using the first letter's sound for the words this app uses. */
 export function withArticle(word: string): string {
   return /^[aeiou]/i.test(word) || /^(8|11|18)/.test(word) ? `an ${word}` : `a ${word}`
