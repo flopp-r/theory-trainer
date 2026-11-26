@@ -29,8 +29,8 @@ import { bestOctave, keyLabel, keysForDifficulty, noteLabel, notesLabel } from '
 import type { Difficulty, Question, QuestionContext, QuestionGenerator } from './types'
 import type { Rng } from './rng'
 
-const TRIADS: ChordQuality[] = ['major', 'minor', 'diminished', 'augmented']
-const SEVENTHS: ChordQuality[] = ['dominant7', 'major7', 'minor7', 'half-diminished7', 'diminished7']
+export const TRIADS: ChordQuality[] = ['major', 'minor', 'diminished', 'augmented']
+export const SEVENTHS: ChordQuality[] = ['dominant7', 'major7', 'minor7', 'half-diminished7', 'diminished7']
 
 /** A chord symbol with proper sharp and flat signs, e.g. "B♭m7" or "C/E". */
 export function symbolLabel(c: Chord, inversion = 0): string {
@@ -43,7 +43,7 @@ function symbolId(c: Chord, inversion = 0): string {
 }
 
 /** "D minor", "B♭ dominant 7th". */
-function chordWords(c: Chord): string {
+export function chordWords(c: Chord): string {
   return `${noteLabel(c.root)} ${CHORD_QUALITY_LABELS[c.quality]}`
 }
 
@@ -61,7 +61,7 @@ function isUnusualRoot(n: NoteName): boolean {
 }
 
 /** A random chord for the level. Every note is within the accidental limit so it stays readable. */
-function randomChord(rng: Rng, difficulty: Difficulty, qualities: readonly ChordQuality[]): Chord {
+export function randomChord(rng: Rng, difficulty: Difficulty, qualities: readonly ChordQuality[]): Chord {
   const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
   for (let attempt = 0; attempt < 500; attempt++) {
     // Level 1 uses plain roots; later levels also use sharp and flat roots.
@@ -81,7 +81,7 @@ export function chordOnStaff(chord: Chord, clef: ClefName, inversion = 0): Pitch
 }
 
 /** How the chord is built, in words. */
-const RECIPE: Record<ChordQuality, string> = {
+export const RECIPE: Record<ChordQuality, string> = {
   major: 'root, major 3rd and perfect 5th',
   minor: 'root, minor 3rd and perfect 5th',
   diminished: 'root, minor 3rd and diminished 5th',
@@ -150,7 +150,7 @@ function seventhQualitiesFor(difficulty: Difficulty): ChordQuality[] {
   return difficulty === 1 ? SEVENTHS.slice(0, 3) : difficulty === 2 ? SEVENTHS.slice(0, 4) : SEVENTHS
 }
 
-const SEVENTH_LABEL: Record<string, string> = {
+export const SEVENTH_LABEL: Record<string, string> = {
   dominant7: 'dominant 7th',
   major7: 'major 7th',
   minor7: 'minor 7th',

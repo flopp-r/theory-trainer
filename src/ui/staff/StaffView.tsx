@@ -11,6 +11,8 @@ interface Props {
   scale?: number
   /** Leave room for at least this many items. */
   minItems?: number
+  /** Keep full size and let the page scroll sideways instead of shrinking (for long runs of notes). */
+  scroll?: boolean
   /** Called each time the staff has been drawn (used to start the answer timer). */
   onDrawn?: () => void
   /** Makes the staff tappable: called with the staff position under the finger (see theory/clef). */
@@ -25,7 +27,7 @@ interface Props {
  * Draws a stave. VexFlow is loaded the first time this appears, so the home screen stays light.
  * The default text label names the clef but never the notes (that would give the answer away).
  */
-export function StaffView({ staff, ledgerLines = 3, scale, minItems, onDrawn, onTap, tapRange, label }: Props) {
+export function StaffView({ staff, ledgerLines = 3, scale, minItems, scroll, onDrawn, onTap, tapRange, label }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const geometry = useRef<StaffGeometry | null>(null)
   const [failed, setFailed] = useState(false)
@@ -43,7 +45,7 @@ export function StaffView({ staff, ledgerLines = 3, scale, minItems, onDrawn, on
         // Wait for the bundled music font so the clef and note heads are drawn with it.
         await document.fonts.ready
         if (cancelled) return
-        geometry.current = drawStaff(element, staff, { color, ledgerLines, scale, minItems })
+        geometry.current = drawStaff(element, staff, { color, ledgerLines, scale, minItems, noShrink: scroll })
         onDrawnRef.current?.()
       })
       .catch(() => {
@@ -53,7 +55,7 @@ export function StaffView({ staff, ledgerLines = 3, scale, minItems, onDrawn, on
       cancelled = true
     }
     // `staff` is covered by specKey.
-  }, [specKey, ledgerLines, scale, minItems]) // eslint-disable-line
+  }, [specKey, ledgerLines, scale, minItems, scroll]) // eslint-disable-line
 
   function handleTap(event: React.MouseEvent<HTMLDivElement>) {
     const geo = geometry.current
@@ -66,7 +68,7 @@ export function StaffView({ staff, ledgerLines = 3, scale, minItems, onDrawn, on
 
   return (
     <div
-      className={`staff${onTap ? ' tappable' : ''}`}
+      className={`staff${onTap ? ' tappable' : ''}${scroll ? ' scrolls' : ''}`}
       role="img"
       aria-label={label ?? `${clefLabel(staff.clef)} staff`}
       onClick={onTap ? handleTap : undefined}

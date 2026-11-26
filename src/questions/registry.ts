@@ -1,6 +1,7 @@
 import { clefCompareGenerator, noteAccidentalGenerator, placeNoteGenerator } from './notes'
 import { cadenceByNameGenerator, cadenceOnStaffGenerator } from './cadences'
 import { chordNotesGenerator, chordSymbolGenerator, inversionGenerator, romanNumeralGenerator, seventhOnStaffGenerator, triadOnStaffGenerator } from './chords'
+import { earCadenceGenerator, earChordQualityGenerator, earIntervalGenerator, earInversionGenerator } from './ear'
 import { intervalAboveGenerator, intervalOnStaffGenerator } from './intervals'
 import { keyFromSignatureGenerator, relativeKeyGenerator, signatureFromKeyGenerator } from './keys'
 import { noteNameGenerator } from './noteName'
@@ -37,6 +38,10 @@ export const GENERATORS: readonly QuestionGenerator[] = [
   cadenceByNameGenerator,
   vocabTermGenerator,
   vocabMeaningGenerator,
+  earChordQualityGenerator,
+  earIntervalGenerator,
+  earCadenceGenerator,
+  earInversionGenerator,
 ]
 
 export function generatorsForTopics(topics: readonly Topic[]): QuestionGenerator[] {

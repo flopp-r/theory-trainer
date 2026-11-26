@@ -38,7 +38,7 @@ describe('parsePracticeConfig', () => {
     const configs: PracticeConfig[] = [
       { topics: ['notes'], clefs: ['treble'], maxLedgerLines: 0, difficulty: 1, vocabCategories: [] },
       {
-        topics: ['notes', 'rhythm', 'keys', 'scales', 'intervals', 'chords', 'cadences', 'vocabulary'],
+        topics: ['notes', 'rhythm', 'keys', 'scales', 'intervals', 'chords', 'cadences', 'vocabulary', 'ear'],
         clefs: ['treble', 'bass', 'alto', 'tenor'],
         maxLedgerLines: 3,
         difficulty: 3,

@@ -31,6 +31,17 @@ Levels are Easy (1), Medium (2) and Hard (3), chosen in Practice.
 | Cadences | `cadence-by-name` | Which chord pair makes this cadence | major keys | adds minor keys | adds V7 versions |
 | Vocabulary | `vocab-term` | What does a term mean | core terms | adds further terms | adds extra terms |
 | Vocabulary | `vocab-meaning` | Which term means this | core terms | adds further terms | adds extra terms |
+| Ear training | `ear-chord-quality` | What type of chord do you hear | major, minor, chord played together | adds diminished, augmented, and chords played note by note | adds dominant, major and minor 7th, and inversions |
+| Ear training | `ear-interval` | Name the interval (up, down or together) | minor and major 3rd, perfect 4th, 5th, octave; up or together | all intervals up to the octave; up, down or together | adds the tritone |
+| Ear training | `ear-cadence` | Which cadence do you hear (key chord first) | major keys | adds minor keys | adds V7 versions |
+| Ear training | `ear-inversion` | Which inversion do you hear | major and minor triads | adds diminished | 7th chords, with third inversion |
+
+## Listening questions
+- Every note you hear is also shown on a staff after you answer, so what you hear and what you read are linked.
+- The sound is a built-in synth, not recorded piano (that can replace it later). Pitches are checked by `scripts/audio-check.cjs`.
+- Notes are between E2 and E6 so they are audible on a phone speaker. The register changes from question to question.
+- A question's timer starts when the sound has finished playing the first time, so listening time is not counted.
+- Phones only allow sound after you have tapped something. The sound starts by itself after you tap Start or Next; if your phone blocks that, tap Play.
 
 ## Rules every type follows
 - **Item ids are stable.** The same item always has the same id and the same answer, so statistics stay meaningful.

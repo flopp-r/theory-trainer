@@ -18,6 +18,9 @@ export function HomeScreen() {
       <a className="btn primary wide" href="#/practice">
         Practice
       </a>
+      <a className="btn wide" href="#/library">
+        Library: lessons and worked examples
+      </a>
       <ul className="status" aria-label="App status">
         <li data-ok={online}>{online ? 'Online' : 'Offline'}</li>
         <li data-ok={standalone}>{standalone ? 'Running as installed app' : 'Running in browser'}</li>

@@ -1,7 +1,8 @@
+import type { AudioSpec } from '../audio/types'
 import type { ClefName, Key, Pitch, TimeSignature } from '../theory'
 import type { Rng } from './rng'
 
-export type Topic = 'notes' | 'rhythm' | 'keys' | 'scales' | 'intervals' | 'chords' | 'cadences' | 'vocabulary'
+export type Topic = 'notes' | 'rhythm' | 'keys' | 'scales' | 'intervals' | 'chords' | 'cadences' | 'vocabulary' | 'ear'
 
 export const TOPICS: readonly { id: Topic; label: string; summary: string }[] = [
   { id: 'notes', label: 'Notes', summary: 'Names, accidentals, clefs, placing notes' },
@@ -12,6 +13,7 @@ export const TOPICS: readonly { id: Topic; label: string; summary: string }[] = 
   { id: 'chords', label: 'Chords', summary: 'Triads, sevenths, inversions, numerals' },
   { id: 'cadences', label: 'Cadences', summary: 'Perfect, imperfect, plagal, interrupted' },
   { id: 'vocabulary', label: 'Vocabulary', summary: 'Italian terms, dynamics, instruments, forms' },
+  { id: 'ear', label: 'Ear training', summary: 'Chords, intervals, cadences and inversions by ear (needs sound)' },
 ]
 
 export const QUESTION_TYPES = [
@@ -41,6 +43,10 @@ export const QUESTION_TYPES = [
   'cadence-by-name',
   'vocab-term',
   'vocab-meaning',
+  'ear-chord-quality',
+  'ear-interval',
+  'ear-cadence',
+  'ear-inversion',
 ] as const
 export type QuestionType = (typeof QUESTION_TYPES)[number]
 
@@ -81,9 +87,6 @@ export interface NotationSpec {
   readonly staves: readonly StaffSpec[]
 }
 
-/** What to play. Filled in from Phase 4; null until then. */
-export type AudioSpec = null
-
 export interface Choice {
   /** Stable value compared with `Question.correct`. */
   readonly id: string
@@ -112,7 +115,10 @@ export interface Question {
   readonly tags: readonly string[]
   readonly prompt: string
   readonly notation: NotationSpec | null
-  readonly audio: AudioSpec
+  /** What to play, for ear-training questions. */
+  readonly audio: AudioSpec | null
+  /** Shown after answering: what was played, written on the staff. */
+  readonly reveal?: NotationSpec
   readonly input: QuestionInput
   /** For multiple choice: the `id` of the correct choice. For tap-staff: the staff position as text. */
   readonly correct: string

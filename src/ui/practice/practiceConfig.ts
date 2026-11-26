@@ -21,7 +21,7 @@ export const DEFAULT_PRACTICE_CONFIG: PracticeConfig = {
 }
 
 /** Topics where the chosen clefs matter. */
-export const TOPICS_USING_CLEFS: readonly Topic[] = ['notes', 'rhythm', 'keys', 'intervals', 'chords', 'cadences']
+export const TOPICS_USING_CLEFS: readonly Topic[] = ['notes', 'rhythm', 'keys', 'intervals', 'chords', 'cadences', 'ear']
 
 const ALL_TOPICS: readonly Topic[] = TOPICS.map((t) => t.id)
 

@@ -72,6 +72,16 @@ Question wording and levels are in `docs/questions.md`. Vocabulary terms are in 
 | Cadences in minor keys | same, Medium and Hard | `aqa-candidate` | |
 | The exact definitions used | see `docs/theory-engine.md` (items 9 and 10) | | |
 
+## Ear training
+
+| Topic | Question type | Tag | On the spec? |
+| --- | --- | --- | --- |
+| Hearing major and minor chords | `ear-chord-quality` | `aqa-candidate` | |
+| Hearing diminished and augmented chords, 7th chords | `ear-chord-quality` | `aqa-candidate` | |
+| Hearing intervals (up, down, together) | `ear-interval` | `aqa-candidate` | |
+| Hearing cadences | `ear-cadence` | `aqa-candidate` | |
+| Hearing inversions | `ear-inversion` | `aqa-candidate` | |
+
 ## Vocabulary
 
 All eight categories are `aqa-candidate`: tempo, dynamics, articulation and playing techniques, ornaments, texture,
