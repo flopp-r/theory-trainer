@@ -3,6 +3,7 @@ import { type WorkedExample, workedToText } from '../../content/library/types'
 import { StaffStack } from '../staff/StaffStack'
 import { InlineText } from './InlineText'
 import { ListenButton } from './ListenButton'
+import { Icon } from '../Icon'
 
 /** One complete piece of working: question, numbered steps, answer, and a way to copy it. */
 export function WorkedExampleView({ example }: { example: WorkedExample }) {
@@ -43,7 +44,8 @@ export function WorkedExampleView({ example }: { example: WorkedExample }) {
       </p>
       <div className="worked-actions">
         <button type="button" className="btn small" onClick={() => void copy()}>
-          {copied === 'yes' ? 'Copied ✓' : 'Copy this working'}
+          {copied === 'yes' && <Icon name="check" size={18} />}
+          {copied === 'yes' ? 'Copied' : 'Copy this working'}
         </button>
         {copied === 'failed' && <span className="hint">Your browser would not copy. Open the plain text below and copy it by hand.</span>}
       </div>

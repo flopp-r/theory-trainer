@@ -45,7 +45,7 @@ export function BlockView({ block }: { block: Block }) {
     case 'note':
       return (
         <aside className={`lib-note ${block.kind}`}>
-          <strong>{NOTE_TITLES[block.kind]}: </strong>
+          <strong className="note-label">{NOTE_TITLES[block.kind]}: </strong>
           <InlineText text={block.text} />
         </aside>
       )

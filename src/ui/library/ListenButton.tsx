@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAudioEngine } from '../../audio'
 import type { ListenItem } from '../../content/library/types'
+import { Icon } from '../Icon'
 
 /** A button that plays a short sound. Playing another one (or leaving the page) stops it. */
 export function ListenButton({ item }: { item: ListenItem }) {
@@ -26,7 +27,8 @@ export function ListenButton({ item }: { item: ListenItem }) {
   if (!getAudioEngine().available) return null
   return (
     <button type="button" className="btn listen" onClick={() => void play()} disabled={playing}>
-      {playing ? 'Playing…' : `▶ ${item.label}`}
+      {!playing && <Icon name="play" size={18} />}
+      {playing ? 'Playing…' : item.label}
     </button>
   )
 }

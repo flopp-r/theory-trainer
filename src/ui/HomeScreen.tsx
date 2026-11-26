@@ -53,8 +53,9 @@ export function HomeScreen() {
       <a className="btn wide" href={last ? `#/practice?${last}` : '#/practice'}>
         {last ? 'Change what to practise' : 'Choose what to practise'}
       </a>
-      <a className="btn wide" href="#/library">
-        Library: lessons and worked examples
+      <a className="btn wide stack" href="#/library">
+        <span>Library</span>
+        <span className="sub">Lessons and worked examples</span>
       </a>
       {!last && (
         <p className="hint-centre">

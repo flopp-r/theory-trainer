@@ -5,6 +5,7 @@ import { setSoundEnabled, useSoundEnabled } from '../../progress/settings'
 import { DIFFICULTY_LABELS, type Difficulty, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
 import { PRESETS, type PracticeConfig, TOPICS_USING_CLEFS, TOPIC_GROUPS, describeSetup, practiceConfigToQuery, presetFor } from './practiceConfig'
+import { Icon } from '../Icon'
 
 const CLEF_TITLES: Record<ClefName, string> = { treble: 'Treble', bass: 'Bass', alto: 'Alto', tenor: 'Tenor' }
 const LEDGER_OPTIONS = [
@@ -65,7 +66,7 @@ export function PracticeSetup({ initial, customise }: { initial: PracticeConfig;
     <main className="screen top has-start">
       <header className="bar">
         <a className="back" href="#/" aria-label="Back to home">
-          ←
+          <Icon name="arrow-left" size={22} />
         </a>
         <h1 className="bar-title">Practice</h1>
       </header>

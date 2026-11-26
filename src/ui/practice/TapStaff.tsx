@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Question } from '../../questions/types'
 import { pitchAtPosition } from '../../theory'
 import { StaffView } from '../staff/StaffView'
+import { Icon } from '../Icon'
 
 // Drawn on the paper-coloured staff card, so these are dark enough to read on it.
 const GOOD = '#0f766e'
@@ -67,10 +68,10 @@ export function TapStaff({
       {!answered && (
         <div className="tap-controls">
           <button type="button" className="btn" onClick={() => move(1)} aria-label="Move the note up one step">
-            ▲
+            <Icon name="chevron-up" size={24} />
           </button>
           <button type="button" className="btn" onClick={() => move(-1)} aria-label="Move the note down one step">
-            ▼
+            <Icon name="chevron-down" size={24} />
           </button>
           <button type="button" className="btn primary" disabled={selected === null} onClick={() => selected !== null && onSubmit(selected)}>
             Check

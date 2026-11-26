@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { type AudioSpec, getAudioEngine } from '../../audio'
 import { setSoundEnabled, useSoundEnabled } from '../../progress/settings'
+import { Icon } from '../Icon'
 
 type Status = 'idle' | 'playing' | 'unavailable'
 
@@ -86,11 +87,7 @@ export function EarPlayer({ spec, onFirstFinished }: { spec: AudioSpec; onFirstF
           void play()
         }}
       >
-        {showIcon && (
-          <svg className="play-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />
-          </svg>
-        )}
+        {showIcon && <Icon name="play" className="play-icon" />}
         {label}
       </button>
     </div>
@@ -111,27 +108,8 @@ export function SoundSwitch() {
         setSoundEnabled(!soundOn)
       }}
     >
-      <SpeakerIcon on={soundOn} />
+      <Icon name={soundOn ? 'speaker-on' : 'speaker-off'} size={22} />
     </button>
   )
 }
 
-/** A drawn speaker: sound waves when on, a cross when off. Uses the text colour. */
-function SpeakerIcon({ on }: { on: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" />
-      {on ? (
-        <>
-          <path d="M15.5 9a4 4 0 0 1 0 6" />
-          <path d="M18 6.5a7.5 7.5 0 0 1 0 11" />
-        </>
-      ) : (
-        <>
-          <path d="M16 9.5l5 5" />
-          <path d="M21 9.5l-5 5" />
-        </>
-      )}
-    </svg>
-  )
-}
