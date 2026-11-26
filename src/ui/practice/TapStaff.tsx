@@ -3,8 +3,9 @@ import type { Question } from '../../questions/types'
 import { pitchAtPosition } from '../../theory'
 import { StaffView } from '../staff/StaffView'
 
-const GOOD = '#5eead4'
-const BAD = '#ff8a80'
+// Drawn on the paper-coloured staff card, so these are dark enough to read on it.
+const GOOD = '#0f766e'
+const BAD = '#b42318'
 
 /**
  * Tap the staff to place a note, nudge it with the arrows, then press Check.
@@ -56,7 +57,8 @@ export function TapStaff({
         staff={staff}
         ledgerLines={input.ledgerLines}
         scale={2.4}
-        minItems={1}
+        // Room for two notes from the start, so the staff does not shrink when the answer is drawn beside the guess.
+        minItems={2}
         onDrawn={onDrawn}
         onTap={answered ? undefined : setSelected}
         tapRange={range}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type AnswerResult, summariseSession } from './sessionSummary'
+import { type AnswerResult, compareWithPrevious, summariseSession, verdict, weakestArea } from './sessionSummary'
 
 const r = (itemId: string, category: string, correct: boolean, ms = 1000): AnswerResult => ({
   itemId,
@@ -61,5 +61,47 @@ describe('summariseSession', () => {
     expect(s.byCategory.reduce((n, c) => n + c.total, 0)).toBe(s.total)
     expect(s.byCategory.reduce((n, c) => n + c.correct, 0)).toBe(s.correct)
     expect(s.missed.reduce((n, m) => n + m.misses, 0)).toBe(s.total - s.correct)
+  })
+})
+
+describe('weakestArea, verdict and compareWithPrevious', () => {
+  const answer = (topic: string, correct: boolean, type = `${topic}-type`) => ({ itemId: `${type}${correct}${Math.random()}`, itemLabel: topic, category: topic, correct, ms: 1000, topic, type })
+
+  it('picks the question type with the most misses', () => {
+    const results = [answer('notes', false, 'note-name'), answer('notes', false, 'place-note'), answer('notes', false, 'place-note'), answer('keys', true, 'relative-key')]
+    expect(weakestArea(results)).toEqual({ type: 'place-note', topic: 'notes', missed: 2, total: 2 })
+  })
+
+  it('breaks a tie by the lower share right, then by the first missed', () => {
+    const byShare = [answer('notes', false, 'note-name'), answer('notes', true, 'note-name'), answer('keys', false, 'relative-key')]
+    expect(weakestArea(byShare)?.type).toBe('relative-key')
+    const byOrder = [answer('keys', false, 'relative-key'), answer('notes', false, 'note-name')]
+    expect(weakestArea(byOrder)?.type).toBe('relative-key')
+  })
+
+  it('is null when nothing was missed, or the answers have no type', () => {
+    expect(weakestArea([answer('notes', true)])).toBeNull()
+    expect(weakestArea([{ itemId: 'a', itemLabel: 'a', category: 'a', correct: false, ms: 1 }])).toBeNull()
+  })
+
+  const summaryOf = (correct: number, total: number) =>
+    summariseSession(Array.from({ length: total }, (_, i) => answer('notes', i < correct)))
+
+  it('gives a verdict by accuracy, and none for a very short round', () => {
+    expect(verdict(summaryOf(10, 10))).toBe('Strong round.')
+    expect(verdict(summaryOf(7, 10))).toBe('Good round.')
+    expect(verdict(summaryOf(5, 10))).toBe('Getting there.')
+    expect(verdict(summaryOf(2, 10))).toMatch(/hard round/)
+    expect(verdict(summaryOf(1, 2))).toBe('Short round.')
+    expect(verdict(summariseSession([]))).toBe('')
+  })
+
+  it('compares with the last round only when both are long enough to mean something', () => {
+    expect(compareWithPrevious(summaryOf(8, 10), { total: 10, correct: 5 })).toBe('Up from 5 / 10 last time.')
+    expect(compareWithPrevious(summaryOf(4, 10), { total: 10, correct: 8 })).toBe('Down from 8 / 10 last time.')
+    expect(compareWithPrevious(summaryOf(7, 10), { total: 10, correct: 7 })).toBe('About the same as last time (7 / 10).')
+    expect(compareWithPrevious(summaryOf(8, 10), null)).toBeNull()
+    expect(compareWithPrevious(summaryOf(8, 10), { total: 2, correct: 1 })).toBeNull()
+    expect(compareWithPrevious(summaryOf(1, 2), { total: 10, correct: 5 })).toBeNull()
   })
 })

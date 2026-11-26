@@ -5,9 +5,18 @@ import { setSoundEnabled, useSoundEnabled } from '../../progress/settings'
 type Status = 'idle' | 'playing' | 'unavailable'
 
 /**
- * The Play button for a listening question. It tries to play once when the question appears
- * (browsers only allow that after you have tapped something in the app, which you have by now).
- * If sound is off, tapping the button turns it on and plays.
+ * Browsers only let a page start sound after the person has tapped or clicked something on it.
+ * Opening a listening question straight from a link or a reload has had no tap yet, so it waits for Play.
+ * Where the browser cannot say, it tries anyway (the old behaviour).
+ */
+function mayStartSound(): boolean {
+  const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+  return activation ? activation.hasBeenActive : true
+}
+
+/**
+ * The Play button for a listening question. It plays once by itself when the question appears,
+ * if the browser allows that yet (see mayStartSound). If sound is off, tapping the button turns it on and plays.
  */
 export function EarPlayer({ spec, onFirstFinished }: { spec: AudioSpec; onFirstFinished: () => void }) {
   const soundOn = useSoundEnabled()
@@ -47,8 +56,8 @@ export function EarPlayer({ spec, onFirstFinished }: { spec: AudioSpec; onFirstF
   // Try to play as soon as the question appears; stop when it goes away.
   useEffect(() => {
     alive.current = true
-    if (getAudioEngine().available && soundOn) void play()
-    else if (!getAudioEngine().available) void play()
+    if (!getAudioEngine().available) void play()
+    else if (soundOn && mayStartSound()) void play()
     return () => {
       alive.current = false
       getAudioEngine().stop()
@@ -64,7 +73,8 @@ export function EarPlayer({ spec, onFirstFinished }: { spec: AudioSpec; onFirstF
     )
   }
 
-  const label = status === 'playing' ? 'Playing…' : !soundOn ? 'Sound is off. Tap to turn it on and play' : played ? '▶ Play again' : '▶ Play'
+  const label = status === 'playing' ? 'Playing…' : !soundOn ? 'Sound is off. Tap to turn it on and play' : played ? 'Play again' : 'Play'
+  const showIcon = status !== 'playing' && soundOn
   return (
     <div className="ear-player">
       <button
@@ -76,6 +86,11 @@ export function EarPlayer({ spec, onFirstFinished }: { spec: AudioSpec; onFirstF
           void play()
         }}
       >
+        {showIcon && (
+          <svg className="play-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />
+          </svg>
+        )}
         {label}
       </button>
     </div>
@@ -96,7 +111,27 @@ export function SoundSwitch() {
         setSoundEnabled(!soundOn)
       }}
     >
-      {soundOn ? '🔊' : '🔇'}
+      <SpeakerIcon on={soundOn} />
     </button>
+  )
+}
+
+/** A drawn speaker: sound waves when on, a cross when off. Uses the text colour. */
+function SpeakerIcon({ on }: { on: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" />
+      {on ? (
+        <>
+          <path d="M15.5 9a4 4 0 0 1 0 6" />
+          <path d="M18 6.5a7.5 7.5 0 0 1 0 11" />
+        </>
+      ) : (
+        <>
+          <path d="M16 9.5l5 5" />
+          <path d="M21 9.5l-5 5" />
+        </>
+      )}
+    </svg>
   )
 }

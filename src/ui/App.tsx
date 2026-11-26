@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react'
+import { getLastSetup } from '../progress/history'
 import { HomeScreen } from './HomeScreen'
 import { PracticeSession } from './practice/PracticeSession'
 import { PracticeSetup } from './practice/PracticeSetup'
@@ -25,8 +26,18 @@ export function App() {
   switch (path) {
     case '/':
       return <HomeScreen />
-    case '/practice':
-      return <PracticeSetup key={query.toString()} initial={parsePracticeConfig(query)} />
+    case '/practice': {
+      // Opening setup with no choices in the address starts from what the learner last used.
+      const remembered = query.toString() === '' ? getLastSetup() : null
+      return (
+        <PracticeSetup
+          key={query.toString()}
+          initial={parsePracticeConfig(remembered ? new URLSearchParams(remembered) : query)}
+          // Arriving with a setup in the address means "change this", so the controls start open.
+          customise={query.toString() !== ''}
+        />
+      )
+    }
     case '/practice/play':
       return <PracticeSession key={query.toString()} config={parsePracticeConfig(query)} />
     case '/library':
@@ -45,10 +56,11 @@ export function App() {
       }
       return (
         <main className="screen">
-          <h1>Not found</h1>
-          <p className="lede">
-            <a href="#/">Back to start</a>
-          </p>
+          <h1>Page not found</h1>
+          <p className="lede">That link does not lead anywhere in the app. It may be mistyped or out of date.</p>
+          <a className="btn primary wide" href="#/">
+            Go to the home screen
+          </a>
         </main>
       )
   }

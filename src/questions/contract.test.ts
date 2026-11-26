@@ -180,4 +180,19 @@ describe('generateQuestion (mixing topics)', () => {
   it('refuses an empty topic list', () => {
     expect(() => generateQuestion(context(1, ['treble'], 1), [])).toThrow(RangeError)
   })
+
+  it('asks only the chosen question types when types are given', () => {
+    const rng = createRng(3)
+    for (let i = 0; i < 100; i++) {
+      const q = generateQuestion({ rng, clefs: ['treble'], difficulty: 2, maxLedgerLines: 1 }, ['notes', 'keys'], ['place-note', 'relative-key'])
+      expect(['place-note', 'relative-key']).toContain(q.type)
+    }
+    // An empty list means every type.
+    const q = generateQuestion({ rng, clefs: ['treble'], difficulty: 2, maxLedgerLines: 1 }, ['notes'], [])
+    expect(q.topic).toBe('notes')
+  })
+
+  it('refuses types that do not belong to the chosen topics', () => {
+    expect(() => generateQuestion(context(1, ['treble'], 1), ['notes'], ['relative-key'])).toThrow(RangeError)
+  })
 })
