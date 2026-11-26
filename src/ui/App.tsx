@@ -56,9 +56,10 @@ export function App() {
       }
       return (
         <main className="screen">
-          <h1>Not found</h1>
-          <a className="btn wide" href="#/">
-            Back to start
+          <h1>Page not found</h1>
+          <p className="lede">That link does not lead anywhere in the app. It may be mistyped or out of date.</p>
+          <a className="btn primary wide" href="#/">
+            Go to the home screen
           </a>
         </main>
       )

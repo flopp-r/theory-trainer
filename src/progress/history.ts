@@ -1,3 +1,5 @@
+import type { AnswerResult } from './sessionSummary'
+
 /**
  * What the app remembers between visits: the last practice setup and a short list of finished rounds.
  * Stored on this device only, in this browser. Clearing site data removes it.
@@ -100,4 +102,59 @@ export function recordSession(record: SessionRecord): void {
 /** For tests: forget what was read so the next call reads storage again. */
 export function resetHistoryCache(): void {
   cache = null
+}
+
+/** The most recent finished round, or null. */
+export function lastSession(): SessionRecord | null {
+  const sessions = read().sessions
+  return sessions.length > 0 ? sessions[sessions.length - 1]! : null
+}
+
+// ---- A round in progress, so a reload or a closed tab does not lose it ----
+
+const ROUND_KEY = 'theory-trainer:round'
+/** An unfinished round older than this is not offered again. */
+export const ROUND_MAX_AGE_MS = 12 * 60 * 60 * 1000
+
+export interface RoundInProgress {
+  readonly setup: string
+  readonly savedAt: number
+  readonly results: readonly AnswerResult[]
+}
+
+function isAnswer(value: unknown): value is AnswerResult {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  return typeof v.itemId === 'string' && typeof v.itemLabel === 'string' && typeof v.category === 'string' && typeof v.correct === 'boolean' && typeof v.ms === 'number'
+}
+
+/** The unfinished round, if there is a recent one. With `setup`, only a round on that setup. */
+export function loadRound(setup?: string, now = Date.now()): RoundInProgress | null {
+  try {
+    const text = localStorage.getItem(ROUND_KEY)
+    if (!text) return null
+    const v = JSON.parse(text) as Partial<RoundInProgress> & { version?: unknown }
+    if (v.version !== 1 || typeof v.setup !== 'string' || typeof v.savedAt !== 'number' || !Array.isArray(v.results)) return null
+    if (now - v.savedAt > ROUND_MAX_AGE_MS || v.results.length === 0 || !v.results.every(isAnswer)) return null
+    if (setup !== undefined && v.setup !== setup) return null
+    return { setup: v.setup, savedAt: v.savedAt, results: v.results }
+  } catch {
+    return null
+  }
+}
+
+export function saveRound(setup: string, results: readonly AnswerResult[], now = Date.now()): void {
+  try {
+    localStorage.setItem(ROUND_KEY, JSON.stringify({ version: 1, setup, savedAt: now, results }))
+  } catch {
+    // storage blocked: the round still works, it just cannot be resumed
+  }
+}
+
+export function clearRound(): void {
+  try {
+    localStorage.removeItem(ROUND_KEY)
+  } catch {
+    // nothing to clear
+  }
 }

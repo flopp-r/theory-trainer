@@ -13,9 +13,10 @@ export default function LessonScreen({ id }: { id: string }) {
     return (
       <main className="screen">
         <h1>Lesson not found</h1>
-        <p className="lede">
-          <a href="#/library">Back to the Library</a>
-        </p>
+        <p className="lede">That lesson is not in the Library. The link may be mistyped or out of date.</p>
+        <a className="btn primary wide" href="#/library">
+          Go to the Library
+        </a>
       </main>
     )
   }

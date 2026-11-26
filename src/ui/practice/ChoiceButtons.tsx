@@ -25,9 +25,17 @@ export function ChoiceButtons({
           <button key={choice.id} type="button" className={`choice ${state}`} disabled={answered} onClick={() => onChoose(choice.id)}>
             {layout !== 'letters' && <span className="choice-number">{index + 1}</span>}
             <span className="choice-label">{choice.label}</span>
+            {/* The colours say which is right; this says it to screen readers too. */}
+            {state === 'right' && <span className="sr-only">{choice.id === chosen ? ' (your answer, correct)' : ' (the correct answer)'}</span>}
+            {state === 'wrong' && <span className="sr-only"> (your answer, wrong)</span>}
           </button>
         )
       })}
+      {!answered && (
+        <p className="key-hint">
+          Keyboard: press {layout === 'letters' ? 'A to G' : `1 to ${choices.length}`} to answer, then Enter for the next question.
+        </p>
+      )}
     </div>
   )
 }

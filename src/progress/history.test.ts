@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
-import { MAX_SESSIONS, getLastSetup, previousSession, recordSession, rememberSetup, resetHistoryCache } from './history'
+import { MAX_SESSIONS, ROUND_MAX_AGE_MS, clearRound, getLastSetup, lastSession, loadRound, previousSession, recordSession, rememberSetup, resetHistoryCache, saveRound } from './history'
 
 const KEY = 'theory-trainer:history'
 const rec = (over: Partial<{ at: number; setup: string; total: number; correct: number }> = {}) => ({
@@ -70,5 +70,39 @@ describe('history', () => {
     resetHistoryCache()
     expect(getLastSetup()).toBe('a')
     expect(previousSession('topics=notes')).toEqual(rec({ at: 9 }))
+  })
+})
+
+describe('lastSession', () => {
+  it('is the most recent round of any setup', () => {
+    expect(lastSession()).toBeNull()
+    recordSession(rec({ at: 1 }))
+    recordSession(rec({ at: 2, setup: 'topics=keys' }))
+    expect(lastSession()?.setup).toBe('topics=keys')
+  })
+})
+
+describe('a round in progress', () => {
+  const answer = { itemId: 'a', itemLabel: 'A', category: 'Notes', correct: true, ms: 900, topic: 'notes', type: 'note-name' }
+
+  it('is kept and given back for the same setup', () => {
+    saveRound('topics=notes', [answer, { ...answer, correct: false }], 1000)
+    expect(loadRound('topics=notes', 2000)?.results).toHaveLength(2)
+    expect(loadRound(undefined, 2000)?.setup).toBe('topics=notes')
+  })
+
+  it('is not given back for another setup, when too old, or after clearing', () => {
+    saveRound('topics=notes', [answer], 1000)
+    expect(loadRound('topics=keys', 2000)).toBeNull()
+    expect(loadRound('topics=notes', 1000 + ROUND_MAX_AGE_MS + 1)).toBeNull()
+    clearRound()
+    expect(loadRound()).toBeNull()
+  })
+
+  it('ignores damaged data', () => {
+    for (const bad of ['not json', '{"version":2}', '{"version":1,"setup":"x","savedAt":1,"results":[{"nope":1}]}', '{"version":1,"setup":"x","savedAt":1,"results":[]}']) {
+      localStorage.setItem('theory-trainer:round', bad)
+      expect(loadRound(undefined, 2)).toBeNull()
+    }
   })
 })

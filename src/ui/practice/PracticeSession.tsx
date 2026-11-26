@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { lessonForQuestionType } from '../../content/library'
-import { type SessionRecord, previousSession, recordSession } from '../../progress/history'
+import { type SessionRecord, clearRound, loadRound, previousSession, recordSession, saveRound } from '../../progress/history'
 import { type AnswerResult } from '../../progress/sessionSummary'
 import { type Question, type QuestionContext, createRng, generateQuestion, randomSeed } from '../../questions'
 import { StaffStack } from '../staff/StaffStack'
@@ -33,7 +33,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   })
   const [question, setQuestion] = useState<Question>(start.first)
   const [chosen, setChosen] = useState<string | null>(null)
-  const [results, setResults] = useState<AnswerResult[]>([])
+  // A round left unfinished on this same setup (reload, closed tab) carries on where it stopped.
+  const [results, setResults] = useState<AnswerResult[]>(() => [...(loadRound(practiceConfigToQuery(config))?.results ?? [])])
   const [finished, setFinished] = useState(false)
   const [previous, setPrevious] = useState<SessionRecord | null>(null)
   const [confirmLeave, setConfirmLeave] = useState(false)
@@ -79,8 +80,14 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   const setupQuery = practiceConfigToQuery(config)
   const roundDone = results.length >= ROUND_LENGTH
 
+  // Keep the unfinished round so it can be resumed. A full round is not saved again: it only waits for "See results".
+  useEffect(() => {
+    if (!finished && results.length > 0 && results.length < ROUND_LENGTH) saveRound(setupQuery, results)
+  }, [finished, results, setupQuery])
+
   /** Saves the round, so the next one can be compared with it, and shows the summary. */
   const finishRound = useCallback(() => {
+    clearRound()
     setPrevious(previousSession(setupQuery))
     recordSession({ at: Date.now(), setup: setupQuery, total: results.length, correct: correctCount })
     setFinished(true)
