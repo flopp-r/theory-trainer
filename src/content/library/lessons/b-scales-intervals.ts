@@ -288,7 +288,7 @@ const KEY_SIGNATURES: LibraryLesson = {
       'A **sharp** (♯) raises a note by a semitone and a **flat** (♭) lowers it by a semitone. A **semitone** is the step from one piano key to the very next.',
       'The **major scale** goes tone, tone, semitone, tone, tone, tone, semitone. Building major scales is in the Major scales lesson.',
       'Each major key has a **relative minor**: the minor key with the same notes, which starts on the 6th note of the major scale, 3 semitones below. For example C major and A minor. The Minor scales lesson explains this.',
-      'A key signature applies in **every octave**: a F♯ in the signature makes every F on the staff a F♯, high or low.',
+      'A key signature applies in **every octave**: an F♯ in the signature makes every F on the staff an F♯, high or low.',
     ),
 
     h('The facts'),
