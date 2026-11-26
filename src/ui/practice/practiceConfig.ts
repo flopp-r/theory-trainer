@@ -20,6 +20,19 @@ export const DEFAULT_PRACTICE_CONFIG: PracticeConfig = {
   vocabCategories: [],
 }
 
+/** One-tap starting points on the setup screen. */
+export const PRESETS: readonly { readonly id: string; readonly label: string; readonly config: PracticeConfig }[] = [
+  { id: 'notes', label: 'Treble and bass notes', config: DEFAULT_PRACTICE_CONFIG },
+  {
+    id: 'mixed',
+    label: 'Mixed revision',
+    // Everything except ear training, which needs sound and headphones.
+    config: { ...DEFAULT_PRACTICE_CONFIG, topics: TOPICS.map((t) => t.id).filter((t) => t !== 'ear') },
+  },
+  { id: 'ear', label: 'Ear training', config: { ...DEFAULT_PRACTICE_CONFIG, topics: ['ear'] } },
+  { id: 'alto-tenor', label: 'Alto and tenor clefs', config: { ...DEFAULT_PRACTICE_CONFIG, clefs: ['alto', 'tenor'] } },
+]
+
 /** Questions in one round. */
 export const ROUND_LENGTH = 10
 

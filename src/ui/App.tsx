@@ -29,7 +29,14 @@ export function App() {
     case '/practice': {
       // Opening setup with no choices in the address starts from what the learner last used.
       const remembered = query.toString() === '' ? getLastSetup() : null
-      return <PracticeSetup key={query.toString()} initial={parsePracticeConfig(remembered ? new URLSearchParams(remembered) : query)} />
+      return (
+        <PracticeSetup
+          key={query.toString()}
+          initial={parsePracticeConfig(remembered ? new URLSearchParams(remembered) : query)}
+          // Arriving with a setup in the address means "change this", so the controls start open.
+          customise={query.toString() !== ''}
+        />
+      )
     }
     case '/practice/play':
       return <PracticeSession key={query.toString()} config={parsePracticeConfig(query)} />
@@ -50,9 +57,9 @@ export function App() {
       return (
         <main className="screen">
           <h1>Not found</h1>
-          <p className="lede">
-            <a href="#/">Back to start</a>
-          </p>
+          <a className="btn wide" href="#/">
+            Back to start
+          </a>
         </main>
       )
   }

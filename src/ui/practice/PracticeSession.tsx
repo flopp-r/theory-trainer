@@ -37,6 +37,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   const [finished, setFinished] = useState(false)
   const [previous, setPrevious] = useState<SessionRecord | null>(null)
   const [confirmLeave, setConfirmLeave] = useState(false)
+  // True once the staff for this question has been drawn. Listening questions can be answered at any time.
+  const [drawn, setDrawn] = useState(false)
   const [lessonOpen, setLessonOpen] = useState(false)
   // Each question gets brand-new staves, so they are always drawn and the old ones never linger.
   const [questionNumber, setQuestionNumber] = useState(0)
@@ -63,10 +65,12 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
 
   const markShown = useCallback(() => {
     if (shownAt.current === null) shownAt.current = performance.now()
+    setDrawn(true)
   }, [])
 
   const next = useCallback(() => {
     shownAt.current = null // restarted when the new question has been drawn
+    setDrawn(false)
     setQuestion((q) => generateQuestion(start.context(q.id), config.topics))
     setChosen(null)
     setQuestionNumber((n) => n + 1)
@@ -196,7 +200,14 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
           )}
           {question.audio && <EarPlayer key={questionNumber} spec={question.audio} onFirstFinished={markShown} />}
           {!question.notation && !question.audio && <NoStaff onShown={markShown} key={questionNumber} />}
-          <ChoiceButtons choices={input.choices} layout={input.layout} correct={question.correct} chosen={chosen} onChoose={choose} />
+          <ChoiceButtons
+            choices={input.choices}
+            layout={input.layout}
+            correct={question.correct}
+            chosen={chosen}
+            waiting={!drawn && !question.audio}
+            onChoose={choose}
+          />
         </>
       )}
 
@@ -207,7 +218,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
             <p>{question.explanation}</p>
             {lesson && (
               <button type="button" className="btn small lesson-link" onClick={() => setLessonOpen(true)}>
-                Read the lesson: {lesson.title}
+                Read the lesson &ldquo;{lesson.title}&rdquo;
               </button>
             )}
             {question.reveal && (

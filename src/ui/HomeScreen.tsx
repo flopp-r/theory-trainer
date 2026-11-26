@@ -20,7 +20,7 @@ export function HomeScreen() {
         <span>{last ? 'Continue practising' : `Try ${ROUND_LENGTH} questions`}</span>
         <span className="sub">{describeSetup(config)}</span>
       </a>
-      <a className="btn wide" href="#/practice">
+      <a className="btn wide" href={last ? `#/practice?${last}` : '#/practice'}>
         {last ? 'Change what to practise' : 'Choose what to practise'}
       </a>
       <a className="btn wide" href="#/library">

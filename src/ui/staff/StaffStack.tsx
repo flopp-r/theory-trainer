@@ -28,7 +28,7 @@ export function StaffStack({
           staff={staff}
           // Several staves share one screen, so each is sized to what it needs and drawn a little smaller.
           ledgerLines={total > 1 ? neededLedgerLines(staff) : Math.max(ledgerLines ?? 1, neededLedgerLines(staff))}
-          scale={total > 1 ? 1.2 : scroll ? 1.5 : undefined}
+          scale={total > 1 ? 1.2 : scroll ? 1.5 : 3.2}
           scroll={scroll}
           label={total > 1 ? `Staff ${index + 1} of ${total}, ${staff.clef} clef` : undefined}
           onDrawn={() => {

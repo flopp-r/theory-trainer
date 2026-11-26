@@ -5,17 +5,20 @@ export function ChoiceButtons({
   layout,
   correct,
   chosen,
+  waiting = false,
   onChoose,
 }: {
   choices: readonly Choice[]
   layout: ChoiceLayout
   correct: string
   chosen: string | null
+  /** True while the picture is still being drawn: taps are ignored, and the buttons show it after a moment. */
+  waiting?: boolean
   onChoose: (id: string) => void
 }) {
   const answered = chosen !== null
   return (
-    <div className={`choices ${layout}`} role="group" aria-label="Answers">
+    <div className={`choices ${layout}${waiting ? ' waiting' : ''}`} role="group" aria-label="Answers" aria-busy={waiting}>
       {choices.map((choice, index) => {
         const state = !answered ? '' : choice.id === correct ? 'right' : choice.id === chosen ? 'wrong' : 'dim'
         return (

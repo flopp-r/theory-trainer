@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRACTICE_CONFIG, type PracticeConfig, describeSetup, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
+import { DEFAULT_PRACTICE_CONFIG, PRESETS, type PracticeConfig, describeSetup, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
 
 const parse = (text: string) => parsePracticeConfig(new URLSearchParams(text))
 
@@ -47,6 +47,22 @@ describe('parsePracticeConfig', () => {
       { topics: ['chords', 'cadences'], clefs: ['alto', 'tenor'], maxLedgerLines: 2, difficulty: 2, vocabCategories: [] },
     ]
     for (const config of configs) expect(parse(practiceConfigToQuery(config))).toEqual(config)
+  })
+})
+
+describe('PRESETS', () => {
+  it('are all valid setups that survive the page address unchanged', () => {
+    expect(PRESETS.length).toBeGreaterThanOrEqual(3)
+    for (const preset of PRESETS) {
+      expect(parse(practiceConfigToQuery(preset.config))).toEqual(preset.config)
+      expect(preset.config.topics.length).toBeGreaterThan(0)
+      expect(preset.config.clefs.length).toBeGreaterThan(0)
+    }
+    expect(new Set(PRESETS.map((p) => p.id)).size).toBe(PRESETS.length)
+  })
+
+  it('keep ear training out of mixed revision, because it needs sound', () => {
+    expect(PRESETS.find((p) => p.id === 'mixed')?.config.topics).not.toContain('ear')
   })
 })
 
