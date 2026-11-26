@@ -3,6 +3,7 @@ import { type AnswerResult } from '../../progress/sessionSummary'
 import { type Question, type QuestionContext, createRng, generateQuestion, randomSeed } from '../../questions'
 import { StaffStack } from '../staff/StaffStack'
 import { ChoiceButtons } from './ChoiceButtons'
+import { EarPlayer, SoundSwitch } from './EarPlayer'
 import { type PracticeConfig, practiceConfigToQuery } from './practiceConfig'
 import { SessionSummaryView } from './SessionSummaryView'
 import { TapStaff } from './TapStaff'
@@ -40,8 +41,9 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
 
   const choose = useCallback(
     (id: string) => {
-      if (chosen !== null || shownAt.current === null) return
-      const ms = Math.round(performance.now() - shownAt.current)
+      // Staff questions wait until the staff is drawn. Listening questions can be answered at any time.
+      if (chosen !== null || (shownAt.current === null && !question.audio)) return
+      const ms = shownAt.current === null ? 0 : Math.round(performance.now() - shownAt.current)
       setChosen(id)
       setResults((r) => [
         ...r,
@@ -104,6 +106,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
         <p className="score" aria-live="off">
           {results.length} answered · {correctCount} correct
         </p>
+        {config.topics.includes('ear') && <SoundSwitch />}
         <button className="btn small" type="button" onClick={() => (results.length > 0 ? setFinished(true) : (window.location.hash = '#/practice'))}>
           Finish
         </button>
@@ -125,7 +128,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
           {question.notation && (
             <StaffStack key={questionNumber} notation={question.notation} ledgerLines={config.maxLedgerLines} onDrawn={markShown} />
           )}
-          {!question.notation && <NoStaff onShown={markShown} key={questionNumber} />}
+          {question.audio && <EarPlayer key={questionNumber} spec={question.audio} onFirstFinished={markShown} />}
+          {!question.notation && !question.audio && <NoStaff onShown={markShown} key={questionNumber} />}
           <ChoiceButtons choices={input.choices} layout={input.layout} correct={question.correct} chosen={chosen} onChoose={choose} />
         </>
       )}
@@ -135,6 +139,12 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
             <strong>{correct ? '✓ Correct' : `✗ Not quite. ${question.answerText}`}</strong>
             <p>{question.explanation}</p>
+            {question.reveal && (
+              <div className="reveal">
+                <p className="reveal-title">What you heard, written down:</p>
+                <StaffStack notation={question.reveal} ledgerLines={1} />
+              </div>
+            )}
           </div>
         )}
       </div>

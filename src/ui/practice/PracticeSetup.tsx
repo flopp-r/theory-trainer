@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { VOCABULARY } from '../../content/vocabulary'
 import { DIFFICULTY_LABELS, type Difficulty, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
+import { setSoundEnabled, useSoundEnabled } from '../../progress/settings'
 import { type PracticeConfig, TOPICS_USING_CLEFS, practiceConfigToQuery } from './practiceConfig'
 
 const CLEF_TITLES: Record<ClefName, string> = { treble: 'Treble', bass: 'Bass', alto: 'Alto', tenor: 'Tenor' }
@@ -42,6 +43,7 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
     setVocab((current) => (current.includes(category) ? current.filter((c) => c !== category) : VOCABULARY.map((v) => v.category).filter((c) => c === category || current.includes(c))))
   }
 
+  const soundOn = useSoundEnabled()
   const allSelected = topics.length === ALL_TOPICS.length
   const showClefs = topics.some((t) => TOPICS_USING_CLEFS.includes(t))
   const showLedger = topics.includes('notes')
@@ -114,6 +116,21 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
               <p className="hint">Ledger lines are the short extra lines used for notes above or below the staff.</p>
             </fieldset>
           )}
+        </section>
+      )}
+
+      {topics.includes('ear') && (
+        <section className="panel">
+          <fieldset>
+            <legend>Ear training</legend>
+            <div className="chips">
+              <label className="chip">
+                <input type="checkbox" checked={soundOn} onChange={() => setSoundEnabled(!soundOn)} />
+                <span>Sound on</span>
+              </label>
+            </div>
+            <p className="hint">Turn your volume up. Headphones help. You can replay each sound as often as you like.</p>
+          </fieldset>
         </section>
       )}
 

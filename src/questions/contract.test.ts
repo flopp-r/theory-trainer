@@ -59,7 +59,31 @@ describe('every question type follows the rules', () => {
       }
       expect(q.tags.length, label).toBeGreaterThan(0)
       for (const tag of q.tags) expect(['aqa-candidate', 'extra']).toContain(tag)
-      expect(q.audio, label).toBeNull()
+      if (q.topic === 'ear') {
+        expect(q.audio, label).not.toBeNull()
+        expect(q.notation, label).toBeNull()
+        expect(q.reveal, label).toBeDefined()
+        const events = q.audio!.events
+        expect(events.length, label).toBeGreaterThan(0)
+        let end = 0
+        for (const e of events) {
+          expect(e.midi.length, label).toBeGreaterThan(0)
+          expect(e.duration, label).toBeGreaterThan(0)
+          expect(e.start, label).toBeGreaterThanOrEqual(0)
+          for (const m of e.midi) {
+            expect(Number.isInteger(m), label).toBe(true)
+            expect(m, label).toBeGreaterThanOrEqual(36)
+            expect(m, label).toBeLessThanOrEqual(90)
+          }
+          end = Math.max(end, e.start + e.duration)
+        }
+        // Long enough to hear, short enough not to be tedious.
+        expect(end, label).toBeGreaterThan(1.5)
+        expect(end, label).toBeLessThan(9)
+      } else {
+        expect(q.audio, label).toBeNull()
+        expect(q.reveal, label).toBeUndefined()
+      }
     }
   })
 
@@ -92,7 +116,7 @@ describe('every question type follows the rules', () => {
 
   it('what is drawn can be drawn: accidentals are writable, key signatures standard, notes within ledger limits', () => {
     for (const { q, clefs, ledger, label } of allQuestions()) {
-      for (const staff of q.notation?.staves ?? []) {
+      for (const staff of [...(q.notation?.staves ?? []), ...(q.reveal?.staves ?? [])]) {
         if (staff.key) expect(() => keySignature(staff.key!), label).not.toThrow()
         const groups = staff.items.map((i) => (i.kind === 'notes' ? i.pitches : []))
         expect(() => accidentalsToShow(groups, staff.key ?? null), label).not.toThrow()
@@ -109,7 +133,7 @@ describe('every question type follows the rules', () => {
       }
       // Questions only use the clefs the learner chose (comparing clefs may bring in one more).
       if (q.type !== 'clef-compare') {
-        for (const staff of q.notation?.staves ?? []) expect(clefs, label).toContain(staff.clef)
+        for (const staff of [...(q.notation?.staves ?? []), ...(q.reveal?.staves ?? [])]) expect(clefs, label).toContain(staff.clef)
       }
     }
   })

@@ -18,7 +18,7 @@ import { keyLabel, keysForDifficulty, notesLabel } from './pitchTools'
 import type { Question, QuestionContext, QuestionGenerator } from './types'
 
 /** Plain-words definition of each cadence, as used in this app (see docs/theory-engine.md). */
-const DEFINITION: Record<CadenceType, string> = {
+export const DEFINITION: Record<CadenceType, string> = {
   perfect: 'A perfect cadence is chord V (or V7) followed by chord I.',
   imperfect: 'An imperfect cadence ends on chord V, usually after I, ii or IV.',
   plagal: 'A plagal cadence is chord IV followed by chord I.',
@@ -26,13 +26,13 @@ const DEFINITION: Record<CadenceType, string> = {
 }
 
 /** Keys used for cadences at each level: major keys first, minor keys from level 2. */
-function cadenceKey(ctx: QuestionContext): Key {
+export function cadenceKey(ctx: QuestionContext): Key {
   const mode = ctx.difficulty === 1 ? 'major' : ctx.rng.pick(['major', 'minor'] as const)
   return ctx.rng.pick(keysForDifficulty(mode, ctx.difficulty))
 }
 
 /** Level 3 also uses the V7 versions; earlier levels use the plain ones. */
-function pickVariant(ctx: QuestionContext, type: CadenceType, key: Key): number {
+export function pickVariant(ctx: QuestionContext, type: CadenceType, key: Key): number {
   const count = cadenceOptions(key, type).length
   return ctx.difficulty === 3 ? ctx.rng.int(0, count - 1) : 0
 }

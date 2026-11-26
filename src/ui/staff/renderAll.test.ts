@@ -20,7 +20,7 @@ describe('every question can be drawn', () => {
         for (const clefs of clefSets) {
           for (let seed = 0; seed < 4; seed++) {
             const q = g.generate({ rng: createRng(seed * 101 + level), clefs, difficulty: level, maxLedgerLines: 2 })
-            for (const staff of q.notation?.staves ?? []) {
+            for (const staff of [...(q.notation?.staves ?? []), ...(q.reveal?.staves ?? [])]) {
               const container = document.createElement('div')
               const geometry = drawStaff(container, staff, { color: '#fff', ledgerLines: Math.max(2, neededLedgerLines(staff)) })
               expect(container.querySelector('svg'), `${q.id}`).not.toBeNull()
