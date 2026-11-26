@@ -19,12 +19,12 @@ npm run build    # production build into dist/
 | --- | --- |
 | `src/theory/` | Pure TypeScript music theory, no UI |
 | `src/questions/` | One generator per question type |
-| `src/audio/` | `AudioEngine` interface and implementations |
 | `src/progress/` | Stats, spaced repetition, storage |
 | `src/ui/` | Screens and components (staff drawing uses VexFlow) |
-| `src/content/` | Vocabulary as editable JSON (path units and intro cards later) |
+| `src/content/` | Vocabulary as editable JSON, and the Library lessons (`library/`) |
 | `src/platform/` | Platform services (notifications) |
-| `docs/` | Notes: `theory-engine.md`, `questions.md`, `aqa-coverage.md`, `vocabulary-review.md`, `key-signature-layouts.md`, `backlog.md` |
+| `src/audio/` | `AudioEngine` interface and the Web Audio synth |
+| `docs/` | Notes: `library.md` (how to write lessons), `theory-engine.md`, `questions.md`, `aqa-coverage.md`, `vocabulary-review.md`, `key-signature-layouts.md`, `backlog.md` |
 
 ## Deployment
 
