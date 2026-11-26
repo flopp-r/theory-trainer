@@ -77,11 +77,11 @@ export function majorScaleExample(tonic: NoteName, clef: ClefName = 'treble'): W
         text: `Check the last step: from ${noteLabel(last)} back up to ${noteLabel(tonic)} is ${backToTonic} semitone${backToTonic === 1 ? '' : 's'}, which is the semitone the pattern ends with.`,
       },
       {
-        text: `Write it out: **${notesLabel(notes)} ${noteLabel(tonic)}**. Here it is on the staff, with the sound.`,
+        text: `Write it out: **${notesLabel(notes)}** (the last note is the key note again, one octave higher). Here it is on the staff, with the sound.`,
         staff: notesOnStaff(clef, scale),
         listen: listenMelody(`Hear the ${name} major scale`, scale),
       },
     ],
-    answer: `The ${name} major scale is ${notesLabel(notes)} ${noteLabel(tonic)}. (Key: ${keyLabel({ tonic, mode: 'major' })}.)`,
+    answer: `The ${name} major scale is ${notesLabel(notes)}. (Key: ${keyLabel({ tonic, mode: 'major' })}.)`,
   }
 }

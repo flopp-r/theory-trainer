@@ -17,6 +17,8 @@ export interface DrawOptions {
   scale?: number
   /** Leave room for at least this many items, even if fewer are drawn. */
   minItems?: number
+  /** Keep the picture at full size instead of shrinking it to fit the screen (the page scrolls sideways instead). */
+  noShrink?: boolean
 }
 
 /** VexFlow's name for a key: "D", "Bb", "F#m". */
@@ -40,7 +42,7 @@ function addDots(note: StaveNote, dots: number | undefined): void {
  * Accidentals are worked out from the key signature (see `accidentalsToShow`), not left to VexFlow.
  */
 export function drawStaff(container: HTMLElement, spec: StaffSpec, options: DrawOptions): StaffGeometry {
-  const { color, ledgerLines = 3, scale = 1.75, minItems = 1 } = options
+  const { color, ledgerLines = 3, scale = 1.75, minItems = 1, noShrink = false } = options
   container.replaceChildren()
 
   const stave = new Stave(SIDE, STAVE_Y, 600)
@@ -83,7 +85,8 @@ export function drawStaff(container: HTMLElement, spec: StaffSpec, options: Draw
   if (svg) {
     svg.removeAttribute('height')
     svg.setAttribute('width', '100%')
-    svg.style.width = `min(100%, ${Math.round(width * scale)}px)`
+    svg.style.width = noShrink ? `${Math.round(width * scale)}px` : `min(100%, ${Math.round(width * scale)}px)`
+    if (noShrink) svg.style.maxWidth = 'none'
     svg.style.height = 'auto'
   }
 

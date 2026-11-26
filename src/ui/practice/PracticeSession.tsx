@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
+import { lessonForQuestionType } from '../../content/library'
 import { type AnswerResult } from '../../progress/sessionSummary'
 import { type Question, type QuestionContext, createRng, generateQuestion, randomSeed } from '../../questions'
 import { StaffStack } from '../staff/StaffStack'
@@ -7,6 +8,8 @@ import { EarPlayer, SoundSwitch } from './EarPlayer'
 import { type PracticeConfig, practiceConfigToQuery } from './practiceConfig'
 import { SessionSummaryView } from './SessionSummaryView'
 import { TapStaff } from './TapStaff'
+
+const LessonSheet = lazy(() => import('../library/LessonSheet'))
 
 /** Restarting swaps the key, which gives a fresh random sequence. */
 export function PracticeSession({ config }: { config: PracticeConfig }) {
@@ -31,6 +34,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   const [chosen, setChosen] = useState<string | null>(null)
   const [results, setResults] = useState<AnswerResult[]>([])
   const [finished, setFinished] = useState(false)
+  const [lessonOpen, setLessonOpen] = useState(false)
   // Each question gets brand-new staves, so they are always drawn and the old ones never linger.
   const [questionNumber, setQuestionNumber] = useState(0)
   const shownAt = useRef<number | null>(null)
@@ -96,6 +100,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
 
   const correct = chosen === question.correct
   const input = question.input
+  const lesson = lessonForQuestionType(question.type)
 
   return (
     <main className="screen top session">
@@ -139,6 +144,11 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
             <strong>{correct ? '✓ Correct' : `✗ Not quite. ${question.answerText}`}</strong>
             <p>{question.explanation}</p>
+            {lesson && (
+              <button type="button" className="btn small lesson-link" onClick={() => setLessonOpen(true)}>
+                Read the lesson: {lesson.title}
+              </button>
+            )}
             {question.reveal && (
               <div className="reveal">
                 <p className="reveal-title">What you heard, written down:</p>
@@ -152,6 +162,11 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       <button ref={nextButton} type="button" className="btn primary wide" disabled={!answered} onClick={next}>
         Next
       </button>
+      {lessonOpen && lesson && (
+        <Suspense fallback={null}>
+          <LessonSheet id={lesson.id} onClose={() => setLessonOpen(false)} />
+        </Suspense>
+      )}
     </main>
   )
 }

@@ -50,7 +50,8 @@ describe('majorScaleExample', () => {
   it('builds all 15 major scales exactly as the hand-written table says', () => {
     for (const [tonic, expected] of Object.entries(MAJOR_SCALES)) {
       const e = majorScaleExample(parseNote(tonic))
-      expect(ascii(e.answer), tonic).toContain(`${expected} ${tonic}`)
+      // seven notes and then the key note again, with nothing doubled
+      expect(ascii(e.answer), tonic).toBe(`The ${tonic} major scale is ${expected} ${tonic}. (Key: ${tonic} major.)`)
     }
   })
 
