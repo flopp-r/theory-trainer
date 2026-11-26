@@ -132,6 +132,7 @@ export function romanNumeralExample(key: Key, chord: Chord, clef: ClefName = 'tr
   const pitches = chordPicture(chord, clef)
   const kName = keyLabel(key)
   const symbol = handChordSymbol(chord, 0)
+  const words = chordWords(chord)
   const ordinalWord = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][a.degree - 1]!
   const { lower, suffix } = numeralSuffix(chord.quality)
   const caseText =
@@ -150,8 +151,8 @@ export function romanNumeralExample(key: Key, chord: Chord, clef: ClefName = 'tr
       ? `Check: every note of the chord, ${notesLabel(notes)}, appears in the scale of ${kName}. Chords made from a key's own notes are the ones numerals are for. ✓`
       : `Check: ${notesLabel(notes.filter((n) => !a.outside.some((o) => sameNote(o, n))))} are all in the scale. The one other note, ${noteLabel(a.outside[0]!)}, is the raised 7th, which minor keys borrow on purpose to make this chord. ✓`
   return {
-    title: `Find the Roman numeral of ${symbol} in ${kName}`,
-    task: `The key is ${kName}. What is the Roman numeral of the chord ${symbol}?`,
+    title: `Find the Roman numeral of ${words} in ${kName}`,
+    task: `The key is ${kName}. What is the Roman numeral of the chord ${words} (symbol ${symbol})?`,
     steps: [
       {
         text: `Name the chord. It is in root position, so the lowest note is the root. The notes are **${notesLabel(notes)}**. ${quickName(counts, chord.root, chord.quality, notes)}`,
@@ -168,7 +169,7 @@ export function romanNumeralExample(key: Key, chord: Chord, clef: ClefName = 'tr
       },
       { text: checkText },
     ],
-    answer: `In ${kName}, ${symbol} is ${a.numeral}.`,
+    answer: `In ${kName}, ${words} (${symbol}) is ${a.numeral}.`,
   }
 }
 

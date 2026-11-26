@@ -219,7 +219,7 @@ export function sharedPictures(chords: readonly Chord[], clef: ClefName): Pitch[
 /** Chords played one after another, each held for `hold` seconds. */
 export function chordSequenceAudio(chords: readonly (readonly Pitch[])[], gap = 1.5, hold = 1.4): AudioSpec {
   return {
-    events: chords.map((c, i) => ({ midi: [...c].sort((a, b) => midiNumber(a) - midiNumber(b)).map(midiNumber), start: i * gap, duration: hold })),
+    events: chords.map((c, i) => ({ midi: [...c].sort((a, b) => midiNumber(a) - midiNumber(b)).map(midiNumber), start: Math.round(i * gap * 100) / 100, duration: hold })),
   }
 }
 

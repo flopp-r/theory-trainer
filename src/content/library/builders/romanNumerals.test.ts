@@ -91,6 +91,8 @@ const KEYS: Record<string, Row[]> = {
   ],
 }
 
+const WORDS = { major: 'major', minor: 'minor', diminished: 'diminished', dominant7: 'dominant 7th' }
+
 describe('scaleByCounting', () => {
   it('builds major scales and natural minor scales as the hand-written tables say', () => {
     for (const [tonic, scale] of Object.entries(MAJOR_SCALES)) {
@@ -109,7 +111,7 @@ describe('romanNumeralExample', () => {
       const key = parseKey(keyName)
       for (const row of rows) {
         const e = romanNumeralExample(key, chord(row.root, row.quality))
-        expect(ascii(e.answer), `${keyName} ${row.numeral}`).toBe(`In ${keyName}, ${row.symbol} is ${row.numeral}.`)
+        expect(ascii(e.answer), `${keyName} ${row.numeral}`).toBe(`In ${keyName}, ${row.root} ${WORDS[row.quality]} (${row.symbol}) is ${row.numeral}.`)
         expect(ascii(e.steps[0]!.text), `${keyName} ${row.numeral}`).toContain(`**${row.notes}**`)
       }
     }
