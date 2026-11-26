@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { type Question, createRng, generateNoteNameQuestion, randomSeed } from '../../questions'
 import { type AnswerResult } from '../../progress/sessionSummary'
-import { StaffView } from '../staff/StaffView'
+import { type Question, type QuestionContext, createRng, generateQuestion, randomSeed } from '../../questions'
+import { StaffStack } from '../staff/StaffStack'
+import { ChoiceButtons } from './ChoiceButtons'
 import { type PracticeConfig, practiceConfigToQuery } from './practiceConfig'
 import { SessionSummaryView } from './SessionSummaryView'
+import { TapStaff } from './TapStaff'
 
 /** Restarting swaps the key, which gives a fresh random sequence. */
 export function PracticeSession({ config }: { config: PracticeConfig }) {
@@ -14,13 +16,21 @@ export function PracticeSession({ config }: { config: PracticeConfig }) {
 function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart: () => void }) {
   const [start] = useState(() => {
     const rng = createRng(randomSeed())
-    return { rng, first: generateNoteNameQuestion(rng, config) }
+    const context = (avoidItemId?: string): QuestionContext => ({
+      rng,
+      clefs: config.clefs,
+      difficulty: config.difficulty,
+      maxLedgerLines: config.maxLedgerLines,
+      vocabCategories: config.vocabCategories,
+      avoidItemId,
+    })
+    return { context, first: generateQuestion(context(), config.topics) }
   })
   const [question, setQuestion] = useState<Question>(start.first)
   const [chosen, setChosen] = useState<string | null>(null)
   const [results, setResults] = useState<AnswerResult[]>([])
   const [finished, setFinished] = useState(false)
-  // Each question gets a brand-new staff, so it is always drawn and the old one never lingers.
+  // Each question gets brand-new staves, so they are always drawn and the old ones never linger.
   const [questionNumber, setQuestionNumber] = useState(0)
   const shownAt = useRef<number | null>(null)
   const nextButton = useRef<HTMLButtonElement>(null)
@@ -41,38 +51,49 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
     [chosen, question],
   )
 
+  const markShown = useCallback(() => {
+    if (shownAt.current === null) shownAt.current = performance.now()
+  }, [])
+
   const next = useCallback(() => {
-    shownAt.current = null // restarted when the new staff has been drawn
-    setQuestion((q) => generateNoteNameQuestion(start.rng, { ...config, avoidItemId: q.id }))
+    shownAt.current = null // restarted when the new question has been drawn
+    setQuestion((q) => generateQuestion(start.context(q.id), config.topics))
     setChosen(null)
     setQuestionNumber((n) => n + 1)
-  }, [config, start.rng])
+  }, [config.topics, start])
 
   // After answering, move focus to "Next" so Enter carries on.
   useEffect(() => {
     if (answered) nextButton.current?.focus()
   }, [answered])
 
-  // Keyboard: A-G to answer, Enter to continue.
+  // Keyboard: A-G (note-name questions) or 1-9 (other multiple choice) to answer.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.ctrlKey || event.metaKey || event.altKey) return
+      if (event.ctrlKey || event.metaKey || event.altKey || answered || question.input.kind !== 'multiple-choice') return
+      const { choices, layout } = question.input
       const key = event.key.toUpperCase()
-      if (!answered && /^[A-G]$/.test(key)) {
+      if (layout === 'letters' && /^[A-G]$/.test(key)) {
         event.preventDefault()
         choose(key)
+      } else if (layout !== 'letters' && /^[1-9]$/.test(key)) {
+        const choice = choices[Number(key) - 1]
+        if (choice) {
+          event.preventDefault()
+          choose(choice.id)
+        }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [answered, choose])
+  }, [answered, choose, question])
 
   if (finished) {
     return <SessionSummaryView results={results} setupQuery={practiceConfigToQuery(config)} onAgain={onRestart} />
   }
 
-  const notation = question.notation
   const correct = chosen === question.correct
+  const input = question.input
 
   return (
     <main className="screen top session">
@@ -91,33 +112,28 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       <p className="category">{question.category}</p>
       <h1 className="prompt">{question.prompt}</h1>
 
-      {notation && (
-        <StaffView
+      {input.kind === 'tap-staff' ? (
+        <TapStaff
           key={questionNumber}
-          clef={notation.clef}
-          notes={notation.notes}
-          ledgerLines={config.maxLedgerLines}
-          onDrawn={() => {
-            if (shownAt.current === null) shownAt.current = performance.now()
-          }}
+          question={question}
+          onSubmit={(position) => choose(String(position))}
+          onDrawn={markShown}
+          submitted={chosen === null ? null : Number(chosen)}
         />
+      ) : (
+        <>
+          {question.notation && (
+            <StaffStack key={questionNumber} notation={question.notation} ledgerLines={config.maxLedgerLines} onDrawn={markShown} />
+          )}
+          {!question.notation && <NoStaff onShown={markShown} key={questionNumber} />}
+          <ChoiceButtons choices={input.choices} layout={input.layout} correct={question.correct} chosen={chosen} onChoose={choose} />
+        </>
       )}
-
-      <div className="choices" role="group" aria-label="Choose the note name">
-        {question.input.choices.map((choice) => {
-          const state = !answered ? '' : choice.id === question.correct ? 'right' : choice.id === chosen ? 'wrong' : 'dim'
-          return (
-            <button key={choice.id} type="button" className={`choice ${state}`} disabled={answered} onClick={() => choose(choice.id)}>
-              {choice.label}
-            </button>
-          )
-        })}
-      </div>
 
       <div className="feedback-area" role="status" aria-live="polite">
         {answered && (
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
-            <strong>{correct ? '✓ Correct' : `✗ Not quite. It is ${question.correct}.`}</strong>
+            <strong>{correct ? '✓ Correct' : `✗ Not quite. ${question.answerText}`}</strong>
             <p>{question.explanation}</p>
           </div>
         )}
@@ -128,4 +144,10 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       </button>
     </main>
   )
+}
+
+/** Questions without a staff (such as vocabulary) are ready as soon as they appear. */
+function NoStaff({ onShown }: { onShown: () => void }) {
+  useEffect(onShown, [onShown])
+  return null
 }

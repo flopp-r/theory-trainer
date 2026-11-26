@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { CLEF_NAMES, type ClefName, formatPitch, staffPlacement, staffPosition } from '../theory'
 import { explainNoteName, generateNoteNameQuestion, noteNameItemId } from './noteName'
 import { createRng } from './rng'
+import { choicesOf, singleNote } from './testing'
 
 /**
  * An independent way to name a note on the staff: start from the line every clef is built
@@ -35,18 +36,16 @@ describe('generateNoteNameQuestion', () => {
 
   it('the correct answer always matches an independent count from the clef anchor', () => {
     for (const q of many(3000, 1, { clefs: CLEF_NAMES, maxLedgerLines: 3 })) {
-      const notation = q.notation
-      expect(notation).not.toBeNull()
-      const pitch = notation!.notes[0]!
-      const position = staffPosition(pitch, notation!.clef)
-      expect(q.correct, q.id).toBe(answerByCounting(notation!.clef, position))
+      const { clef, pitch } = singleNote(q)
+      const position = staffPosition(pitch, clef)
+      expect(q.correct, q.id).toBe(answerByCounting(clef, position))
       expect(q.correct).toBe(pitch.letter)
     }
   })
 
   it('the correct answer is always one of the choices, with seven distinct choices A to G', () => {
     for (const q of many(500, 2, { clefs: CLEF_NAMES, maxLedgerLines: 3 })) {
-      const ids = q.input.choices.map((c) => c.id)
+      const ids = choicesOf(q).map((c) => c.id)
       expect(ids).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G'])
       expect(ids).toContain(q.correct)
       expect(q.input.kind).toBe('multiple-choice')
@@ -55,15 +54,14 @@ describe('generateNoteNameQuestion', () => {
 
   it('every question shows one natural note in a single clef', () => {
     for (const q of many(500, 3, { clefs: ['alto'], maxLedgerLines: 2 })) {
-      expect(q.notation?.clef).toBe('alto')
-      expect(q.notation?.notes).toHaveLength(1)
-      expect(q.notation?.notes[0]?.accidental).toBe(0)
+      expect(singleNote(q).clef).toBe('alto')
+      expect(singleNote(q).pitch.accidental).toBe(0)
     }
   })
 
   it('only uses the chosen clefs, and uses all of them', () => {
     const questions = many(600, 4, { clefs: ['bass', 'tenor'], maxLedgerLines: 1 })
-    const used = new Set(questions.map((q) => q.notation?.clef))
+    const used = new Set(questions.map((q) => singleNote(q).clef))
     expect(used).toEqual(new Set(['bass', 'tenor']))
   })
 
@@ -71,8 +69,8 @@ describe('generateNoteNameQuestion', () => {
     for (const limit of [0, 1, 2, 3]) {
       const seen = new Set<number>()
       for (const q of many(2000, 5 + limit, { clefs: CLEF_NAMES, maxLedgerLines: limit })) {
-        const pitch = q.notation!.notes[0]!
-        const placement = staffPlacement(pitch, q.notation!.clef)
+        const { clef, pitch } = singleNote(q)
+        const placement = staffPlacement(pitch, clef)
         expect(placement.ledgerLines).toBeLessThanOrEqual(limit)
         seen.add(placement.ledgerLines)
       }
@@ -83,7 +81,8 @@ describe('generateNoteNameQuestion', () => {
 
   it('with no ledger lines, only staff lines/spaces and the spaces just outside are used', () => {
     for (const q of many(1000, 9, { clefs: CLEF_NAMES, maxLedgerLines: 0 })) {
-      const position = staffPosition(q.notation!.notes[0]!, q.notation!.clef)
+      const { clef, pitch } = singleNote(q)
+      const position = staffPosition(pitch, clef)
       expect(position).toBeGreaterThanOrEqual(-1)
       expect(position).toBeLessThanOrEqual(9)
     }
@@ -97,10 +96,12 @@ describe('generateNoteNameQuestion', () => {
 
   it('item ids are stable and name the clef and pitch', () => {
     const q = many(1, 12, { clefs: ['alto'], maxLedgerLines: 0 })[0]!
-    const pitch = q.notation!.notes[0]!
+    const { pitch } = singleNote(q)
     expect(q.id).toBe(`note-name:alto:${formatPitch(pitch)}`)
     expect(q.id).toBe(noteNameItemId('alto', pitch))
     expect(q.type).toBe('note-name')
+    expect(q.topic).toBe('notes')
+    expect(q.answerText).toBe(`It is ${q.correct}.`)
     expect(q.itemLabel).toBe(`${formatPitch(pitch)} in alto clef`)
     expect(q.category).toBe('Alto clef')
   })
@@ -118,7 +119,7 @@ describe('generateNoteNameQuestion', () => {
   it('tags treble and bass as candidates for AQA coverage and alto and tenor as extras', () => {
     const questions = many(800, 14, { clefs: CLEF_NAMES, maxLedgerLines: 1 })
     for (const q of questions) {
-      const clef = q.notation!.clef
+      const { clef } = singleNote(q)
       expect(q.tags).toEqual(clef === 'treble' || clef === 'bass' ? ['aqa-candidate'] : ['extra'])
     }
   })

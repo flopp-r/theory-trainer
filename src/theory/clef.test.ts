@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CLEF_NAMES,
   type ClefName,
+  describeStaffPosition,
   lineNotes,
   naturalPitchesInClef,
   pitchAtPosition,
@@ -177,5 +178,37 @@ describe('instruments', () => {
     expect(isInRange(parsePitch('A5'), VIOLA_RANGE)).toBe(true)
     expect(isInRange(parsePitch('A#5'), VIOLA_RANGE)).toBe(false)
     expect(isInRange(parsePitch('Cb3'), VIOLA_RANGE)).toBe(false) // sounds as B2
+  })
+})
+
+describe('describeStaffPosition', () => {
+  it.each([
+    [0, 'the bottom line'],
+    [1, 'the bottom space'],
+    [2, 'the 2nd line'],
+    [3, 'the 2nd space'],
+    [4, 'the middle line'],
+    [5, 'the 3rd space'],
+    [6, 'the 4th line'],
+    [7, 'the top space'],
+    [8, 'the top line'],
+    [-1, 'the space below the bottom line'],
+    [-2, 'the 1st ledger line below the staff'],
+    [-3, 'the space below the 1st ledger line'],
+    [-4, 'the 2nd ledger line below the staff'],
+    [-5, 'the space below the 2nd ledger line'],
+    [-6, 'the 3rd ledger line below the staff'],
+    [9, 'the space above the top line'],
+    [10, 'the 1st ledger line above the staff'],
+    [11, 'the space above the 1st ledger line'],
+    [12, 'the 2nd ledger line above the staff'],
+    [14, 'the 3rd ledger line above the staff'],
+  ])('position %i is %s', (position, expected) => {
+    expect(describeStaffPosition(position)).toBe(expected)
+  })
+
+  it('every position from -9 to 17 has a different description', () => {
+    const all = Array.from({ length: 27 }, (_, i) => describeStaffPosition(i - 9))
+    expect(new Set(all).size).toBe(all.length)
   })
 })

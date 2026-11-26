@@ -13,7 +13,7 @@ import {
 } from '../theory'
 import { at } from '../theory/util'
 import type { Rng } from './rng'
-import type { Question } from './types'
+import type { Question, QuestionGenerator } from './types'
 
 export interface NoteNameOptions {
   /** Clefs to draw from. Must not be empty. */
@@ -49,17 +49,22 @@ export function explainNoteName(clef: ClefName, pitch: Pitch): string {
   return `${start} Count ${count} ${count === 1 ? 'step' : 'steps'} ${direction} (every line and every space is a step): ${names.join(', ')}. The note is ${answer}.`
 }
 
+/** The note every clef is built around, and a sentence saying so. */
+export function clefAnchor(clef: ClefName): { letter: Letter; position: number; description: string } {
+  return ANCHORS[clef]
+}
+
+/** Treble and bass are candidates for the AQA list; alto and tenor are extras. */
+export function clefTags(clef: ClefName): readonly string[] {
+  return clef === 'treble' || clef === 'bass' ? ['aqa-candidate'] : ['extra']
+}
+
 /** Choices are the seven letter names, A to G. */
 const CHOICES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((letter) => ({ id: letter, label: letter }))
 
 /** "note-name:alto:C4" - the same note in the same clef is always the same item. */
 export function noteNameItemId(clef: ClefName, pitch: Pitch): string {
   return `note-name:${clef}:${formatPitch(pitch)}`
-}
-
-/** Tags used for coverage lists. Treble and bass are candidates for the AQA list; alto and tenor are extras. */
-function tagsFor(clef: ClefName): readonly string[] {
-  return clef === 'treble' || clef === 'bass' ? ['aqa-candidate'] : ['extra']
 }
 
 /** "Which note is this?" for a natural note in one of the chosen clefs. */
@@ -90,14 +95,24 @@ export function generateNoteNameQuestion(rng: Rng, options: NoteNameOptions): Qu
   return {
     id: noteNameItemId(clef, pitch),
     type: 'note-name',
+    topic: 'notes',
     category: clefLabel(clef),
     itemLabel: `${formatPitch(pitch)} in ${clefLabel(clef).toLowerCase()}`,
-    tags: tagsFor(clef),
+    tags: clefTags(clef),
     prompt: 'Which note is this?',
-    notation: { clef, notes: [pitch] },
+    notation: { staves: [{ clef, items: [{ kind: 'notes', pitches: [pitch] }] }] },
     audio: null,
-    input: { kind: 'multiple-choice', choices: CHOICES },
+    input: { kind: 'multiple-choice', choices: CHOICES, layout: 'letters' },
     correct: pitch.letter,
+    answerText: `It is ${pitch.letter}.`,
     explanation: explainNoteName(clef, pitch),
   }
+}
+
+export const noteNameGenerator: QuestionGenerator = {
+  type: 'note-name',
+  topic: 'notes',
+  label: 'Note names',
+  generate: (ctx) =>
+    generateNoteNameQuestion(ctx.rng, { clefs: ctx.clefs, maxLedgerLines: ctx.maxLedgerLines, avoidItemId: ctx.avoidItemId }),
 }

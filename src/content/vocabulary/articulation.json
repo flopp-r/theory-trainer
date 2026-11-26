@@ -1,0 +1,86 @@
+{
+  "category": "articulation",
+  "label": "Articulation and playing techniques",
+  "askTerm": "What does “{term}” mean?",
+  "askMeaning": "Which term means “{meaning}”?",
+  "entries": [
+    {
+      "term": "staccato",
+      "meaning": "short and detached",
+      "level": 1,
+      "group": "short"
+    },
+    {
+      "term": "staccatissimo",
+      "meaning": "very short and detached",
+      "level": 3,
+      "group": "short"
+    },
+    {
+      "term": "legato",
+      "meaning": "smooth and connected",
+      "level": 1,
+      "group": "smooth"
+    },
+    {
+      "term": "slur",
+      "meaning": "a curved line over notes to be played smoothly",
+      "level": 2,
+      "group": "smooth"
+    },
+    {
+      "term": "accent",
+      "meaning": "play the note with extra emphasis",
+      "level": 1,
+      "group": "accent"
+    },
+    {
+      "term": "tenuto",
+      "meaning": "hold the note for its full length",
+      "level": 2,
+      "group": "tenuto"
+    },
+    {
+      "term": "marcato",
+      "meaning": "marked: strongly accented",
+      "level": 3,
+      "group": "marcato"
+    },
+    {
+      "term": "pizzicato (pizz.)",
+      "meaning": "plucked (on a string instrument)",
+      "level": 1,
+      "group": "pizz"
+    },
+    {
+      "term": "arco",
+      "meaning": "played with the bow",
+      "level": 2,
+      "group": "arco"
+    },
+    {
+      "term": "con sordino",
+      "meaning": "with a mute",
+      "level": 3,
+      "group": "mute"
+    },
+    {
+      "term": "tremolo",
+      "meaning": "very fast repetition of the same note",
+      "level": 3,
+      "group": "tremolo"
+    },
+    {
+      "term": "glissando",
+      "meaning": "a slide from one note to another",
+      "level": 2,
+      "group": "gliss"
+    },
+    {
+      "term": "vibrato",
+      "meaning": "a slight, fast wobble in the pitch of a note",
+      "level": 3,
+      "group": "vibrato"
+    }
+  ]
+}

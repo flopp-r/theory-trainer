@@ -358,3 +358,125 @@ legend {
 .btn.wide {
   width: 100%;
 }
+
+/* ---- Phase 3 additions ---- */
+.staff-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.staff-stack .staff {
+  width: 100%;
+}
+
+.staff {
+  width: 100%;
+  align-self: center;
+}
+
+.staff-drawing {
+  display: flex;
+  justify-content: center;
+}
+
+.staff.tappable {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tap-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tap-controls {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.tap-controls .btn {
+  flex: 0 0 4rem;
+  padding: 0;
+}
+
+.tap-controls .btn.primary {
+  flex: 1;
+}
+
+.choices.grid .choice {
+  flex: 0 0 calc(50% - 0.25rem);
+}
+
+.choices.list {
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+.choices.list .choice {
+  flex: none;
+  width: 100%;
+}
+
+.choices.grid .choice,
+.choices.list .choice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.05rem;
+  text-align: left;
+}
+
+.choice-number {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.choice-label {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border: 2px solid var(--muted);
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip-button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.staff-drawing svg {
+  display: block;
+  height: auto;
+}
+
+.feedback-area {
+  min-height: 5.5rem;
+}
