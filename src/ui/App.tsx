@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react'
+import { getLastSetup } from '../progress/history'
 import { HomeScreen } from './HomeScreen'
 import { PracticeSession } from './practice/PracticeSession'
 import { PracticeSetup } from './practice/PracticeSetup'
@@ -25,8 +26,11 @@ export function App() {
   switch (path) {
     case '/':
       return <HomeScreen />
-    case '/practice':
-      return <PracticeSetup key={query.toString()} initial={parsePracticeConfig(query)} />
+    case '/practice': {
+      // Opening setup with no choices in the address starts from what the learner last used.
+      const remembered = query.toString() === '' ? getLastSetup() : null
+      return <PracticeSetup key={query.toString()} initial={parsePracticeConfig(remembered ? new URLSearchParams(remembered) : query)} />
+    }
     case '/practice/play':
       return <PracticeSession key={query.toString()} config={parsePracticeConfig(query)} />
     case '/library':

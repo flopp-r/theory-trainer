@@ -53,31 +53,22 @@ a {
   color: var(--accent);
 }
 
-.status {
-  list-style: none;
-  margin: 0.5rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.status li {
-  background: var(--surface);
-  border-radius: 999px;
-  padding: 0.5rem 1rem;
-  color: var(--warn);
-}
-
-.status li[data-ok='true'] {
-  color: var(--accent);
-}
-
 .build {
   margin: 0;
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.hint-centre {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
 }
 
 /* ---- Layout ---- */
@@ -126,6 +117,38 @@ a {
   text-align: left;
 }
 
+/* ---- Round progress and leaving ---- */
+.progress {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.panel.confirm p {
+  margin: 0 0 0.75rem;
+}
+
+.panel.confirm .btn:not(.primary) {
+  background: var(--bg);
+}
+
+.confirm-actions,
+.pair {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.confirm-actions .btn,
+.pair .btn {
+  flex: 1;
+}
+
 /* ---- Buttons ---- */
 .btn {
   display: inline-flex;
@@ -153,6 +176,19 @@ a {
   min-height: 3rem;
   font-size: 1rem;
   width: auto;
+}
+
+.btn.stack {
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  text-align: center;
+}
+
+.btn .sub {
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .btn:disabled {

@@ -14,11 +14,14 @@ export interface PracticeConfig {
 
 export const DEFAULT_PRACTICE_CONFIG: PracticeConfig = {
   topics: ['notes'],
-  clefs: ['alto'],
+  clefs: ['treble', 'bass'],
   maxLedgerLines: 1,
   difficulty: 2,
   vocabCategories: [],
 }
+
+/** Questions in one round. */
+export const ROUND_LENGTH = 10
 
 /** Topics where the chosen clefs matter. */
 export const TOPICS_USING_CLEFS: readonly Topic[] = ['notes', 'rhythm', 'keys', 'intervals', 'chords', 'cadences', 'ear']
@@ -62,4 +65,21 @@ export function practiceConfigToQuery(config: PracticeConfig): string {
 
 export function difficultyLabel(level: Difficulty): string {
   return DIFFICULTY_LABELS[level]
+}
+
+function describeClefs(clefs: readonly ClefName[]): string {
+  const names = CLEF_NAMES.filter((c) => clefs.includes(c)).map((c) => c.toLowerCase())
+  if (names.length === CLEF_NAMES.length) return 'All clefs'
+  const text = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : (names[0] ?? '')
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)} clef${names.length > 1 ? 's' : ''}`
+}
+
+/** A short line for buttons, e.g. "Notes · Treble and bass clefs · Medium". */
+export function describeSetup(config: PracticeConfig): string {
+  const labels = ALL_TOPICS.filter((t) => config.topics.includes(t)).map((t) => TOPICS.find((x) => x.id === t)?.label ?? t)
+  const topics = labels.length === ALL_TOPICS.length ? 'All topics' : labels.length <= 3 ? labels.join(', ') : `${labels.length} topics`
+  const parts = [topics]
+  if (config.topics.some((t) => TOPICS_USING_CLEFS.includes(t))) parts.push(describeClefs(config.clefs))
+  parts.push(DIFFICULTY_LABELS[config.difficulty])
+  return parts.join(' · ')
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { VOCABULARY } from '../../content/vocabulary'
 import { DIFFICULTY_LABELS, type Difficulty, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
+import { rememberSetup } from '../../progress/history'
 import { setSoundEnabled, useSoundEnabled } from '../../progress/settings'
 import { type PracticeConfig, TOPICS_USING_CLEFS, practiceConfigToQuery } from './practiceConfig'
 
@@ -47,7 +48,7 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
   const allSelected = topics.length === ALL_TOPICS.length
   const showClefs = topics.some((t) => TOPICS_USING_CLEFS.includes(t))
   const showLedger = topics.includes('notes')
-  const start = `#/practice/play?${practiceConfigToQuery({ topics, clefs, maxLedgerLines: ledger, difficulty: level, vocabCategories: vocab })}`
+  const setup = practiceConfigToQuery({ topics, clefs, maxLedgerLines: ledger, difficulty: level, vocabCategories: vocab })
 
   return (
     <main className="screen top">
@@ -151,7 +152,7 @@ export function PracticeSetup({ initial }: { initial: PracticeConfig }) {
         </section>
       )}
 
-      <a className="btn primary wide" href={start}>
+      <a className="btn primary wide" href={`#/practice/play?${setup}`} onClick={() => rememberSetup(setup)}>
         Start
       </a>
     </main>

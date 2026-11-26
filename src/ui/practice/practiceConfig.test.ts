@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRACTICE_CONFIG, type PracticeConfig, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
+import { DEFAULT_PRACTICE_CONFIG, type PracticeConfig, describeSetup, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
 
 const parse = (text: string) => parsePracticeConfig(new URLSearchParams(text))
 
@@ -47,5 +47,20 @@ describe('parsePracticeConfig', () => {
       { topics: ['chords', 'cadences'], clefs: ['alto', 'tenor'], maxLedgerLines: 2, difficulty: 2, vocabCategories: [] },
     ]
     for (const config of configs) expect(parse(practiceConfigToQuery(config))).toEqual(config)
+  })
+})
+
+describe('defaults and describeSetup', () => {
+  it('starts a new learner on treble and bass clef', () => {
+    expect(DEFAULT_PRACTICE_CONFIG.clefs).toEqual(['treble', 'bass'])
+    expect(describeSetup(DEFAULT_PRACTICE_CONFIG)).toBe('Notes · Treble and bass clefs · Medium')
+  })
+
+  it('describes topics, clefs and level briefly', () => {
+    const base = DEFAULT_PRACTICE_CONFIG
+    expect(describeSetup({ ...base, topics: ['notes', 'keys'], clefs: ['alto'], difficulty: 3 })).toBe('Notes, Keys · Alto clef · Hard')
+    expect(describeSetup({ ...base, topics: ['notes', 'keys', 'scales', 'chords'], clefs: ['treble', 'bass', 'alto', 'tenor'] })).toBe('4 topics · All clefs · Medium')
+    expect(describeSetup({ ...base, topics: ['vocabulary'], difficulty: 1 })).toBe('Vocabulary · Easy')
+    expect(describeSetup({ ...base, clefs: ['treble', 'bass', 'alto'] })).toBe('Notes · Treble, bass and alto clefs · Medium')
   })
 })

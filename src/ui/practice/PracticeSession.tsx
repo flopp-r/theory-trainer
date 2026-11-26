@@ -1,11 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { lessonForQuestionType } from '../../content/library'
+import { type SessionRecord, previousSession, recordSession } from '../../progress/history'
 import { type AnswerResult } from '../../progress/sessionSummary'
 import { type Question, type QuestionContext, createRng, generateQuestion, randomSeed } from '../../questions'
 import { StaffStack } from '../staff/StaffStack'
 import { ChoiceButtons } from './ChoiceButtons'
 import { EarPlayer, SoundSwitch } from './EarPlayer'
-import { type PracticeConfig, practiceConfigToQuery } from './practiceConfig'
+import { type PracticeConfig, ROUND_LENGTH, practiceConfigToQuery } from './practiceConfig'
 import { SessionSummaryView } from './SessionSummaryView'
 import { TapStaff } from './TapStaff'
 
@@ -34,11 +35,14 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   const [chosen, setChosen] = useState<string | null>(null)
   const [results, setResults] = useState<AnswerResult[]>([])
   const [finished, setFinished] = useState(false)
+  const [previous, setPrevious] = useState<SessionRecord | null>(null)
+  const [confirmLeave, setConfirmLeave] = useState(false)
   const [lessonOpen, setLessonOpen] = useState(false)
   // Each question gets brand-new staves, so they are always drawn and the old ones never linger.
   const [questionNumber, setQuestionNumber] = useState(0)
   const shownAt = useRef<number | null>(null)
   const nextButton = useRef<HTMLButtonElement>(null)
+  const keepGoingButton = useRef<HTMLButtonElement>(null)
 
   const answered = chosen !== null
   const correctCount = results.filter((r) => r.correct).length
@@ -51,7 +55,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       setChosen(id)
       setResults((r) => [
         ...r,
-        { itemId: question.id, itemLabel: question.itemLabel, category: question.category, correct: id === question.correct, ms },
+        { itemId: question.id, itemLabel: question.itemLabel, category: question.category, correct: id === question.correct, ms, topic: question.topic },
       ])
     },
     [chosen, question],
@@ -68,6 +72,27 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
     setQuestionNumber((n) => n + 1)
   }, [config.topics, start])
 
+  const setupQuery = practiceConfigToQuery(config)
+  const roundDone = results.length >= ROUND_LENGTH
+
+  /** Saves the round, so the next one can be compared with it, and shows the summary. */
+  const finishRound = useCallback(() => {
+    setPrevious(previousSession(setupQuery))
+    recordSession({ at: Date.now(), setup: setupQuery, total: results.length, correct: correctCount })
+    setFinished(true)
+  }, [correctCount, results.length, setupQuery])
+
+  // Leaving with answers given asks first. Focus goes to the safe choice, and Escape means "keep going".
+  useEffect(() => {
+    if (!confirmLeave) return
+    keepGoingButton.current?.focus()
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setConfirmLeave(false)
+    }
+    window.addEventListener('keydown', onEscape)
+    return () => window.removeEventListener('keydown', onEscape)
+  }, [confirmLeave])
+
   // After answering, move focus to "Next" so Enter carries on.
   useEffect(() => {
     if (answered) nextButton.current?.focus()
@@ -76,7 +101,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   // Keyboard: A-G (note-name questions) or 1-9 (other multiple choice) to answer.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.ctrlKey || event.metaKey || event.altKey || answered || question.input.kind !== 'multiple-choice') return
+      if (event.ctrlKey || event.metaKey || event.altKey || answered || confirmLeave || question.input.kind !== 'multiple-choice') return
       const { choices, layout } = question.input
       const key = event.key.toUpperCase()
       if (layout === 'letters' && /^[A-G]$/.test(key)) {
@@ -92,10 +117,10 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [answered, choose, question])
+  }, [answered, choose, confirmLeave, question])
 
   if (finished) {
-    return <SessionSummaryView results={results} setupQuery={practiceConfigToQuery(config)} onAgain={onRestart} />
+    return <SessionSummaryView results={results} config={config} previous={previous} onAgain={onRestart} />
   }
 
   const correct = chosen === question.correct
@@ -105,17 +130,53 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   return (
     <main className="screen top session">
       <header className="bar">
-        <a className="back" href={`#/practice?${practiceConfigToQuery(config)}`} aria-label="Back to practice setup">
+        <a
+          className="back"
+          href={`#/practice?${setupQuery}`}
+          aria-label="Back to practice setup"
+          onClick={(event) => {
+            if (results.length > 0) {
+              event.preventDefault()
+              setConfirmLeave(true)
+            }
+          }}
+        >
           ←
         </a>
         <p className="score" aria-live="off">
-          {results.length} answered · {correctCount} correct
+          Question {Math.min(answered ? results.length : results.length + 1, ROUND_LENGTH)} of {ROUND_LENGTH}
         </p>
         {config.topics.includes('ear') && <SoundSwitch />}
-        <button className="btn small" type="button" onClick={() => (results.length > 0 ? setFinished(true) : (window.location.hash = '#/practice'))}>
-          Finish
+        <button className="btn small" type="button" onClick={() => (results.length > 0 ? finishRound() : (window.location.hash = `#/practice?${setupQuery}`))}>
+          End round
         </button>
       </header>
+      <div
+        className="progress"
+        role="progressbar"
+        aria-label="Round progress"
+        aria-valuemin={0}
+        aria-valuemax={ROUND_LENGTH}
+        aria-valuenow={Math.min(results.length, ROUND_LENGTH)}
+      >
+        <div className="progress-fill" style={{ width: `${(Math.min(results.length, ROUND_LENGTH) / ROUND_LENGTH) * 100}%` }} />
+      </div>
+
+      {confirmLeave && (
+        <section className="panel confirm" role="group" aria-label="Leave this round?">
+          <p>
+            <strong>Leave this round?</strong> Your {results.length} {results.length === 1 ? 'answer' : 'answers'} won&rsquo;t be saved.
+          </p>
+          <div className="confirm-actions">
+            <button ref={keepGoingButton} type="button" className="btn primary" onClick={() => setConfirmLeave(false)}>
+              Keep going
+            </button>
+            <a className="btn" href={`#/practice?${setupQuery}`}>
+              Leave round
+            </a>
+          </div>
+        </section>
+      )}
 
       <p className="category">{question.category}</p>
       <h1 className="prompt">{question.prompt}</h1>
@@ -159,8 +220,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
         )}
       </div>
 
-      <button ref={nextButton} type="button" className="btn primary wide" disabled={!answered} onClick={next}>
-        Next
+      <button ref={nextButton} type="button" className="btn primary wide" disabled={!answered} onClick={roundDone ? finishRound : next}>
+        {roundDone ? 'See results' : 'Next'}
       </button>
       {lessonOpen && lesson && (
         <Suspense fallback={null}>

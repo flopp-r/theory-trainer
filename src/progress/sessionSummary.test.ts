@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type AnswerResult, summariseSession } from './sessionSummary'
+import { type AnswerResult, compareWithPrevious, missedTopics, summariseSession, verdict } from './sessionSummary'
 
 const r = (itemId: string, category: string, correct: boolean, ms = 1000): AnswerResult => ({
   itemId,
@@ -61,5 +61,36 @@ describe('summariseSession', () => {
     expect(s.byCategory.reduce((n, c) => n + c.total, 0)).toBe(s.total)
     expect(s.byCategory.reduce((n, c) => n + c.correct, 0)).toBe(s.correct)
     expect(s.missed.reduce((n, m) => n + m.misses, 0)).toBe(s.total - s.correct)
+  })
+})
+
+describe('missedTopics, verdict and compareWithPrevious', () => {
+  const answer = (topic: string, correct: boolean) => ({ itemId: `${topic}${correct}`, itemLabel: topic, category: topic, correct, ms: 1000, topic })
+
+  it('lists topics with a wrong answer once each, in the order first missed', () => {
+    expect(missedTopics([answer('keys', false), answer('notes', true), answer('ear', false), answer('keys', false)])).toEqual(['keys', 'ear'])
+    expect(missedTopics([answer('notes', true)])).toEqual([])
+    expect(missedTopics([{ itemId: 'a', itemLabel: 'a', category: 'a', correct: false, ms: 1 }])).toEqual([])
+  })
+
+  const summaryOf = (correct: number, total: number) =>
+    summariseSession(Array.from({ length: total }, (_, i) => answer('notes', i < correct)))
+
+  it('gives a verdict by accuracy, and none for a very short round', () => {
+    expect(verdict(summaryOf(10, 10))).toBe('Strong round.')
+    expect(verdict(summaryOf(7, 10))).toBe('Good round.')
+    expect(verdict(summaryOf(5, 10))).toBe('Getting there.')
+    expect(verdict(summaryOf(2, 10))).toMatch(/hard one/)
+    expect(verdict(summaryOf(1, 2))).toBe('Short round.')
+    expect(verdict(summariseSession([]))).toBe('')
+  })
+
+  it('compares with the last round only when both are long enough to mean something', () => {
+    expect(compareWithPrevious(summaryOf(8, 10), { total: 10, correct: 5 })).toBe('Up from 5 / 10 last time.')
+    expect(compareWithPrevious(summaryOf(4, 10), { total: 10, correct: 8 })).toBe('Down from 8 / 10 last time.')
+    expect(compareWithPrevious(summaryOf(7, 10), { total: 10, correct: 7 })).toBe('About the same as last time (7 / 10).')
+    expect(compareWithPrevious(summaryOf(8, 10), null)).toBeNull()
+    expect(compareWithPrevious(summaryOf(8, 10), { total: 2, correct: 1 })).toBeNull()
+    expect(compareWithPrevious(summaryOf(1, 2), { total: 10, correct: 5 })).toBeNull()
   })
 })
