@@ -4,9 +4,9 @@ import { pitchAtPosition } from '../../theory'
 import { StaffView } from '../staff/StaffView'
 import { Icon } from '../Icon'
 
-// Drawn on the paper-coloured staff card, so these are dark enough to read on it.
-const GOOD = '#0f766e'
-const BAD = '#b42318'
+// Theme colours for the staff card (see styles.css); the fallbacks are the light-theme values.
+const GOOD = 'var(--staff-good, #0f766e)'
+const BAD = 'var(--staff-bad, #b42318)'
 
 /**
  * Tap the staff to place a note, nudge it with the arrows, then press Check.

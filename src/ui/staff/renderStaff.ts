@@ -21,6 +21,18 @@ export interface DrawOptions {
   noShrink?: boolean
 }
 
+/**
+ * A note colour may be a CSS variable with a fallback, such as "var(--staff-good, #0f766e)", so it can follow
+ * the light or dark theme. This turns it into a real colour for the drawing; without styles (as in tests) it
+ * uses the fallback.
+ */
+export function resolveColor(color: string, element: Element | null): string {
+  const match = /^var\(\s*(--[\w-]+)\s*(?:,\s*(.+))?\)$/.exec(color.trim())
+  if (!match) return color
+  const value = element && typeof getComputedStyle === 'function' ? getComputedStyle(element).getPropertyValue(match[1]!).trim() : ''
+  return value || match[2]?.trim() || 'currentColor'
+}
+
 /** VexFlow's name for a key: "D", "Bb", "F#m". */
 export function vexKeySpec(key: Key): string {
   return formatNote(key.tonic) + (key.mode === 'minor' ? 'm' : '')
@@ -69,7 +81,8 @@ export function drawStaff(container: HTMLElement, spec: StaffSpec, options: Draw
     const groups = spec.items.map((item) => (item.kind === 'notes' ? sortedPitches(item.pitches) : []))
     const signs = accidentalsToShow(groups, spec.key ?? null)
     const restKey = pitchAtPosition(4, spec.clef) // rests sit on the middle line
-    const notes = spec.items.map((item, i) => makeNote(item, groups[i] ?? [], signs[i] ?? [], spec, restKey, color, stave))
+    const items = spec.items.map((item) => (item.kind === 'notes' && item.color ? { ...item, color: resolveColor(item.color, container) } : item))
+    const notes = items.map((item, i) => makeNote(item, groups[i] ?? [], signs[i] ?? [], spec, restKey, color, stave))
     const voice = new Voice({ numBeats: 4 * notes.length, beatValue: 4 })
     voice.setStrict(false)
     voice.addTickables(notes)

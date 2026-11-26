@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import type { StaffSpec } from '../../questions/types'
 import { parseKey, parsePitch, parseTimeSignature } from '../../theory'
-import { drawStaff, vexKeySpec } from './renderStaff'
+import { drawStaff, resolveColor, vexKeySpec } from './renderStaff'
 
 // jsdom has no canvas; VexFlow falls back to its own font metrics when this returns null.
 HTMLCanvasElement.prototype.getContext = () => null
@@ -96,5 +96,21 @@ describe('vexKeySpec', () => {
     expect(vexKeySpec(parseKey('Bb major'))).toBe('Bb')
     expect(vexKeySpec(parseKey('F# minor'))).toBe('F#m')
     expect(vexKeySpec(parseKey('Eb minor'))).toBe('Ebm')
+  })
+})
+
+describe('resolveColor', () => {
+  it('leaves a plain colour alone', () => {
+    expect(resolveColor('#5eead4', null)).toBe('#5eead4')
+  })
+
+  it('reads a theme variable from the page, and uses the fallback when it is not set', () => {
+    const element = document.createElement('div')
+    element.style.setProperty('--staff-good', '#8bd3a5')
+    document.body.append(element)
+    expect(resolveColor('var(--staff-good, #0f766e)', element)).toBe('#8bd3a5')
+    expect(resolveColor('var(--not-set, #0f766e)', element)).toBe('#0f766e')
+    expect(resolveColor('var(--not-set)', null)).toBe('currentColor')
+    element.remove()
   })
 })

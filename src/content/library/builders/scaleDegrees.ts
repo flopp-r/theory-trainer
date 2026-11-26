@@ -15,8 +15,8 @@ const DEGREE_SEMITONES = {
 } as const
 
 /** The colour the app uses for "this one" in notation (the accent colour). */
-// Drawn on the paper-coloured staff card, so dark enough to read on it.
-const HIGHLIGHT = '#0f766e'
+// A theme colour for the staff card (see styles.css); the fallback is the light-theme value.
+const HIGHLIGHT = 'var(--staff-good, #0f766e)'
 
 export type DegreeQuestion = 'note' | 'name'
 
