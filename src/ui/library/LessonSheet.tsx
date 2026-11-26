@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { lessonById } from '../../content/library'
 import { LessonView } from './LessonView'
+import { Icon } from '../Icon'
 
 /**
  * A lesson shown over whatever you are doing, so you can read it and come straight back.
@@ -31,7 +32,8 @@ export default function LessonSheet({ id, onClose }: { id: string; onClose: () =
       <header className="sheet-bar">
         <p className="bar-title small">Lesson</p>
         <button ref={closeButton} type="button" className="btn small" onClick={onClose}>
-          Close ✕
+          Close
+          <Icon name="close" size={18} />
         </button>
       </header>
       <div className="sheet-body">

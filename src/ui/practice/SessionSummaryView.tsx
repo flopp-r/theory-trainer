@@ -5,6 +5,7 @@ import { type SessionRecord, rememberSetup } from '../../progress/history'
 import { type AnswerResult, compareWithPrevious, summariseSession, verdict, weakestArea } from '../../progress/sessionSummary'
 import { QUESTION_TYPES, type QuestionType, TOPICS } from '../../questions/types'
 import { type PracticeConfig, practiceConfigToQuery, questionTypeLabel } from './practiceConfig'
+import { Icon } from '../Icon'
 
 const LessonSheet = lazy(() => import('../library/LessonSheet'))
 
@@ -68,7 +69,7 @@ export function SessionSummaryView({
     <main className="screen top">
       <header className="bar">
         <a className="back" href={`#/practice?${setup}`} aria-label="Back to practice setup">
-          ←
+          <Icon name="arrow-left" size={22} />
         </a>
         <h1 className="bar-title">Round summary</h1>
       </header>

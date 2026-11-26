@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LESSONS, LIBRARY_GROUPS } from '../../content/library'
 import { plainText } from '../../content/library/inline'
+import { Icon } from '../Icon'
 
 /** The list of all lessons, grouped, with a search box. */
 export default function LibraryScreen() {
@@ -13,7 +14,7 @@ export default function LibraryScreen() {
     <main className="screen top library">
       <header className="bar">
         <a className="back" href="#/" aria-label="Back to home">
-          ←
+          <Icon name="arrow-left" size={22} />
         </a>
         <h1 className="bar-title">Library</h1>
       </header>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { lessonById, neighbours } from '../../content/library'
 import { LessonView } from './LessonView'
+import { Icon } from '../Icon'
 
 /** A lesson as its own page, with links to the lessons either side. */
 export default function LessonScreen({ id }: { id: string }) {
@@ -25,7 +26,7 @@ export default function LessonScreen({ id }: { id: string }) {
     <main className="screen top library">
       <header className="bar">
         <a className="back" href="#/library" aria-label="Back to the Library">
-          ←
+          <Icon name="arrow-left" size={22} />
         </a>
         <p className="bar-title small">Library</p>
       </header>
@@ -33,14 +34,16 @@ export default function LessonScreen({ id }: { id: string }) {
       <nav className="lesson-nav" aria-label="Other lessons">
         {previous ? (
           <a className="btn" href={`#/library/${previous.id}`}>
-            ← {previous.title}
+            <Icon name="arrow-left" />
+            <span>{previous.title}</span>
           </a>
         ) : (
           <span />
         )}
         {next && (
           <a className="btn primary" href={`#/library/${next.id}`}>
-            {next.title} →
+            <span>{next.title}</span>
+            <Icon name="arrow-right" />
           </a>
         )}
       </nav>

@@ -9,6 +9,7 @@ import { EarPlayer, SoundSwitch } from './EarPlayer'
 import { type PracticeConfig, ROUND_LENGTH, practiceConfigToQuery } from './practiceConfig'
 import { SessionSummaryView } from './SessionSummaryView'
 import { TapStaff } from './TapStaff'
+import { Icon } from '../Icon'
 
 const LessonSheet = lazy(() => import('../library/LessonSheet'))
 
@@ -152,7 +153,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
             }
           }}
         >
-          ←
+          <Icon name="arrow-left" size={22} />
         </a>
         <p className="score" aria-live="off">
           <span className="score-word">Question </span>
@@ -171,7 +172,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
         aria-valuemax={ROUND_LENGTH}
         aria-valuenow={Math.min(results.length, ROUND_LENGTH)}
       >
-        <div className="progress-fill" style={{ width: `${(Math.min(results.length, ROUND_LENGTH) / ROUND_LENGTH) * 100}%` }} />
+        <div className="progress-fill" style={{ transform: `scaleX(${Math.min(results.length, ROUND_LENGTH) / ROUND_LENGTH})` }} />
       </div>
 
       <p className="category">{question.category}</p>
@@ -206,7 +207,10 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       <div className="feedback-area" role="status" aria-live="polite">
         {answered && (
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
-            <strong>{correct ? '✓ Correct' : `✗ Not quite. ${question.answerText}`}</strong>
+            <strong>
+              <Icon name={correct ? 'check' : 'cross'} size={18} className="icon-inline" />
+              {correct ? 'Correct' : `Not quite. ${question.answerText}`}
+            </strong>
             <p>{question.explanation}</p>
             {lesson && (
               // After a miss the lesson is the next step, so it looks like a button; after a right answer it is only a pointer.
