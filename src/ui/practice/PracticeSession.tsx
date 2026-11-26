@@ -29,7 +29,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       vocabCategories: config.vocabCategories,
       avoidItemId,
     })
-    return { context, first: generateQuestion(context(), config.topics) }
+    return { context, first: generateQuestion(context(), config.topics, config.types) }
   })
   const [question, setQuestion] = useState<Question>(start.first)
   const [chosen, setChosen] = useState<string | null>(null)
@@ -57,7 +57,7 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       setChosen(id)
       setResults((r) => [
         ...r,
-        { itemId: question.id, itemLabel: question.itemLabel, category: question.category, correct: id === question.correct, ms, topic: question.topic },
+        { itemId: question.id, itemLabel: question.itemLabel, category: question.category, correct: id === question.correct, ms, topic: question.topic, type: question.type },
       ])
     },
     [chosen, question],
@@ -71,10 +71,10 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   const next = useCallback(() => {
     shownAt.current = null // restarted when the new question has been drawn
     setDrawn(false)
-    setQuestion((q) => generateQuestion(start.context(q.id), config.topics))
+    setQuestion((q) => generateQuestion(start.context(q.id), config.topics, config.types))
     setChosen(null)
     setQuestionNumber((n) => n + 1)
-  }, [config.topics, start])
+  }, [config.topics, config.types, start])
 
   const setupQuery = practiceConfigToQuery(config)
   const roundDone = results.length >= ROUND_LENGTH
@@ -148,7 +148,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
           ←
         </a>
         <p className="score" aria-live="off">
-          Question {Math.min(answered ? results.length : results.length + 1, ROUND_LENGTH)} of {ROUND_LENGTH}
+          <span className="score-word">Question </span>
+          {Math.min(answered ? results.length : results.length + 1, ROUND_LENGTH)} of {ROUND_LENGTH}
         </p>
         {config.topics.includes('ear') && <SoundSwitch />}
         <button className="btn small" type="button" onClick={() => (results.length > 0 ? finishRound() : (window.location.hash = `#/practice?${setupQuery}`))}>
@@ -165,22 +166,6 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       >
         <div className="progress-fill" style={{ width: `${(Math.min(results.length, ROUND_LENGTH) / ROUND_LENGTH) * 100}%` }} />
       </div>
-
-      {confirmLeave && (
-        <section className="panel confirm" role="group" aria-label="Leave this round?">
-          <p>
-            <strong>Leave this round?</strong> Your {results.length} {results.length === 1 ? 'answer' : 'answers'} won&rsquo;t be saved.
-          </p>
-          <div className="confirm-actions">
-            <button ref={keepGoingButton} type="button" className="btn primary" onClick={() => setConfirmLeave(false)}>
-              Keep going
-            </button>
-            <a className="btn" href={`#/practice?${setupQuery}`}>
-              Leave round
-            </a>
-          </div>
-        </section>
-      )}
 
       <p className="category">{question.category}</p>
       <h1 className="prompt">{question.prompt}</h1>
@@ -217,7 +202,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
             <strong>{correct ? '✓ Correct' : `✗ Not quite. ${question.answerText}`}</strong>
             <p>{question.explanation}</p>
             {lesson && (
-              <button type="button" className="btn small lesson-link" onClick={() => setLessonOpen(true)}>
+              // After a miss the lesson is the next step, so it looks like a button; after a right answer it is only a pointer.
+              <button type="button" className={correct ? 'text-button' : 'btn small lesson-link'} onClick={() => setLessonOpen(true)}>
                 Read the lesson &ldquo;{lesson.title}&rdquo;
               </button>
             )}
@@ -231,9 +217,29 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
         )}
       </div>
 
-      <button ref={nextButton} type="button" className="btn primary wide" disabled={!answered} onClick={roundDone ? finishRound : next}>
-        {roundDone ? 'See results' : 'Next'}
-      </button>
+      {/* Kept at the bottom of the screen, so Next never ends up below the fold after a long explanation. */}
+      <div className="next-bar">
+        {confirmLeave ? (
+          <section className="confirm" role="group" aria-label="End this round?">
+            <p>
+              <strong>End this round?</strong> Your {results.length} {results.length === 1 ? 'answer is' : 'answers are'} saved and you&rsquo;ll see
+              how you did.
+            </p>
+            <div className="confirm-actions">
+              <button ref={keepGoingButton} type="button" className="btn primary" onClick={() => setConfirmLeave(false)}>
+                Keep going
+              </button>
+              <button type="button" className="btn" onClick={finishRound}>
+                See results
+              </button>
+            </div>
+          </section>
+        ) : (
+          <button ref={nextButton} type="button" className="btn primary wide" disabled={!answered} onClick={roundDone ? finishRound : next}>
+            {roundDone ? 'See results' : 'Next'}
+          </button>
+        )}
+      </div>
       {lessonOpen && lesson && (
         <Suspense fallback={null}>
           <LessonSheet id={lesson.id} onClose={() => setLessonOpen(false)} />

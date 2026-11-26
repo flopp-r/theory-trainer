@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRACTICE_CONFIG, PRESETS, type PracticeConfig, describeSetup, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
+import { DEFAULT_PRACTICE_CONFIG, PRESETS, type PracticeConfig, TOPIC_GROUPS, describeSetup, presetFor, questionTypeLabel, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
 
 const parse = (text: string) => parsePracticeConfig(new URLSearchParams(text))
 
@@ -78,5 +78,41 @@ describe('defaults and describeSetup', () => {
     expect(describeSetup({ ...base, topics: ['notes', 'keys', 'scales', 'chords'], clefs: ['treble', 'bass', 'alto', 'tenor'] })).toBe('4 topics · All clefs · Medium')
     expect(describeSetup({ ...base, topics: ['vocabulary'], difficulty: 1 })).toBe('Vocabulary · Easy')
     expect(describeSetup({ ...base, clefs: ['treble', 'bass', 'alto'] })).toBe('Notes · Treble, bass and alto clefs · Medium')
+  })
+})
+
+describe('question types in the setup', () => {
+  it('reads and writes types, keeping only real ones that belong to the chosen topics', () => {
+    const c = parse('topics=notes,keys&types=relative-key,place-note,cooking,ear-cadence')
+    expect(c.types).toEqual(['place-note', 'relative-key'])
+    expect(practiceConfigToQuery(c)).toContain('&types=place-note,relative-key')
+    expect(parse(practiceConfigToQuery(c))).toEqual(c)
+  })
+
+  it('leaves types out when none are valid, so every type is used', () => {
+    expect(parse('topics=notes&types=relative-key').types).toBeUndefined()
+    expect(practiceConfigToQuery(DEFAULT_PRACTICE_CONFIG)).not.toContain('types=')
+  })
+
+  it('names a weak area briefly, and puts the topic in front of vocabulary questions', () => {
+    expect(questionTypeLabel('place-note')).toBe('Placing notes')
+    expect(questionTypeLabel('vocab-meaning')).toBe('Vocabulary: which term?')
+    expect(describeSetup({ ...DEFAULT_PRACTICE_CONFIG, types: ['place-note'] })).toBe('Placing notes · Treble and bass clefs · Medium')
+  })
+
+  it('does not mention clefs for ear training alone', () => {
+    expect(describeSetup({ ...DEFAULT_PRACTICE_CONFIG, topics: ['ear'] })).toBe('Ear training · Medium')
+  })
+})
+
+describe('presetFor and TOPIC_GROUPS', () => {
+  it('recognises a preset, and nothing for a custom mix', () => {
+    for (const p of PRESETS) expect(presetFor(p.config)?.id).toBe(p.id)
+    expect(presetFor({ ...DEFAULT_PRACTICE_CONFIG, difficulty: 3 })).toBeUndefined()
+  })
+
+  it('lists every topic exactly once', () => {
+    const grouped = TOPIC_GROUPS.flatMap((g) => g.topics)
+    expect([...grouped].sort()).toEqual(['cadences', 'chords', 'ear', 'intervals', 'keys', 'notes', 'rhythm', 'scales', 'vocabulary'])
   })
 })

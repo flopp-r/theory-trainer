@@ -45,11 +45,13 @@ h1 {
   margin: 0;
   font-size: 3rem;
   color: var(--accent);
+  text-wrap: balance;
 }
 
 .lede {
   margin: 0;
   font-size: 1.25rem;
+  text-wrap: pretty;
 }
 
 a {
@@ -115,6 +117,8 @@ a {
 .score {
   margin: 0;
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
   color: var(--muted);
   font-size: 0.9rem;
   text-align: left;
@@ -125,13 +129,71 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin: 0;
 }
 
-.presets .btn {
+/* A legend sits on the fieldset's edge by default; floating it puts it inside the panel like a heading. */
+.panel-title {
+  float: left;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.preset {
+  clear: both;
+  display: block;
+  cursor: pointer;
+}
+
+.preset input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preset span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 3.5rem;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
   background: var(--bg);
+  border: 2px solid transparent;
 }
 
-.customise summary {
+.preset strong {
+  font-size: 1.05rem;
+}
+
+.preset small {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.preset input:checked + span {
+  border-color: var(--accent);
+}
+
+.preset input:checked + span strong {
+  color: var(--accent);
+}
+
+.preset input:focus-visible + span {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.topic-group {
+  margin: 0.75rem 0 0;
+}
+
+.disclosure summary {
   display: flex;
   align-items: center;
   min-height: 3rem;
@@ -140,12 +202,12 @@ a {
   cursor: pointer;
 }
 
-.customise summary::-webkit-details-marker {
+.disclosure summary::-webkit-details-marker {
   display: none;
 }
 
 /* A drawn chevron that turns when the section is open. */
-.customise summary::after {
+.disclosure summary::after {
   content: '';
   width: 0.55rem;
   height: 0.55rem;
@@ -155,19 +217,20 @@ a {
   transform: rotate(45deg);
 }
 
-.customise[open] summary {
+.disclosure[open] summary {
   margin-bottom: 0.25rem;
 }
 
-.customise[open] summary::after {
+.disclosure[open] summary::after {
   transform: rotate(-135deg);
 }
 
-.customise h2 {
+.disclosure h2 {
   margin: 1rem 0 0.75rem;
 }
 
-.start-bar {
+.start-bar,
+.next-bar {
   position: sticky;
   bottom: 0;
   z-index: 5;
@@ -190,12 +253,57 @@ a {
   background: var(--accent);
 }
 
-.panel.confirm p {
+.confirm p {
   margin: 0 0 0.75rem;
+  text-align: left;
 }
 
-.panel.confirm .btn:not(.primary) {
+.confirm .btn:not(.primary) {
+  background: var(--surface);
+}
+
+/* What to revisit, grouped by lesson. */
+.revisit {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.revisit p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.revisit .lesson-link {
   background: var(--bg);
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+/* A quiet link-style button, for a pointer that is not the next step. */
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.play-icon {
+  flex: none;
+  margin-right: 0.5rem;
 }
 
 .confirm-actions,
@@ -268,6 +376,8 @@ a {
 .back:focus-visible,
 .chip-button:focus-visible,
 summary:focus-visible,
+.text-link:focus-visible,
+.text-button:focus-visible,
 .chip input:focus-visible + span {
   outline: 3px solid var(--text);
   outline-offset: 2px;
@@ -403,8 +513,9 @@ legend {
   color: var(--bad);
 }
 
+/* Answers that were not chosen fade by colour, not opacity, so their text stays readable. */
 .choice.dim {
-  opacity: 0.6;
+  color: var(--muted);
 }
 
 /* Taps are ignored until the staff is drawn. The buttons say so, but only if it takes a moment, so a fast draw does not flash. */
@@ -420,10 +531,6 @@ legend {
 
 .choice:disabled {
   cursor: default;
-}
-
-.feedback-area {
-  min-height: 7rem;
 }
 
 .feedback {
@@ -704,5 +811,21 @@ legend {
 @media (min-width: 48rem) {
   .screen.session > * {
     max-width: 40rem;
+  }
+}
+
+/* The practice bar holds up to four controls on a phone, so it packs them a little closer. */
+.session .bar {
+  gap: 0.5rem;
+}
+
+.session .bar .btn.small:not(.icon) {
+  padding: 0 1rem;
+}
+
+/* On narrow phones with the sound switch showing, "Question 3 of 10" becomes "3 of 10". */
+@media (max-width: 380px) {
+  .session .bar:has(.icon) .score-word {
+    display: none;
   }
 }

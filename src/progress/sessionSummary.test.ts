@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type AnswerResult, compareWithPrevious, missedTopics, summariseSession, verdict } from './sessionSummary'
+import { type AnswerResult, compareWithPrevious, summariseSession, verdict, weakestArea } from './sessionSummary'
 
 const r = (itemId: string, category: string, correct: boolean, ms = 1000): AnswerResult => ({
   itemId,
@@ -64,13 +64,24 @@ describe('summariseSession', () => {
   })
 })
 
-describe('missedTopics, verdict and compareWithPrevious', () => {
-  const answer = (topic: string, correct: boolean) => ({ itemId: `${topic}${correct}`, itemLabel: topic, category: topic, correct, ms: 1000, topic })
+describe('weakestArea, verdict and compareWithPrevious', () => {
+  const answer = (topic: string, correct: boolean, type = `${topic}-type`) => ({ itemId: `${type}${correct}${Math.random()}`, itemLabel: topic, category: topic, correct, ms: 1000, topic, type })
 
-  it('lists topics with a wrong answer once each, in the order first missed', () => {
-    expect(missedTopics([answer('keys', false), answer('notes', true), answer('ear', false), answer('keys', false)])).toEqual(['keys', 'ear'])
-    expect(missedTopics([answer('notes', true)])).toEqual([])
-    expect(missedTopics([{ itemId: 'a', itemLabel: 'a', category: 'a', correct: false, ms: 1 }])).toEqual([])
+  it('picks the question type with the most misses', () => {
+    const results = [answer('notes', false, 'note-name'), answer('notes', false, 'place-note'), answer('notes', false, 'place-note'), answer('keys', true, 'relative-key')]
+    expect(weakestArea(results)).toEqual({ type: 'place-note', topic: 'notes', missed: 2, total: 2 })
+  })
+
+  it('breaks a tie by the lower share right, then by the first missed', () => {
+    const byShare = [answer('notes', false, 'note-name'), answer('notes', true, 'note-name'), answer('keys', false, 'relative-key')]
+    expect(weakestArea(byShare)?.type).toBe('relative-key')
+    const byOrder = [answer('keys', false, 'relative-key'), answer('notes', false, 'note-name')]
+    expect(weakestArea(byOrder)?.type).toBe('relative-key')
+  })
+
+  it('is null when nothing was missed, or the answers have no type', () => {
+    expect(weakestArea([answer('notes', true)])).toBeNull()
+    expect(weakestArea([{ itemId: 'a', itemLabel: 'a', category: 'a', correct: false, ms: 1 }])).toBeNull()
   })
 
   const summaryOf = (correct: number, total: number) =>
@@ -80,7 +91,7 @@ describe('missedTopics, verdict and compareWithPrevious', () => {
     expect(verdict(summaryOf(10, 10))).toBe('Strong round.')
     expect(verdict(summaryOf(7, 10))).toBe('Good round.')
     expect(verdict(summaryOf(5, 10))).toBe('Getting there.')
-    expect(verdict(summaryOf(2, 10))).toMatch(/hard one/)
+    expect(verdict(summaryOf(2, 10))).toMatch(/hard round/)
     expect(verdict(summaryOf(1, 2))).toBe('Short round.')
     expect(verdict(summariseSession([]))).toBe('')
   })

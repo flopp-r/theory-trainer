@@ -4,7 +4,7 @@ import { rememberSetup } from '../../progress/history'
 import { setSoundEnabled, useSoundEnabled } from '../../progress/settings'
 import { DIFFICULTY_LABELS, type Difficulty, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
-import { PRESETS, type PracticeConfig, TOPICS_USING_CLEFS, describeSetup, practiceConfigToQuery } from './practiceConfig'
+import { PRESETS, type PracticeConfig, TOPICS_USING_CLEFS, TOPIC_GROUPS, describeSetup, practiceConfigToQuery, presetFor } from './practiceConfig'
 
 const CLEF_TITLES: Record<ClefName, string> = { treble: 'Treble', bass: 'Bass', alto: 'Alto', tenor: 'Tenor' }
 const LEDGER_OPTIONS = [
@@ -51,6 +51,15 @@ export function PracticeSetup({ initial, customise }: { initial: PracticeConfig;
   const current: PracticeConfig = { topics, clefs, maxLedgerLines: ledger, difficulty: level, vocabCategories: vocab }
   const setup = practiceConfigToQuery(current)
   const onlyTopic = topics.length === 1 ? TOPICS.find((t) => t.id === topics[0]) : undefined
+  const preset = presetFor(current)
+
+  function choosePreset(config: PracticeConfig) {
+    setTopics(config.topics)
+    setClefs(config.clefs)
+    setLedger(config.maxLedgerLines)
+    setLevel(config.difficulty)
+    setVocab(config.vocabCategories)
+  }
 
   return (
     <main className="screen top has-start">
@@ -61,36 +70,41 @@ export function PracticeSetup({ initial, customise }: { initial: PracticeConfig;
         <h1 className="bar-title">Practice</h1>
       </header>
 
-      <section className="panel">
-        <h2>Quick start</h2>
-        <div className="presets">
-          {PRESETS.map((preset) => {
-            const query = practiceConfigToQuery(preset.config)
-            return (
-              <a key={preset.id} className="btn wide stack" href={`#/practice/play?${query}`} onClick={() => rememberSetup(query)}>
-                <span>{preset.label}</span>
-                <span className="sub">{describeSetup(preset.config)}</span>
-              </a>
-            )
-          })}
-        </div>
-      </section>
+      <fieldset className="panel presets">
+        <legend className="panel-title">What to practise</legend>
+        {PRESETS.map((p) => (
+          <label key={p.id} className="preset">
+            <input type="radio" name="preset" checked={preset?.id === p.id} onChange={() => choosePreset(p.config)} />
+            <span>
+              <strong>{p.label}</strong>
+              <small>{p.blurb}</small>
+            </span>
+          </label>
+        ))}
+      </fieldset>
 
-      <details className="panel customise" open={customise}>
-        <summary>Customise</summary>
+      <details className="panel disclosure" open={customise}>
+        <summary>{preset ? 'Customise' : 'Customise (your own mix)'}</summary>
 
         <h2>Topics</h2>
         <div className="chips">
           <button type="button" className={`chip-button${allSelected ? ' on' : ''}`} aria-pressed={allSelected} onClick={() => setTopics(allSelected ? [topics[0] ?? 'notes'] : ALL_TOPICS)}>
             Everything
           </button>
-          {TOPICS.map((topic) => (
-            <label key={topic.id} className="chip">
-              <input type="checkbox" checked={topics.includes(topic.id)} onChange={() => toggleTopic(topic.id)} />
-              <span>{topic.label}</span>
-            </label>
-          ))}
         </div>
+        {TOPIC_GROUPS.map((group) => (
+          <fieldset key={group.label} className="topic-group">
+            <legend>{group.label}</legend>
+            <div className="chips">
+              {group.topics.map((id) => (
+                <label key={id} className="chip">
+                  <input type="checkbox" checked={topics.includes(id)} onChange={() => toggleTopic(id)} />
+                  <span>{TOPICS.find((t) => t.id === id)?.label ?? id}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
         <p className="hint">{onlyTopic ? onlyTopic.summary : `${topics.length} topics selected`}</p>
 
         <h2>Level</h2>
@@ -167,7 +181,7 @@ export function PracticeSetup({ initial, customise }: { initial: PracticeConfig;
       <div className="start-bar">
         <a className="btn primary wide stack" href={`#/practice/play?${setup}`} onClick={() => rememberSetup(setup)}>
           <span>Start</span>
-          <span className="sub">{describeSetup(current)}</span>
+          <span className="sub">{preset ? preset.label : describeSetup(current)}</span>
         </a>
       </div>
     </main>

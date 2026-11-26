@@ -57,7 +57,8 @@ export function TapStaff({
         staff={staff}
         ledgerLines={input.ledgerLines}
         scale={2.4}
-        minItems={1}
+        // Room for two notes from the start, so the staff does not shrink when the answer is drawn beside the guess.
+        minItems={2}
         onDrawn={onDrawn}
         onTap={answered ? undefined : setSelected}
         tapRange={range}

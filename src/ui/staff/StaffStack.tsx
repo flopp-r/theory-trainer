@@ -19,6 +19,8 @@ export function StaffStack({
 }) {
   // Each stave reports when it is drawn; `onDrawn` fires once all of them have been.
   const total = notation.staves.length
+  // On short screens a single stave is drawn a little smaller, so the answers stay in view.
+  const short = typeof window !== 'undefined' && window.matchMedia?.('(max-height: 740px)').matches
   const drawn = useRef(new Set<number>())
   return (
     <div className="staff-stack">
@@ -28,7 +30,7 @@ export function StaffStack({
           staff={staff}
           // Several staves share one screen, so each is sized to what it needs and drawn a little smaller.
           ledgerLines={total > 1 ? neededLedgerLines(staff) : Math.max(ledgerLines ?? 1, neededLedgerLines(staff))}
-          scale={total > 1 ? 1.2 : scroll ? 1.5 : 3.2}
+          scale={total > 1 ? 1.2 : scroll ? 1.5 : short ? 2.4 : 3.2}
           scroll={scroll}
           label={total > 1 ? `Staff ${index + 1} of ${total}, ${staff.clef} clef` : undefined}
           onDrawn={() => {
