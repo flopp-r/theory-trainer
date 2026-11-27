@@ -378,7 +378,7 @@ export function noteBeatsExample(name: NoteValueName, dots = 0): WorkedExample {
   }
   const semiWork =
     dots === 0
-      ? `${capital(withArticle(name))} is ${semis} semiquavers (${semiChain.short}).`
+      ? `${capital(withArticle(name))} is ${semis} semiquavers${name === 'semibreve' ? '' : ` (${semiChain.short})`}.`
       : `${capital(withArticle(name))} is ${semis} (${semiChain.short}). ${dots === 1 ? 'The dot adds' : 'The dots add'} ${semiAdd.map((a, i) => `${i === 0 ? semis : semiAdd[i - 1]!} ÷ 2 = ${a}`).join(' and then ')}. ${[semis, ...semiAdd].join(' + ')} = ${semiTotal} semiquavers.`
   steps.push({
     title: 'Check by counting in semiquavers',

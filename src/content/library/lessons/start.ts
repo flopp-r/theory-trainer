@@ -50,15 +50,15 @@ export const START_LESSONS: LibraryLesson[] = [
       h('4. How to name any note: a method you can copy'),
       steps(
         'Find the **clef** at the start of the staff.',
-        'Remember its **anchor**: treble clef, the 2nd line is **G**. Bass clef, the 4th line is **F**.',
+        'Remember the line it fixes: treble clef, the 2nd line is **G**. Bass clef, the 4th line is **F**.',
         'Look at where your note sits: on which line or space?',
-        'Starting from the anchor, **count steps** to your note: every line and every space is one step. Count **up** if your note is higher, **down** if it is lower.',
+        'Starting from that line, **count steps** to your note: every line and every space is one step. Count **up** if your note is higher, **down** if it is lower.',
         'As you count, say the letters of the musical alphabet **forwards** for up and **backwards** for down. The letter you land on is the name of your note.',
       ),
       worked(nameNoteExample('treble', pitch('E', 0, 4))),
       worked(nameNoteExample('treble', pitch('B', 0, 4))),
       worked(nameNoteExample('bass', pitch('A', 0, 2))),
-      watch('Do not start counting from the bottom line every time: start from the **anchor**. And do not skip spaces. A common slip is to count only the lines.'),
+      watch('Do not start counting from the bottom line every time: start from the line the clef fixes. And do not skip spaces. A common slip is to count only the lines.'),
       tip('Notes **above** the staff or **below** it sit on short extra lines called **ledger lines**. You count them in exactly the same way: one step per line or space. They have their own lesson.'),
 
       h('5. Try it'),

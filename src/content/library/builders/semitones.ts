@@ -109,7 +109,7 @@ function numberSteps(a: NoteName, b: NoteName, c: Climb): WorkedStep[] {
   if (c.wrapped) {
     steps.push({
       title: `Add 12 to the number of ${to}`,
-      text: `${to} (${c.second}) is a smaller number than ${from} (${c.first}). Going up from ${from} you pass the next C, an octave above the first, so the numbers start again: that C is number 12. Count ${to} as ${c.second} + 12 = ${c.second + 12}.`,
+      text: `${to} (${c.second}) is a smaller number than ${from} (${c.first}), because going up from ${from} you pass the next C. That C is an octave (12 semitones) above the C numbered 0, so it is number 12. Count ${to} as ${c.second} + 12 = ${c.second + 12}.`,
       result: `${to} counts as ${c.second + 12}`,
     })
   }

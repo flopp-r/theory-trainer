@@ -89,7 +89,7 @@ describe('placeNoteExample', () => {
     const up = all(placeNoteExample('treble', parsePitch('C5')).steps)
     expect(up).toContain('3 steps up')
     expect(up).toContain('2nd line G4, 2nd space A4, middle line B4, 3rd space C5')
-    expect(up).toContain('after B4 comes C5')
+    expect(up).toContain('from B4 to C5 the number goes up')
     const down = placeNoteExample('treble', parsePitch('C4'))
     const downText = all(down.steps)
     // inside the staff to the bottom line, then on below the staff

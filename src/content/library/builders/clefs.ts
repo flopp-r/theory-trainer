@@ -392,7 +392,7 @@ export function placeNoteExample(clef: ClefName, target: Pitch): WorkedExample {
     },
     ...(counting
       ? counting.steps
-      : [{ title: 'See that there is nothing to count', text: `${name} is the note on the clef's own line, so it goes on ${where}. There are no steps (moves to the next line or space) to count.`, result: `0 steps: ${cap(where)}` }]),
+      : [{ title: 'See that there is nothing to count', text: `${name} is the note on the clef's own line, so it goes on ${where}. There are no steps (moves to the next line or space) to count.`, result: `0 steps: ${where}` }]),
     { title: ledger.title, text: ledger.text, result: ledger.result },
     {
       title: 'Draw the note head',
@@ -490,7 +490,7 @@ export function convertClefExample(target: Pitch, fromClef: ClefName, toClef: Cl
       },
       ...(toCount
         ? toCount.steps
-        : [{ title: 'See that there is nothing to count', text: `${name} is the note on the clef's own line, so it goes on ${toWhere}.`, result: `0 steps: ${cap(toWhere)}` }]),
+        : [{ title: 'See that there is nothing to count', text: `${name} is the note on the clef's own line, so it goes on ${toWhere}.`, result: `0 steps: ${toWhere}` }]),
       { title: toLedger.title, text: toLedger.text, result: toLedger.result },
       {
         title: 'Write the note',
