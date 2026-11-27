@@ -84,12 +84,16 @@ describe('intervalNameExample', () => {
     const e = intervalNameExample(parsePitch('Bb3'), parsePitch('F4'))
     const text = e.steps.map((s) => s.text).join(' ')
     expect(text).toContain('B, C, D, E, F')
-    expect(text).toContain('B to C is 1, C to D is 2, D to E is 2, E to F is 1')
-    expect(text).toContain('Add them up: **6**')
-    expect(text).toContain('add 1')
-    expect(text).toContain('7 semitones')
+    // one step per pair of letters, with a running total
+    expect(e.steps.filter((s) => s.title?.startsWith('Count ') && s.title.includes(' up to ')).map((s) => s.result)).toEqual(
+      ['Total so far: 1 semitone', 'Total so far: 3 semitones', 'Total so far: 5 semitones', 'Total so far: 6 semitones'],
+    )
+    expect(text).toContain('From E up to F is 1 semitone (there is no black key between them). Add it on: 5 + 1 = 6.')
+    expect(text).toContain('add 1: 6 + 1 = 7')
+    expect(e.steps.at(-1)!.text).toContain('B♭, B, C, D♭, D, E♭, E, F: 7 steps, so 7 semitones')
     expect(e.steps[0]!.staff!.items).toHaveLength(2)
     expect(e.steps.at(-1)!.listen).toBeDefined()
+    expect(e.steps.at(-1)!.title!.startsWith('Check another way')).toBe(true)
   })
 
   it('treats C to F♯ and C to G♭ as two different intervals with the same six semitones', () => {
@@ -102,7 +106,7 @@ describe('intervalNameExample', () => {
   })
 
   it('says "an" before octave and augmented', () => {
-    expect(intervalNameExample(parsePitch('C4'), parsePitch('C5')).steps[1]!.text).toContain('an **octave**')
+    expect(intervalNameExample(parsePitch('C4'), parsePitch('C5')).steps[1]!.text).toContain('is an octave (8th)')
     expect(intervalNameExample(parsePitch('C4'), parsePitch('F#4')).answer).toContain('is an augmented 4th')
   })
 
@@ -153,10 +157,13 @@ describe('buildIntervalExample', () => {
     const e = buildIntervalExample(parsePitch('F#4'), 'P5', 'up')
     const text = e.steps.map((s) => s.text).join(' ')
     expect(text).toContain('F, G, A, B, C')
-    expect(text).toContain('F to G is 2, G to A is 2, A to B is 2, B to C is 1')
+    expect(e.steps.filter((s) => s.title?.startsWith('Count ') && s.title.includes(' up to ')).map((s) => s.title)).toEqual(
+      ['Count F up to G', 'Count G up to A', 'Count A up to B', 'Count B up to C'],
+    )
     expect(text).toContain('7 − 1 = 6')
-    expect(text).toContain('1 semitone too few')
-    expect(e.steps.at(-1)!.text).toContain('Check')
+    expect(text).toContain('C is 1 semitone too close, so raise it with a sharp')
+    expect(e.steps.at(-1)!.title!.startsWith('Check another way')).toBe(true)
+    expect(e.steps.at(-1)!.text).toContain('F♯, G, G♯, A, A♯, B, C, C♯: 7 steps, so 7 semitones')
     expect(e.steps.some((s) => s.staff && s.staff.items.length === 2)).toBe(true)
     expect(e.steps.some((s) => s.listen)).toBe(true)
   })
@@ -196,7 +203,7 @@ describe('invertIntervalExample', () => {
     const e = invertIntervalExample(parsePitch('C4'), 'M3')
     const text = e.steps.map((s) => s.text).join(' ')
     expect(text).toContain('E, F, G, A, B, C')
-    expect(text).toContain('3 + 6 = 9')
+    expect(text).toContain('9 − 3 = 6')
     expect(text).toContain('12 − 4 = **8 semitones**')
     expect(text).toContain('major and minor swap')
     expect(e.steps.filter((s) => s.staff)).toHaveLength(2)

@@ -23,15 +23,16 @@ describe('relativeKeyExample: relative keys', () => {
 
   it('has the working a reader needs: scale, numbered notes, the 6th or 3rd note, a distance check, a signature check with a picture', () => {
     const e = relativeKeyExample(major('G'), 'relative')
-    const text = e.steps.map((s) => s.text).join(' ')
-    expect(ascii(text)).toContain('G A B C D E F#')
-    expect(text).toContain('6th note')
-    expect(text).toContain('Count 3 letter names down from G: G, F, E')
-    expect(e.steps.at(-1)!.staff).toBeDefined()
-    expect(e.steps.at(-1)!.text).toContain('shares that signature')
-    const back = relativeKeyExample(minor('E'), 'relative').steps.map((s) => s.text).join(' ')
-    expect(back).toContain('3rd note')
-    expect(back).toContain('Count 3 letter names up from E: E, F, G')
+    expect(e.steps.map((s) => s.result)).toContain('G A B C D E')
+    expect(e.steps.filter((s) => s.title?.startsWith('Gap '))).toHaveLength(5)
+    const take = e.steps.find((s) => s.title === 'Take note 6, the submediant')!
+    expect(take.result).toBe('Relative minor: E minor')
+    expect(take.staff).toBeDefined()
+    expect(e.steps.at(-1)!.text).toContain('Letters down from G: G, F, E')
+    expect(e.steps.at(-1)!.text).toContain('G, F♯, F, E: 3 steps, so 3 semitones')
+    const back = relativeKeyExample(minor('E'), 'relative')
+    expect(back.steps.find((s) => s.title === 'Take note 3, the mediant')!.result).toBe('Relative major: G major')
+    expect(back.steps.at(-1)!.text).toContain('Letters up from E: E, F, G')
   })
 })
 

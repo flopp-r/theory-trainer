@@ -63,12 +63,12 @@ export function majorScaleExample(tonic: NoteName, clef: ClefName = 'treble'): W
       naturalExplained = true
     } else if (accidental > 0) {
       const sign = accidental === 1 ? 'a sharp' : 'a double sharp'
-      const reminder = sharpExplained ? '' : ` (${accidental === 1 ? '♯' : '𝄪'} raises a note by ${st(accidental)})`
+      const reminder = sharpExplained ? '' : ` (${accidental === 1 ? '♯' : 'a double sharp'} raises a note by ${st(accidental)})`
       sharpExplained = true
       fix = `The gap is ${st(accidental)} too small, so raise ${letter} with ${sign}${reminder}: **${noteLabel(next)}**.`
     } else {
       const sign = accidental === -1 ? 'a flat' : 'a double flat'
-      const reminder = flatExplained ? '' : ` (${accidental === -1 ? '♭' : '𝄫'} lowers a note by ${st(-accidental)})`
+      const reminder = flatExplained ? '' : ` (${accidental === -1 ? '♭' : 'a double flat'} lowers a note by ${st(-accidental)})`
       flatExplained = true
       fix = `The gap is ${st(-accidental)} too big, so lower ${letter} with ${sign}${reminder}: **${noteLabel(next)}**.`
     }

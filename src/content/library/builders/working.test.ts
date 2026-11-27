@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { type NoteName, note, parseNote } from '../../../theory'
 import { ascii, pc } from '../../../questions/handTables'
 import { noteLabel } from '../../../questions/pitchTools'
-import { MAJOR_PATTERN, NATURAL_MINOR_PATTERN, gapsBetween, lettersDown, lettersUp, noteAt, ordinal, patternInOneLine, spellByPattern, spellOnLetter } from './working'
+import { MAJOR_PATTERN, NATURAL_MINOR_PATTERN, Words, gapsBetween, keyWalk, lettersDown, lettersUp, noteAt, ordinal, scaleGapSteps, spellByPattern, spellOnLetter } from './working'
+import { MAJOR_SCALES, NATURAL_MINOR_SCALES } from '../../../questions/handTables'
 
 const text = (notes: readonly NoteName[]) => ascii(notes.map(noteLabel).join(' '))
 
@@ -47,9 +48,43 @@ describe('working helpers', () => {
     expect(gapsBetween([...spellByPattern(parseNote('A'), NATURAL_MINOR_PATTERN).notes, parseNote('A')])).toEqual([2, 1, 2, 2, 1, 2, 2])
   })
 
-  it('says each step in one line', () => {
-    expect(ascii(patternInOneLine(parseNote('G'), MAJOR_PATTERN).text)).toBe(
-      'G, then a tone above G is **A**; then a tone above A is **B**; then a semitone above B is **C**; then a tone above C is **D**; then a tone above D is **E**; then a tone above E is **F#** (the plain F needs a sharp to make a tone)',
+  it('builds every major and natural minor scale gap by gap, as the hand-written tables say', () => {
+    for (const [t, scale] of Object.entries(MAJOR_SCALES)) {
+      const g = scaleGapSteps(parseNote(t), 'major', 7, new Words())
+      expect(text(g.notes), t).toBe(`${scale} ${t}`)
+      expect(g.steps, t).toHaveLength(7)
+    }
+    for (const [t, scale] of Object.entries(NATURAL_MINOR_SCALES)) {
+      const g = scaleGapSteps(parseNote(t), 'natural minor', 7, new Words())
+      expect(text(g.notes), t).toBe(`${scale} ${t}`)
+    }
+    // stopping early gives just the first notes
+    expect(text(scaleGapSteps(parseNote('Eb'), 'major', 5, new Words()).notes)).toBe('Eb F G Ab Bb C')
+  })
+
+  it('explains each gap: the letter distance, what the pattern asks for and the sign', () => {
+    const w = new Words()
+    const g = scaleGapSteps(parseNote('D'), 'major', 7, w)
+    expect(g.steps[1]!.title).toBe('Gap 2: E up to F')
+    expect(g.steps[1]!.text).toBe(
+      'From E up to F is 1 semitone (there is no black key between them). The pattern asks for a tone (2 semitones). The gap is 1 semitone too small, so raise F with a sharp (♯ raises a note by 1 semitone): **F♯**.',
     )
+    expect(g.steps[1]!.result).toBe('Note 3: F♯')
+    expect(g.steps[6]!.result).toBe('Note 8: D, the key note again')
+    expect(w.terms().map((t) => t.term)).toEqual(['Natural', 'Sharp (♯)'])
+  })
+
+  it('gives a reminder in brackets only the first time a word is used', () => {
+    const w = new Words()
+    expect(w.say('semitone', 'semitones')).toBe('semitones (the smallest step, from one piano key to the very next)')
+    expect(w.say('semitone', 'semitone')).toBe('semitone')
+    expect(w.terms()).toHaveLength(1)
+  })
+
+  it('counts piano keys one at a time, refusing a wrong count', () => {
+    expect(keyWalk(parseNote('D'), parseNote('F#'), 4, 'up', false).join(' ')).toBe('D D♯ E F F♯')
+    expect(keyWalk(parseNote('Bb'), parseNote('F'), 7, 'up', true).join(' ')).toBe('B♭ B C D♭ D E♭ E F')
+    expect(keyWalk(parseNote('G'), parseNote('E'), 3, 'down', false).join(' ')).toBe('G F♯ F E')
+    expect(() => keyWalk(parseNote('C'), parseNote('E'), 3, 'up', false)).toThrow()
   })
 })
