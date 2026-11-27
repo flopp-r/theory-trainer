@@ -1,4 +1,5 @@
 import { VOCAB_CATEGORY_IDS } from '../../content/vocabulary'
+import { type Focus, reviewScope } from '../../progress/selection'
 import { GENERATORS, generatorFor } from '../../questions/registry'
 import { DIFFICULTY_LABELS, type Difficulty, QUESTION_TYPES, type QuestionType, type Topic, TOPICS } from '../../questions/types'
 import { CLEF_NAMES, type ClefName } from '../../theory'
@@ -13,6 +14,8 @@ export interface PracticeConfig {
   readonly vocabCategories: readonly string[]
   /** Only these question types (one weak area). Missing or empty means every type in the topics. */
   readonly types?: readonly QuestionType[]
+  /** A review round: every question goes to a due item or a weak area (spaced repetition). */
+  readonly review?: boolean
 }
 
 export const DEFAULT_PRACTICE_CONFIG: PracticeConfig = {
@@ -93,6 +96,7 @@ export function parsePracticeConfig(query: URLSearchParams): PracticeConfig {
     difficulty: levelText !== null && /^[1-3]$/.test(levelText) ? (Number(levelText) as Difficulty) : DEFAULT_PRACTICE_CONFIG.difficulty,
     vocabCategories: vocab,
     ...(types.length > 0 ? { types } : {}),
+    ...(query.get('review') === '1' ? { review: true } : {}),
   }
 }
 
@@ -110,6 +114,7 @@ export function practiceConfigToQuery(config: PracticeConfig): string {
   if (vocabIds.length > 0) parts.push(`vocab=${vocabIds.join(',')}`)
   const typeIds = QUESTION_TYPES.filter((t) => config.types?.includes(t))
   if (typeIds.length > 0) parts.push(`types=${typeIds.join(',')}`)
+  if (config.review) parts.push('review=1')
   return parts.join('&')
 }
 
@@ -124,8 +129,29 @@ function describeClefs(clefs: readonly ClefName[]): string {
   return `${text.charAt(0).toUpperCase()}${text.slice(1)} clef${names.length > 1 ? 's' : ''}`
 }
 
+/**
+ * The setup for a review round: the topics and question types of what is due or weak, in the clefs and at the
+ * level last practised, plus any clef a due item was asked in (an item can only come up again in its own clef).
+ * Null when there is nothing to review.
+ */
+export function reviewConfig(focus: Focus, base: PracticeConfig): PracticeConfig | null {
+  const scope = reviewScope(focus)
+  if (scope.types.length === 0) return null
+  const dueClefs = CLEF_NAMES.filter((c) => focus.due.some((i) => i.id.split(':').includes(c)))
+  return {
+    topics: scope.topics,
+    types: scope.types,
+    clefs: CLEF_NAMES.filter((c) => base.clefs.includes(c) || dueClefs.includes(c)),
+    maxLedgerLines: base.maxLedgerLines,
+    difficulty: base.difficulty,
+    vocabCategories: [],
+    review: true,
+  }
+}
+
 /** A short line for buttons, e.g. "Notes · Treble and bass clefs · Medium". */
 export function describeSetup(config: PracticeConfig): string {
+  if (config.review) return 'Review of your weak spots'
   const labels = ALL_TOPICS.filter((t) => config.topics.includes(t)).map((t) => TOPICS.find((x) => x.id === t)?.label ?? t)
   const typeLabels = QUESTION_TYPES.filter((t) => config.types?.includes(t)).map(questionTypeLabel)
   const topics =

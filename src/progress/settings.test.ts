@@ -23,7 +23,7 @@ describe('settings', () => {
 
   it('stores a version number', () => {
     setSoundEnabled(false)
-    expect(JSON.parse(localStorage.getItem('theory-trainer:settings')!)).toEqual({ version: 1, soundEnabled: false })
+    expect(JSON.parse(localStorage.getItem('theory-trainer:settings')!)).toEqual({ version: 1, soundEnabled: false, theme: 'auto' })
   })
 
   it('ignores damaged or unknown data and falls back to the defaults', () => {
@@ -45,5 +45,24 @@ describe('settings', () => {
     } finally {
       Storage.prototype.setItem = original
     }
+  })
+})
+
+describe('theme', () => {
+  it('follows the device by default, and remembers a choice', async () => {
+    const { getTheme, setTheme } = await import('./settings')
+    expect(getTheme()).toBe('auto')
+    setTheme('dark')
+    resetSettingsCache()
+    expect(getTheme()).toBe('dark')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    setTheme('auto')
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false)
+  })
+
+  it('ignores an unknown theme and keeps the sound setting', () => {
+    localStorage.setItem('theory-trainer:settings', '{"version":1,"soundEnabled":false,"theme":"purple"}')
+    resetSettingsCache()
+    expect(getSoundEnabled()).toBe(false)
   })
 })

@@ -158,3 +158,14 @@ export function clearRound(): void {
     // nothing to clear
   }
 }
+
+/** Every finished round still kept, oldest first. */
+export function getSessions(): readonly SessionRecord[] {
+  return read().sessions
+}
+
+/** Forget finished rounds and any unfinished one, but keep the last setup (it is a preference, not progress). */
+export function resetHistory(): void {
+  write({ ...read(), sessions: [] })
+  clearRound()
+}

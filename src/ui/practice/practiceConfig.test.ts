@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRACTICE_CONFIG, PRESETS, type PracticeConfig, TOPIC_GROUPS, describeSetup, presetFor, questionTypeLabel, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
+import { DEFAULT_PRACTICE_CONFIG, PRESETS, type PracticeConfig, TOPIC_GROUPS, describeSetup, presetFor, questionTypeLabel, reviewConfig, parsePracticeConfig, practiceConfigToQuery } from './practiceConfig'
 
 const parse = (text: string) => parsePracticeConfig(new URLSearchParams(text))
 
@@ -114,5 +114,31 @@ describe('presetFor and TOPIC_GROUPS', () => {
   it('lists every topic exactly once', () => {
     const grouped = TOPIC_GROUPS.flatMap((g) => g.topics)
     expect([...grouped].sort()).toEqual(['cadences', 'chords', 'ear', 'intervals', 'keys', 'notes', 'rhythm', 'scales', 'vocabulary'])
+  })
+})
+
+describe('review rounds', () => {
+  const item = (id: string, type: string, topic: string) => ({ id, type, topic, label: id, box: 0, due: 0, misses: 1, lastSeen: 0 })
+  const weakArea = (type: string, topic: string) => ({ type, topic, answered: 10, correct: 3, recent: Array.from({ length: 10 }, (_, i) => i < 3) })
+
+  it('keeps review=1 in the address', () => {
+    const c = parse('topics=notes&review=1')
+    expect(c.review).toBe(true)
+    expect(practiceConfigToQuery(c)).toContain('&review=1')
+    expect(parse('topics=notes').review).toBeUndefined()
+  })
+
+  it('covers what is due and weak, in the last-used clefs plus any clef a due item needs', () => {
+    const c = reviewConfig({ due: [item('place-note:alto:E4', 'place-note', 'notes')], weak: [weakArea('relative-key', 'keys')] }, DEFAULT_PRACTICE_CONFIG)!
+    expect([...c.topics].sort()).toEqual(['keys', 'notes'])
+    expect([...c.types!].sort()).toEqual(['place-note', 'relative-key'])
+    expect(c.clefs).toEqual(['treble', 'bass', 'alto'])
+    expect(c.review).toBe(true)
+    expect(parse(practiceConfigToQuery(c))).toEqual(c)
+    expect(describeSetup(c)).toBe('Review of your weak spots')
+  })
+
+  it('is null when nothing is due or weak', () => {
+    expect(reviewConfig({ due: [], weak: [] }, DEFAULT_PRACTICE_CONFIG)).toBeNull()
   })
 })

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLightTheme } from '../../progress/settings'
 import type { StaffSpec } from '../../questions/types'
 import { clefLabel } from '../../theory'
 import { type StaffGeometry, positionAtY, screenYToDrawingY } from './geometry'
@@ -27,20 +28,6 @@ interface Props {
  * Draws a stave. VexFlow is loaded the first time this appears, so the home screen stays light.
  * The default text label names the clef but never the notes (that would give the answer away).
  */
-const LIGHT_QUERY = '(prefers-color-scheme: light)'
-
-/** True in the light theme. The staff is redrawn when this changes, because its colours are baked into the drawing. */
-function useLightTheme(): boolean {
-  return useSyncExternalStore(
-    (callback) => {
-      const query = window.matchMedia?.(LIGHT_QUERY)
-      query?.addEventListener('change', callback)
-      return () => query?.removeEventListener('change', callback)
-    },
-    () => window.matchMedia?.(LIGHT_QUERY).matches ?? false,
-  )
-}
-
 export function StaffView({ staff, ledgerLines = 3, scale, minItems, scroll, onDrawn, onTap, tapRange, label }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const geometry = useRef<StaffGeometry | null>(null)

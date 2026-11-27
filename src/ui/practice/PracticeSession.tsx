@@ -2,7 +2,9 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { lessonForQuestionType } from '../../content/library'
 import { type SessionRecord, clearRound, loadRound, previousSession, recordSession, saveRound } from '../../progress/history'
 import { type AnswerResult } from '../../progress/sessionSummary'
-import { type Question, type QuestionContext, createRng, generateQuestion, randomSeed } from '../../questions'
+import { recordAnswer } from '../../progress/mastery'
+import { NUDGE_SHARE, currentFocus, pickQuestion } from '../../progress/selection'
+import { type Question, type QuestionContext, createRng, randomSeed } from '../../questions'
 import { StaffStack } from '../staff/StaffStack'
 import { ChoiceButtons } from './ChoiceButtons'
 import { EarPlayer, SoundSwitch } from './EarPlayer'
@@ -30,7 +32,10 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       vocabCategories: config.vocabCategories,
       avoidItemId,
     })
-    return { context, first: generateQuestion(context(), config.topics, config.types) }
+    // Spaced repetition: a review round always picks due or weak questions; a normal round does for about half.
+    const share = config.review ? 1 : NUDGE_SHARE
+    const pick = (avoidItemId?: string) => pickQuestion(context(avoidItemId), config.topics, config.types, currentFocus(), share)
+    return { pick, first: pick() }
   })
   const [question, setQuestion] = useState<Question>(start.first)
   const [chosen, setChosen] = useState<string | null>(null)
@@ -57,6 +62,8 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
       if (chosen !== null || (shownAt.current === null && !question.audio)) return
       const ms = shownAt.current === null ? 0 : Math.round(performance.now() - shownAt.current)
       setChosen(id)
+      // Remember every answer at once, so a round that is left early still counts.
+      recordAnswer({ itemId: question.id, type: question.type, topic: question.topic, label: question.itemLabel, correct: id === question.correct })
       setResults((r) => [
         ...r,
         { itemId: question.id, itemLabel: question.itemLabel, category: question.category, correct: id === question.correct, ms, topic: question.topic, type: question.type },
@@ -73,10 +80,10 @@ function PracticeRun({ config, onRestart }: { config: PracticeConfig; onRestart:
   const next = useCallback(() => {
     shownAt.current = null // restarted when the new question has been drawn
     setDrawn(false)
-    setQuestion((q) => generateQuestion(start.context(q.id), config.topics, config.types))
+    setQuestion((q) => start.pick(q.id))
     setChosen(null)
     setQuestionNumber((n) => n + 1)
-  }, [config.topics, config.types, start])
+  }, [start])
 
   const setupQuery = practiceConfigToQuery(config)
   const roundDone = results.length >= ROUND_LENGTH
