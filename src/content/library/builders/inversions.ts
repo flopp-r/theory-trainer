@@ -27,6 +27,7 @@ import {
   andList,
   article,
   countsText,
+  fit,
   assertSameNotes,
   capital,
   chordPicture,
@@ -40,6 +41,7 @@ import {
   letterStep,
   nameNotesStep,
   neighbourWalks,
+  walkCheck,
   ordinal,
   qualityFromSemitones,
   qualityPhrase,
@@ -132,9 +134,12 @@ export function analyseStack(written: readonly NoteName[], ex: Explained): Stack
       const lettersOnly = candidate.accidental !== 0 ? ex.once('letters-only', ' (sharps and flats do not change the letter count)') : ''
       tries.push({
         title: `Try ${c} as the root`,
-        text: `Count letter names up from ${candidate.letter}, counting ${candidate.letter} as 1${lettersOnly}: ${counted}. ${
-          ok ? `That is ${wantedWords}, so the notes are stacked in 3rds on ${c}.` : `A root needs ${wantedWords} above it, so ${c} is not the root.`
-        }`,
+        text: fit(
+          `Count letter names up from ${candidate.letter}, counting ${candidate.letter} as 1${lettersOnly}: ${counted}. ${
+            ok ? `That is ${wantedWords}, so the notes are stacked in 3rds on ${c}.` : `A root needs ${wantedWords} above it, so ${c} is not the root.`
+          }`,
+          `Count up from ${candidate.letter}, with ${candidate.letter} as 1${lettersOnly}: ${counted}. ${ok ? `So the notes are stacked in 3rds on ${c}.` : `Not ${wantedWords}, so ${c} is not the root.`}`,
+        ),
         result: ok ? `Root: ${c}` : `${c} is not the root`,
       })
     }
@@ -292,17 +297,17 @@ export function handChordSymbol(chord: Chord, inversion: number): string {
 }
 
 /** The check shared by the symbol examples: the 3rds of the chord counted by piano keys match the ending. */
-function symbolCheck(stack: readonly NoteName[], quality: ChordQuality, code: string, ex: Explained): WorkedStep {
+function symbolCheck(stack: readonly NoteName[], quality: ChordQuality, code: string, ex: Explained): WorkedStep[] {
   const walks = neighbourWalks(stack, ex)
   const expected = recipeCounts(quality).map((c, i, all) => c - (i === 0 ? 0 : all[i - 1]!))
   if (walks.sizes.join(',') !== expected.join(',')) throw new Error('The piano-key check does not match the chord type')
-  return {
-    title: 'Check another way: count the 3rds by piano keys',
-    text: `Count up one piano key at a time. ${walks.text} Added up from the root: ${walks.sizes
-      .map((_, i) => walks.sizes.slice(0, i + 1).reduce((x, y) => x + y, 0))
-      .join(', ')}.`,
-    result: `${walks.sizes.join(' then ')}: ${qualityPhrase(quality)}, as ${code === '' ? 'no ending means' : `the ending ${code} says`}`,
-  }
+  const totals = walks.sizes.map((_, i) => walks.sizes.slice(0, i + 1).reduce((x, y) => x + y, 0))
+  return walkCheck(
+    'Check another way: count the 3rds by piano keys',
+    walks,
+    `Added up from the root: ${totals.join(', ')}.`,
+    `${walks.sizes.join(' then ')}: ${qualityPhrase(quality)}, as ${code === '' ? 'no ending means' : `the ending ${code} says`}`,
+  )
 }
 
 /**
@@ -357,7 +362,7 @@ export function chordSymbolExample(chord: Chord, inversion: number, clef: ClefNa
             text: `The bass note${ex.once('bass', ' (the lowest note)')} is ${noteLabel(bass)}, the ${ROLE[inversion]} of the chord, not the root. So the chord is in ${INVERSION_ORDER[inversion]}. Add a slash and the bass note: this makes a slash chord, read as "${label} with ${noteLabel(bass)} in the bass".`,
             result: `Symbol: ${symbol}`,
           },
-      symbolCheck(a.stack, chord.quality, code, ex),
+      ...symbolCheck(a.stack, chord.quality, code, ex),
     ],
     answer: `The chord symbol is ${symbol}.`,
   })
@@ -451,7 +456,7 @@ export function readChordSymbolExample(chord: Chord, inversion: number, clef: Cl
         staff: chordsOnStaff(clef, [pitches]),
         listen: listenChord(`Hear ${symbol}`, pitches),
       },
-      symbolCheck(stack, chord.quality, parts.code, ex),
+      ...symbolCheck(stack, chord.quality, parts.code, ex),
     ],
     answer: `${symbol} is ${notesLabel(written)}, written lowest first${inversion > 0 ? ` (${INVERSION_ORDER[inversion]})` : ' (root position)'}.`,
   })

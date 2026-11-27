@@ -43,6 +43,7 @@ import {
   intervalTerm,
   letterNumber,
   neighbourWalks,
+  walkCheck,
   ordinal,
   pianoWalk,
   qualityFromSemitones,
@@ -171,12 +172,13 @@ export function earChordExample(root: NoteName, quality: TriadQuality, clef: Cle
         text: `Each triad type has its own counts from the root. ${TRIAD_TABLE_TEXT} Yours are ${third.total} and ${fifth.total}.`,
         result: `${article(quality)} triad: ${label}, as you heard`,
       },
-      {
-        title: 'Check another way: count the 3rds by piano keys',
-        text: `Count up one piano key at a time between neighbouring notes. ${walks.text} ${article(quality)} triad is ${recipe.lowerSemis} then ${recipe.upperSemis}.`,
-        result: `${walks.sizes[0]} then ${walks.sizes[1]}: ${label}, as it should be`,
-        listen: listenChord(`Play ${label} again`, pitches),
-      },
+      ...walkCheck(
+        'Check another way: count the 3rds by piano keys',
+        walks,
+        `${article(quality)} triad is ${recipe.lowerSemis} then ${recipe.upperSemis}.`,
+        `${walks.sizes[0]} then ${walks.sizes[1]}: ${label}, as it should be`,
+        listenChord(`Play ${label} again`, pitches),
+      ),
     ],
     answer: `The chord was ${label} (${notesLabel(notes)}).`,
   })

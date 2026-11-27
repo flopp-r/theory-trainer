@@ -20,7 +20,7 @@ import { cadenceAudio } from '../../../questions/earAudio'
 import { keyLabel, noteLabel, notesLabel } from '../../../questions/pitchTools'
 import type { WorkedExample, WorkedStep, WorkedTerm } from '../types'
 import { chordsOnStaff } from './common'
-import { Explained, TERM, andList, capital, finish, sharedPictures } from './chords'
+import { Explained, TERM, andList, capital, finish, fit, sharedPictures } from './chords'
 import { handChordSymbol } from './inversions'
 import { numeralSteps, scaleSteps, stackSteps } from './romanNumerals'
 
@@ -226,7 +226,7 @@ export function cadenceExample(key: Key, type: CadenceType, task: 'identify' | '
     steps: [
       {
         title: 'Look up the pattern',
-        text: `You are writing ${cadenceWords}. ${DEFINITION[type]} In ${kName} that is ${pair}.${homeNote}`,
+        text: fit(`You are writing ${cadenceWords}. ${DEFINITION[type]} In ${kName} that is ${pair}.${homeNote}`, `You are writing ${cadenceWords}. ${DEFINITION[type]} In ${kName} that is ${pair}.${minor ? ' (The minor tonic chord is i.)' : ''}`),
         result: pair,
       },
       ...scaleWork,

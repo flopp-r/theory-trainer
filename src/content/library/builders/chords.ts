@@ -24,7 +24,7 @@ import {
 } from '../../../theory'
 import { chordOnStaff, chordWords } from '../../../questions/chords'
 import { fitsOnStaff, noteLabel, notesLabel } from '../../../questions/pitchTools'
-import type { WorkedExample, WorkedStep, WorkedTerm } from '../types'
+import type { ListenItem, WorkedExample, WorkedStep, WorkedTerm } from '../types'
 import { listenChord } from './audio'
 import { chordsOnStaff } from './common'
 
@@ -260,6 +260,14 @@ export function countsTable(size: number, ex: Explained): string {
 export function countsText(size: number, counts: readonly number[], quality: ChordQuality, ex: Explained): string {
   const table = countsTable(size, ex)
   return table ? `${table} Yours are ${andList(counts.map(String))}.` : `Yours are ${andList(counts.map(String))}: the counts of a ${qualityPhrase(quality)}.`
+}
+
+/** The longest text a step may have (workedStyle.test.ts). */
+const MAX_WORDS = 55
+
+/** The first wording that fits in a step, for inputs that make the usual wording too long. */
+export function fit(...variants: string[]): string {
+  return variants.find((v) => wordCount(v) <= MAX_WORDS) ?? variants.at(-1)!
 }
 
 /** "A" or "An", for the start of a sentence. */
@@ -659,11 +667,41 @@ export function chordSequenceAudio(chords: readonly (readonly Pitch[])[], gap = 
  * "Check another way: count the 3rds by piano keys": walks between neighbouring notes of a chord stacked in 3rds.
  * Returns the walks' text pieces and the sizes.
  */
-export function neighbourWalks(notes: readonly NoteName[], ex: Explained): { sizes: number[]; text: string } {
+export interface NeighbourWalks {
+  readonly sizes: number[]
+  /** Every walk, then any note about unusual spellings. */
+  readonly text: string
+  /** One sentence per walk. */
+  readonly parts: string[]
+  /** Sentences about unusual spellings, or ''. */
+  readonly note: string
+}
+
+export function neighbourWalks(notes: readonly NoteName[], ex: Explained): NeighbourWalks {
   const flats = prefersFlats(notes)
   const walks = notes.slice(1).map((n, i) => ({ from: notes[i]!, to: n, walk: pianoWalk(notes[i]!, n, ex, 'up', flats) }))
-  const text = walks.map((w) => `${noteLabel(w.from)} to ${noteLabel(w.to)}: ${w.walk.text}.`).join(' ') + sameKeyNotes(notes)
-  return { sizes: walks.map((w) => w.walk.steps), text }
+  const parts = walks.map((w) => `${noteLabel(w.from)} to ${noteLabel(w.to)}: ${w.walk.text}.`)
+  const note = sameKeyNotes(notes)
+  return { sizes: walks.map((w) => w.walk.steps), text: parts.join(' ') + note, parts, note }
+}
+
+/**
+ * The piano-key check as one step, or as two when the walks are too long to read in one
+ * (a 7th chord full of double flats, for example). The last step keeps `title`.
+ */
+export function walkCheck(title: string, walks: NeighbourWalks, tail: string, result: string, listen?: ListenItem): WorkedStep[] {
+  const intro = 'Count up one piano key at a time.'
+  const text = fit(`${intro} ${walks.text} ${tail}`, `${walks.text} ${tail}`)
+  if (wordCount(text) <= MAX_WORDS) return [{ title, text, result, ...(listen ? { listen } : {}) }]
+  const half = Math.ceil(walks.parts.length / 2)
+  return [
+    {
+      title: 'Check another way: count the lower 3rds',
+      text: `${intro} ${walks.parts.slice(0, half).join(' ')}`,
+      result: `${walks.sizes.slice(0, half).join(' then ')} semitones`,
+    },
+    { title, text: `${walks.parts.slice(half).join(' ')}${walks.note} ${tail}`, result, ...(listen ? { listen } : {}) },
+  ]
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -732,11 +770,12 @@ export function buildTriadExample(root: NoteName, quality: TriadQuality, clef: C
         staff: chordsOnStaff(clef, [pitches]),
         listen: listenChord(`Hear ${label}`, pitches),
       },
-      {
-        title: 'Check another way: count the 3rds by piano keys',
-        text: `Count up one piano key at a time. ${walks.text} ${article(quality)} triad is ${recipe.lowerSemis} then ${recipe.upperSemis}: a ${recipe.lower} with a ${recipe.upper} on top.`,
-        result: `${walks.sizes[0]} then ${walks.sizes[1]}: ${label}, as it should be`,
-      },
+      ...walkCheck(
+        'Check another way: count the 3rds by piano keys',
+        walks,
+        `${article(quality)} triad is ${recipe.lowerSemis} then ${recipe.upperSemis}: a ${recipe.lower} with a ${recipe.upper} on top.`,
+        `${walks.sizes[0]} then ${walks.sizes[1]}: ${label}, as it should be`,
+      ),
     ],
     answer: `The ${label} triad is ${notesLabel(notes)}.`,
   })
@@ -881,7 +920,7 @@ export function buildSeventhExample(root: NoteName, quality: SeventhQuality, cle
       },
       {
         title: 'Check another way: the triad at the bottom',
-        text: `Count up one piano key at a time between the lower three notes. ${walks.text} ${walks.sizes[0]} then ${walks.sizes[1]} is a ${recipe.triad} triad, as a ${name} chord needs.`,
+        text: fit(`Count up one piano key at a time between the lower three notes. ${walks.text} ${walks.sizes[0]} then ${walks.sizes[1]} is a ${recipe.triad} triad, as a ${name} chord needs.`, `${walks.text} ${walks.sizes[0]} then ${walks.sizes[1]} is a ${recipe.triad} triad, as a ${name} chord needs.`),
         result: `${notesLabel(notes.slice(0, 3))}: a ${recipe.triad} triad`,
       },
       {
@@ -939,14 +978,10 @@ export function identifySeventhExample(pitches: readonly Pitch[], clef: ClefName
       ...counts.flatMap((c) => c.steps),
       {
         title: 'Match the three counts to a 7th chord type',
-        text: `Each type has its own three counts from the root (to the 3rd, 5th and 7th). ${SEVENTH_TABLE_TEXT} Yours are ${totals.join(', ')}, and the root is ${noteLabel(root)}.`,
+        text: `Each type has its own three counts from the root (to the 3rd, 5th and 7th). ${SEVENTH_TABLE_TEXT} Yours are ${totals.join(', ')}.`,
         result: `A ${SEVENTH_NAME[quality]} chord: ${label}`,
       },
-      {
-        title: 'Check another way: count the 3rds between neighbours',
-        text: `Count up one piano key at a time between neighbouring notes. ${walks.text} Added up: ${walks.sizes.join(' + ')} = ${sum}.`,
-        result: `${sum}, the same as your count from the root to the 7th`,
-      },
+      ...walkCheck('Check another way: count the 3rds between neighbours', walks, `Added up: ${walks.sizes.join(' + ')} = ${sum}.`, `${sum}, the same as your count from the root to the 7th`),
     ],
     answer: `It is ${label} (${notesLabel(notes)}).`,
   })

@@ -37,9 +37,11 @@ import {
   chordTypeTerm,
   countStep,
   finish,
+  fit,
   intervalTerm,
   nameNotesStep,
   neighbourWalks,
+  walkCheck,
   qualityFromSemitones,
   qualityPhrase,
   semitoneWorking,
@@ -125,7 +127,9 @@ export function scaleSteps(key: Key, ex: Explained): { scale: NoteName[]; steps:
       ? 'no sharps or flats, so every note is a natural'
       : signs.length === 7
         ? `7 ${kind}s, so every letter takes a ${kind}`
-        : `${signs.length} ${kind}${signs.length === 1 ? '' : 's'}: ${andList(signs)}. So ${andList(signature.accidentals.map((a) => a.letter))} ${signs.length === 1 ? 'becomes' : 'become'} ${andList(signs)}`
+        : signs.length <= 3
+          ? `${signs.length} ${kind}${signs.length === 1 ? '' : 's'}: ${andList(signs)}. So ${andList(signature.accidentals.map((a) => a.letter))} ${signs.length === 1 ? 'becomes' : 'become'} ${andList(signs)}`
+          : `${signs.length} ${kind}s: ${andList(signs)}. Add a ${kind} to each of those letters`
   const minorText = key.mode === 'minor' ? ' This gives the natural minor scale.' : ''
   return {
     scale,
@@ -366,12 +370,12 @@ export function buildFromNumeral(key: Key, numeral: string): NumeralBuild {
 }
 
 /** Why degree 7 is raised, for the step that stacks the chord. */
-function raisedStackText(b: NumeralBuild, numeral: string): string {
+function raisedStackText(b: NumeralBuild, numeral: string, short = false): string {
   if (!b.usedRaised) return ''
   const from = b.scale[6]!
   const to = note(from.letter, from.accidental + 1)
-  const without = b.degree === 5 ? 'Without it, the chord would be minor (v).' : 'Without it, the chord would be major (VII).'
-  return ` In a minor key, ${numeral} uses scale degree 7 raised by a semitone (the leading note): ${noteLabel(from)} becomes ${spokenNote(to)}. ${without}`
+  const without = short ? '' : b.quality === 'dominant7' ? ' Without it, the 3rd would be too small for a dominant 7th.' : b.degree === 5 ? ' Without it, the chord would be minor (v).' : ' Without it, the chord would be major (VII).'
+  return ` In a minor key, ${numeral} uses scale degree 7 raised by a semitone (the leading note): ${noteLabel(from)} becomes ${spokenNote(to)}.${without}`
 }
 
 /** The steps that build a chord from a numeral: degree, stack, count, match. Used here and for cadences. */
@@ -384,6 +388,7 @@ export function stackSteps(key: Key, numeral: string, ex: Explained, which = '',
   const counted = b.notes.slice(1).map((n, i) => countStep(root, n, ex, `Count from ${noteLabel(root)} up to the ${ROLES[i] as Role}, ${noteLabel(n)}`))
   if (counted.map((c) => c.total).join(',') !== b.counts.join(',')) throw new Error('Counts disagree')
   const symbol = handChordSymbol(b.chord, 0)
+  const stackBase = `Take the root, skip one scale note, take the next${b.notes.length === 4 ? ', and do it twice more' : ', and do it once more'}: scale degrees ${b.numbers.join(', ')}${wraps ? ex.once('wrap', ' (after 7, start again at 1)') : ''}.`
   return {
     build: b,
     steps: [
@@ -394,7 +399,7 @@ export function stackSteps(key: Key, numeral: string, ex: Explained, which = '',
       },
       {
         title: `Build ${numeral}: stack 3rds on ${noteLabel(root)}`,
-        text: `Take the root, skip one scale note, take the next${b.notes.length === 4 ? ', and do it twice more' : ', and do it once more'}: scale degrees ${b.numbers.join(', ')}${wraps ? ex.once('wrap', ' (after 7, start again at 1)') : ''}.${raisedStackText(b, numeral)}`,
+        text: fit(`${stackBase}${raisedStackText(b, numeral)}`, `${stackBase}${raisedStackText(b, numeral, true)}`),
         result: notesLabel(b.notes),
       },
       ...counted.flatMap((c) => c.steps),
@@ -459,11 +464,12 @@ export function chordFromNumeralExample(key: Key, numeral: string, clef: ClefNam
       findRoot!,
       { ...stack!, staff: chordsOnStaff(clef, [pitches], key), listen: listenChord(`Hear ${symbol}`, pitches) },
       ...rest,
-      {
-        title: 'Check another way: count the 3rds by piano keys',
-        text: `Count up one piano key at a time. ${walks.text} Added up: ${walks.sizes.join(' + ')} = ${b.counts.at(-1)}.`,
-        result: `${b.counts.at(-1)}, as you counted to the top note: ${qualityPhrase(b.quality)}`,
-      },
+      ...walkCheck(
+        'Check another way: count the 3rds by piano keys',
+        walks,
+        `Added up: ${walks.sizes.join(' + ')} = ${b.counts.at(-1)}.`,
+        `${b.counts.at(-1)}, as you counted to the top note: ${qualityPhrase(b.quality)}`,
+      ),
     ],
     answer: `In ${kName}, ${numeral} is ${symbol}: ${notesLabel(b.notes)}.`,
   })
