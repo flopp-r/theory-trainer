@@ -29,13 +29,38 @@ In this order (use `h()` headings; short headings in plain words):
 - Memory aids (mnemonics) are welcome but label them as aids: "A memory aid: ...".
 - Never put personal information anywhere. The repository is public.
 
+## Worked examples: the format
+Every worked example has the same parts, shown in this order. `builders/scales.ts` (`majorScaleExample`) is the model to copy.
+
+1. **Question** (`task`): one sentence.
+2. **Words you need** (`terms`): every musical word the working uses that a beginner might not know, each with a meaning
+   in one plain sentence (at most 30 words). Use real musical terms (tonic, natural, root, 3rd, interval, simple time...),
+   never made-up ones ("anchor note", "plain E"). Each example lists its own words, because readers jump straight to it.
+3. **Steps**. Each step has:
+   - `title`: what to do, as a short instruction (at most 10 words, no full stop): "Write the letter names".
+   - `text`: how, with every count shown (at most about 50 words). The **first time** a term from Words you need appears
+     in the steps, add a short reminder in brackets: "raise F with a sharp (♯ raises a note by 1 semitone)".
+   - `result`: what the step gives you, with no full stop (at most 20 words): "Note 3: F♯". Results line up down the
+     page, so a reader can follow the answer by reading the results alone.
+4. **Check another way**: the last step, titled "Check …", reaches the answer by a **different route** (for a scale, count up
+   one piano key at a time from the key note to note 3). Never just restate the rule or the answer.
+5. **Answer**: one sentence.
+
+Rules:
+- **One action per step. Do not skip anything.** When the same working repeats (each gap of a scale, each note of a chord),
+  write one short step for each, in words. No tables inside worked examples.
+- Show every count: list the letters or piano keys you count ("D, D♯, E, F, F♯: 4 steps, so 4 semitones").
+- Explain *why* a count is what it is the first time (E to F is 1 semitone because there is no black key between them).
+- No "Step 1:" inside a numbered step, no tick marks, no exclamation marks, no filler ("Look at the picture").
+- `npx vitest run src/content/library/workedStyle.test.ts -t "<lesson id>"` checks these rules for one lesson.
+
 ## Worked examples are built by the theory engine
 Do not type spellings, counts or semitone numbers by hand. Write a **builder** in `builders/<area>.ts` that returns a `WorkedExample`
 (see `builders/notes.ts` and `builders/scales.ts`). Rules for builders:
 - Compute every spelling, count and number with the functions in `src/theory/` (or by simple arithmetic on pitch classes).
 - Where you can, do the long-hand working by one method (for example counting semitones) and then **cross-check against the engine
   by a different route, and throw an Error if they disagree** (see `majorScaleExample`). A wrong example then cannot be shown.
-- Each step is one `WorkedStep { text, staff?, listen? }`. Add a `staff` (notation picture) where it helps; use `listen` for sound
+- Each step is one `WorkedStep { title, text, result, staff?, listen? }`. Add a `staff` (notation picture) where it helps; use `listen` for sound
   (`builders/audio.ts`) where hearing it helps.
 - Write the text so it reads well when the same builder is used with different inputs.
 - Every builder needs a test in `builders/<area>.test.ts` that compares its answers with **hand-written tables**

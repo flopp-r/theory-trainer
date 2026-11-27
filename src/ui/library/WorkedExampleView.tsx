@@ -27,14 +27,46 @@ export function WorkedExampleView({ example }: { example: WorkedExample }) {
         <strong>Question: </strong>
         <InlineText text={example.task} />
       </p>
+      {example.terms && example.terms.length > 0 && (
+        <div className="worked-terms">
+          <p className="worked-terms-title">Words you need</p>
+          <dl>
+            {example.terms.map((t) => (
+              <div key={t.term}>
+                <dt>
+                  <InlineText text={t.term} />
+                </dt>
+                <dd>
+                  <InlineText text={t.meaning} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
       <ol className="worked-steps">
         {example.steps.map((step, i) => (
           <li key={i}>
+            {step.title && (
+              <p className="step-title">
+                <InlineText text={step.title} />
+              </p>
+            )}
             <p>
               <InlineText text={step.text} />
             </p>
             {step.staff && <StaffStack notation={{ staves: [step.staff] }} ledgerLines={0} scroll />}
             {step.listen && <ListenButton item={step.listen} />}
+            {step.result && (
+              // What the step gives you, always in the same place, so you can read down the results alone.
+              <p className="step-result">
+                <Icon name="arrow-right" size={16} />
+                <span className="sr-only">Result: </span>
+                <span>
+                  <InlineText text={step.result} />
+                </span>
+              </p>
+            )}
           </li>
         ))}
       </ol>
