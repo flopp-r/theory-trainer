@@ -918,7 +918,7 @@ legend {
 /* Each step: what to do, how, and what it gives you. */
 .worked-steps .step-title { margin: 0 0 var(--space-1); font-weight: 600; }
 .worked-steps .step-result { display: flex; align-items: baseline; gap: var(--space-2); margin: var(--space-2) 0 0; font-weight: 600; color: var(--accent); }
-.worked-steps .step-result .icon { align-self: center; color: var(--muted); }
+.worked-steps .step-result .icon { align-self: flex-start; margin-top: 0.2em; color: var(--muted); }
 .worked-answer { margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); border-radius: 0.6rem; background: var(--bg); border: 1px solid var(--line); }
 .worked-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .worked-plain { margin-top: var(--space-2); font-size: 0.85rem; color: var(--muted); }
