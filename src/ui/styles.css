@@ -1123,8 +1123,10 @@ legend {
 }
 
 /* ---- Light theme: a paper page, ink type, and ink for the main action ---- */
+/* Light theme tokens apply when the device is in light mode (unless the app is set to Dark),
+   or when the app is set to Light in Settings. */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme='dark']) {
     --bg: #f3eee2;
     --surface: #e7e0cf;
     --line: #d2c8b3;
@@ -1159,4 +1161,138 @@ legend {
     --note-tip-line: #a9bfd9;
     --note-tip: #1f4f7f;
   }
+}
+
+:root[data-theme='light'] {
+  --bg: #f3eee2;
+  --surface: #e7e0cf;
+  --line: #d2c8b3;
+  --text: #1c1b18;
+  --muted: #57514a;
+  --accent: #1c1b18;
+  --good: #1d6b45;
+  --warn: #7a4f00;
+  --bad: #a3261a;
+  /* The staff card and title page are brighter than the page, so music still sits on its own sheet. */
+  --paper: #fffdf8;
+  --title-bg: #fffdf8;
+  --title-fg: #1c1b18;
+  --title-muted: #5b554a;
+  --staff-bg: #fffdf8;
+  --staff-ink: #1c1b18;
+  --staff-good: #0f766e;
+  --staff-bad: #b42318;
+  --error-on-paper: #92400e;
+  --action-bg: #1c1b18;
+  --action-fg: #f8f4ea;
+  --action-hover: #37342e;
+  --action-pressed: #4a463e;
+  --select-bg: #1c1b18;
+  --select-fg: #f8f4ea;
+  --select-muted: #cfc6b4;
+  --surface-hover: #ddd5c1;
+  --surface-pressed: #d2c9b4;
+  --bg-hover: #ebe5d6;
+  --staff-rule: #b3aa98;
+  --note-watch-line: #d6b36a;
+  --note-tip-line: #a9bfd9;
+  --note-tip: #1f4f7f;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ---- Progress and settings ---- */
+.home-links {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
+}
+
+.settings-text {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.progress-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.stat {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.areas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.area {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .area:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.area:active {
+  background: var(--surface-pressed);
+}
+
+.area:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.area-name {
+  font-weight: 600;
+}
+
+.area-detail {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* How much of the last few answers were right: a plain bar, filled by scaling so it never re-lays the page. */
+.area-bar {
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.area-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
 }

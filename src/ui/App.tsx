@@ -1,6 +1,8 @@
 import { Suspense, lazy } from 'react'
 import { getLastSetup } from '../progress/history'
 import { HomeScreen } from './HomeScreen'
+import { ProgressScreen } from './ProgressScreen'
+import { SettingsScreen } from './SettingsScreen'
 import { PracticeSession } from './practice/PracticeSession'
 import { PracticeSetup } from './practice/PracticeSetup'
 import { parsePracticeConfig } from './practice/practiceConfig'
@@ -38,6 +40,10 @@ export function App() {
         />
       )
     }
+    case '/progress':
+      return <ProgressScreen />
+    case '/settings':
+      return <SettingsScreen />
     case '/practice/play':
       return <PracticeSession key={query.toString()} config={parsePracticeConfig(query)} />
     case '/library':
