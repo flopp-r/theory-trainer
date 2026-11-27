@@ -23,8 +23,8 @@ export function styleProblems(example: WorkedExample): string[] {
   if (terms.length < 2) problems.push('needs "Words you need" with 2 or more terms')
   const everything = plain([example.task, example.answer, ...example.steps.flatMap((s) => [s.title ?? '', s.text, s.result ?? ''])].join(' ')).toLowerCase()
   for (const t of terms) {
-    if (/\.$/.test(t.term)) problems.push(`term "${t.term}" ends with a full stop`)
-    if (!/\.$/.test(t.meaning)) problems.push(`meaning of "${t.term}" should be a sentence ending with a full stop`)
+    if (t.term.endsWith('.')) problems.push(`term "${t.term}" ends with a full stop`)
+    if (!t.meaning.endsWith('.')) problems.push(`meaning of "${t.term}" should be a sentence ending with a full stop`)
     if (words(t.meaning) > 30) problems.push(`meaning of "${t.term}" is over 30 words`)
     const name = plain(t.term).replace(/\s*\(.*\)\s*/g, '').trim().toLowerCase()
     if (!everything.includes(name)) problems.push(`term "${t.term}" is not used in the working`)
@@ -41,7 +41,7 @@ export function styleProblems(example: WorkedExample): string[] {
     if (!s.result) problems.push(`${n} has no result`)
     else {
       if (words(plain(s.result)) > 20) problems.push(`${n} result is over 20 words`)
-      if (/\.$/.test(s.result)) problems.push(`${n} result ends with a full stop`)
+      if (s.result.endsWith('.')) problems.push(`${n} result ends with a full stop`)
     }
     for (const field of [s.title ?? '', s.text, s.result ?? '']) {
       for (const [pattern, what] of BANNED) if (pattern.test(field)) problems.push(`${n} has ${what}`)

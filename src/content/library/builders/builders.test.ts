@@ -51,22 +51,26 @@ describe('majorScaleExample', () => {
     for (const [tonic, expected] of Object.entries(MAJOR_SCALES)) {
       const e = majorScaleExample(parseNote(tonic))
       // seven notes and then the key note again, with nothing doubled
-      expect(ascii(e.answer), tonic).toBe(`The ${tonic} major scale is ${expected} ${tonic}. (Key: ${tonic} major.)`)
+      expect(ascii(e.answer), tonic).toBe(`The ${tonic} major scale is ${expected} ${tonic}.`)
     }
   })
 
-  it('has the three set-up steps, seven note steps, a check and a result', () => {
+  it('has three set-up steps, one step per gap, the written-out scale and a check', () => {
     const e = majorScaleExample(note('D'))
     expect(e.steps).toHaveLength(3 + 7 + 1 + 1)
-    expect(e.steps.slice(3, 10).every((s) => s.text.startsWith('**Note '))).toBe(true)
-    expect(e.steps.at(-1)!.staff).toBeDefined()
-    expect(e.steps.at(-1)!.listen).toBeDefined()
+    expect(e.steps.slice(3, 10).every((s) => s.title?.startsWith('Gap '))).toBe(true)
+    expect(e.steps[10]!.staff).toBeDefined()
+    expect(e.steps[10]!.listen).toBeDefined()
+    expect(e.steps.at(-1)!.title).toMatch(/^Check another way/)
   })
 
   it('adds a sharp or flat only when the pattern needs one (D major: F♯ and C♯ only)', () => {
     const e = majorScaleExample(note('D'))
-    const notes = e.steps.filter((s) => s.text.startsWith('**Note ')).map((s) => /the note is \*\*([^*]+)\*\*/.exec(s.text)?.[1] ?? /just \*\*([A-G])\*\*/.exec(s.text)![1]!)
+    const gapSteps = e.steps.filter((s) => s.title?.startsWith('Gap '))
+    const notes = gapSteps.map((s) => /^Note \d: ([A-G]♯?♭?)/.exec(s.result!)![1]!)
     expect(notes).toEqual(['E', 'F♯', 'G', 'A', 'B', 'C♯', 'D'])
+    // only the gaps that needed a sign say so
+    expect(gapSteps.filter((s) => /raise|lower/.test(s.text)).map((s) => s.result)).toEqual(['Note 3: F♯', 'Note 7: C♯'])
   })
 
   it('works for every clef without error', () => {
