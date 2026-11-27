@@ -26,7 +26,13 @@ function textsOf(block: Block): string[] {
     case 'practise':
       return [block.link.label]
     case 'worked':
-      return [block.example.title, block.example.task, block.example.answer, ...block.example.steps.map((s) => s.text)]
+      return [
+        block.example.title,
+        block.example.task,
+        block.example.answer,
+        ...block.example.steps.flatMap((s) => [s.title ?? '', s.text, s.result ?? '']),
+        ...(block.example.terms ?? []).flatMap((t) => [t.term, t.meaning]),
+      ]
   }
 }
 
@@ -65,7 +71,7 @@ describe('the chords, cadences, vocabulary and ear lessons', () => {
     for (const l of CHORDS_EAR_LESSONS) {
       for (const b of l.build()) {
         if (b.type !== 'worked') continue
-        expect(b.example.steps.some((s) => s.text.startsWith('Check')), `${l.id}: ${b.example.title}`).toBe(true)
+        expect(b.example.steps.at(-1)!.title?.startsWith('Check another way'), `${l.id}: ${b.example.title}`).toBe(true)
       }
     }
   })

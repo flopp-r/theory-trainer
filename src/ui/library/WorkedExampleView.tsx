@@ -5,6 +5,9 @@ import { InlineText } from './InlineText'
 import { ListenButton } from './ListenButton'
 import { Icon } from '../Icon'
 
+/** Lists of up to this many words are shown open; longer ones start folded. */
+const TERMS_SHOWN_OPEN = 8
+
 /** One complete piece of working: question, numbered steps, answer, and a way to copy it. */
 export function WorkedExampleView({ example }: { example: WorkedExample }) {
   const [copied, setCopied] = useState<'no' | 'yes' | 'failed'>('no')
@@ -27,14 +30,45 @@ export function WorkedExampleView({ example }: { example: WorkedExample }) {
         <strong>Question: </strong>
         <InlineText text={example.task} />
       </p>
+      {example.terms.length > 0 && (
+        // A long list folds away so the working stays near the question; each step still explains a word where it is first used.
+        <details className="worked-terms" open={example.terms.length <= TERMS_SHOWN_OPEN}>
+          <summary className="worked-terms-title">
+            Words you need{example.terms.length > TERMS_SHOWN_OPEN ? ` (${example.terms.length})` : ''}
+          </summary>
+          <dl>
+            {example.terms.map((t) => (
+              <div key={t.term}>
+                <dt>
+                  <InlineText text={t.term} />
+                </dt>
+                <dd>
+                  <InlineText text={t.meaning} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
       <ol className="worked-steps">
         {example.steps.map((step, i) => (
           <li key={i}>
+            <p className="step-title">
+              <InlineText text={step.title} />
+            </p>
             <p>
               <InlineText text={step.text} />
             </p>
             {step.staff && <StaffStack notation={{ staves: [step.staff] }} ledgerLines={0} scroll />}
             {step.listen && <ListenButton item={step.listen} />}
+            {/* What the step gives you, always in the same place, so you can read down the results alone. */}
+            <p className="step-result">
+              <Icon name="arrow-right" size={16} />
+              <span className="sr-only">Result: </span>
+              <span>
+                <InlineText text={step.result} />
+              </span>
+            </p>
           </li>
         ))}
       </ol>

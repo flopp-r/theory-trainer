@@ -52,13 +52,23 @@ describe('minorScaleExample', () => {
     for (const t of tonics) expect(ascii(noteLabel(relativeMajorTonic(parseNote(t)))), t).toBe(RELATIVE_MAJOR[t])
   })
 
-  it('has the steps a reader needs: start, letters, pattern, six note steps, check, write-out with picture and sound, relative-major check', () => {
+  it('has the steps a reader needs: key note, letters, pattern, one step per gap, write-out with picture and sound, a check by counting keys', () => {
     const e = minorScaleExample(parseNote('A'), 'natural')
-    expect(e.steps).toHaveLength(3 + 6 + 1 + 1 + 1)
-    expect(e.steps.slice(3, 9).every((s) => s.text.startsWith('**Note '))).toBe(true)
+    expect(e.steps).toHaveLength(3 + 7 + 1 + 1)
+    expect(e.steps.slice(3, 10).map((s) => s.title)).toEqual(['A up to B', 'B up to C', 'C up to D', 'D up to E', 'E up to F', 'F up to G', 'G up to A'].map((t, i) => `Gap ${i + 1}: ${t}`))
+    expect(e.steps.slice(3, 10).map((s) => s.result)).toEqual(['Note 2: B', 'Note 3: C', 'Note 4: D', 'Note 5: E', 'Note 6: F', 'Note 7: G', 'Note 8: A, the key note again'])
     expect(e.steps[10]!.staff).toBeDefined()
     expect(e.steps[10]!.listen).toBeDefined()
-    expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+    expect(e.steps.at(-1)!.title!.startsWith('Check another way')).toBe(true)
+    expect(e.steps.at(-1)!.text).toContain('A, A♯, B, C: 3 steps, so 3 semitones')
+    expect(e.terms!.map((t) => t.term)).toContain('Natural minor scale')
+  })
+
+  it('lowers notes 3, 6 and 7 of the major scale one step at a time, and checks the gaps against the pattern', () => {
+    const e = minorScaleExample(parseNote('E'), 'natural', { method: 'from-major' })
+    const lowered = e.steps.filter((s) => s.title?.startsWith('Lower note'))
+    expect(lowered.map((s) => s.result)).toEqual(['Note 3: G', 'Note 6: C', 'Note 7: D'])
+    expect(e.steps.at(-1)!.result).toBe('tone, semitone, tone, tone, semitone, tone, tone: the natural minor pattern')
   })
 
   it('explains the double sharp in G♯ harmonic minor, and that F♯♯ is not written as G', () => {
@@ -66,8 +76,9 @@ describe('minorScaleExample', () => {
     const text = e.steps.map((s) => s.text).join(' ')
     expect(text).toContain('F♯♯')
     expect(text).toContain('double sharp')
-    expect(text).toContain('written as F')
-    expect(text).toContain('3 semitones')
+    expect(text).toContain('note 7 must use the letter F')
+    expect(e.steps.map((s) => s.result)).toContain('Note 7: F♯♯, not G')
+    expect(e.steps.at(-1)!.text).toContain('E, F, F♯, F♯♯: 3 steps, so 3 semitones')
   })
 
   it('says the harmonic 6th-to-7th gap is three semitones and the 7th-to-tonic gap is one, in every key', () => {

@@ -49,17 +49,17 @@ const NOTE_NAMES_LESSON: LibraryLesson = {
     h('What you need to know first'),
     p('The **staff** is five lines with four spaces between them. We count the lines and spaces **from the bottom up**: the bottom line is the 1st line, the space just above it is the 1st space, then the 2nd line, and so on up to the 5th line at the top.'),
     p('Notes are named with seven letters, the **musical alphabet**: A B C D E F G, then back to A again. Going from a line to the space above it (or from a space to the line above it) is **one step**. One step up is the next letter. One step down is the previous letter.'),
-    p('A **clef** fixes one line to one letter. We call that line the **anchor**, because you count from it.'),
+    p('A **clef** fixes one line to one letter. You count from that line to find every other note, so it is the one line to remember for each clef.'),
     list(
       'Treble clef: the **2nd line from the bottom** is **G**.',
       'Bass clef: the **4th line from the bottom** is **F**.',
     ),
-    staffBlock(notesOnStaff('treble', pitches('G4')), 'Treble clef. The anchor: the 2nd line is G.'),
-    staffBlock(notesOnStaff('bass', pitches('F3')), 'Bass clef. The anchor: the 4th line is F.'),
+    staffBlock(notesOnStaff('treble', pitches('G4')), 'Treble clef, also called the G clef: its curl circles the 2nd line, which is G.'),
+    staffBlock(notesOnStaff('bass', pitches('F3')), 'Bass clef, also called the F clef: its two dots sit either side of the 4th line, which is F.'),
     p('This lesson uses plain notes only (no sharps or flats). Those have their own lesson.'),
 
     h('The line notes and the space notes'),
-    p('Count the anchor line, then count up and down, and you get the letter of every line and space. Here is the whole result, so you can see it all at once. It is listed from the bottom up, the way you count.'),
+    p('Start on the line the clef fixes, then count up and down, and you get the letter of every line and space. Here is the whole result, so you can see it all at once. It is listed from the bottom up, the way you count.'),
     table(['Place on the staff', 'Treble clef', 'Bass clef'], staffLetterRows(['treble', 'bass']), 'The letter on every line and every space.'),
     remember(
       `Treble clef: lines **${spaced(lettersOf('treble', 'lines'))}**, spaces **${spaced(lettersOf('treble', 'spaces'))}**. Bass clef: lines **${spaced(lettersOf('bass', 'lines'))}**, spaces **${spaced(lettersOf('bass', 'spaces'))}**. (Each list is from the bottom up.)`,
@@ -77,7 +77,7 @@ const NOTE_NAMES_LESSON: LibraryLesson = {
       `A memory aid for the bass lines: ${memoryAid('Good Boys Do Fine Always', lettersOf('bass', 'lines').join(''))}.`,
       `A memory aid for the bass spaces: ${memoryAid('All Cows Eat Grass', lettersOf('bass', 'spaces').join(''))}.`,
     ),
-    tip('If you forget an aid, the counting method below always works. Many musicians remember only the anchors and a few other notes, and count from the nearest one.'),
+    tip('If you forget an aid, the counting method below always works. Many musicians remember only the lines the clefs fix and a few other notes, and count from the nearest one.'),
 
     h('Ledger lines'),
     p('The staff has room for nine notes: five on lines and four in spaces. Higher or lower notes need extra room. A **ledger line** is a short extra line, just wide enough for one note, drawn above or below the staff.'),
@@ -105,9 +105,9 @@ const NOTE_NAMES_LESSON: LibraryLesson = {
 
     h('The method: naming any note'),
     steps(
-      'Find the **clef** and remember its **anchor**: treble clef, the 2nd line is **G**. Bass clef, the 4th line is **F**.',
+      'Find the **clef** and remember the line it fixes: treble clef, the 2nd line is **G**. Bass clef, the 4th line is **F**.',
       'Look at where your note sits. Is it on a line or in a space? If it is outside the staff, count the ledger lines out from the staff.',
-      'Count the **steps** from the anchor to your note. Every line and every space is one step. Count **up** if your note is higher than the anchor and **down** if it is lower.',
+      'Count the **steps** from that line to your note. Every line and every space is one step. Count **up** if your note is higher than that line and **down** if it is lower.',
       'Say the letters as you count: **forwards** through the alphabet when you go up, **backwards** when you go down.',
       'The last letter you say is the name of the note. Check it against the tables above.',
     ),
@@ -125,12 +125,12 @@ const NOTE_NAMES_LESSON: LibraryLesson = {
     worked(nameNoteExample('bass', P('E2'))),
 
     h('Placing a note on the staff'),
-    p('Practice also asks the reverse. It gives you a name such as **E4** and you **tap where the note goes**. The skill is the same, run backwards: you count from the anchor to the letter you are given, and then walk the same number of steps up or down the staff.'),
+    p('Practice also asks the reverse. It gives you a name such as **E4** and you **tap where the note goes**. The skill is the same, run backwards: you count from the line the clef fixes to the letter you are given, and then walk the same number of steps up or down the staff.'),
     p('The octave number matters, because the same letter appears in many places. Counting with the octave number tells you which one.'),
     steps(
       'Read the name: the **letter** and the **octave number**.',
-      'Find the clef\'s anchor, with its octave number: treble clef G4 (2nd line), bass clef F3 (4th line).',
-      'Count from the anchor to your letter, one letter at a time. Add 1 to the octave number each time you pass a **C** going up. Take 1 off each time you step down from a **C**. Stop when you have the right letter **and** the right octave number.',
+      'Find the line the clef fixes, with its octave number: treble clef G4 (2nd line), bass clef F3 (4th line).',
+      'Count from that line to your letter, one letter at a time. Add 1 to the octave number each time you pass a **C** going up. Take 1 off each time you step down from a **C**. Stop when you have the right letter **and** the right octave number.',
       'Take the **same number of steps** on the staff, in the same direction, one line or space at a time. Where you stop is the place for your note.',
       'If the place is above or below the staff, draw the **ledger lines** you need, counting outwards from the staff.',
       'Draw the note head **centred**: the line passes through the middle of the head, or the head fills the space.',
@@ -142,7 +142,7 @@ const NOTE_NAMES_LESSON: LibraryLesson = {
     h('Common mistakes'),
     watch('**Skipping spaces.** Every line **and** every space is a step. Counting only the lines gives the wrong letter.'),
     watch('**Forgetting which clef you are in.** The same place on the staff is a different note in each clef. The bottom line is E in treble clef but G in bass clef. Look at the clef first.'),
-    watch('**Starting from the bottom line every time.** Start from the **anchor** (or from middle C). It is much shorter.'),
+    watch('**Starting from the bottom line every time.** Start from the line the clef fixes (or from middle C). It is much shorter.'),
     watch('**Counting the space above the top line as a ledger line.** The first step above the top line is a space. The 1st ledger line is the step after that.'),
     watch('**Changing the octave number at A.** The number changes at **C**. B3 is just below C4, and A4 is just below B4.'),
     watch('**Drawing the note half-way between a line and a space.** A note on a line has the line through the middle of its head. A note in a space sits between two lines. Half-way is unreadable.'),
@@ -166,12 +166,12 @@ const ALTO_TENOR_LESSON: LibraryLesson = {
   build: () => [
     p('Treble and bass are not the only clefs. The **alto clef** and the **tenor clef** are two more. Together they are called the **C clefs**, because each one tells you where **middle C** is.'),
     p('The **viola** reads alto clef. Cellos, bassoons and trombones usually read bass clef, but they switch to tenor clef for their higher notes. That keeps the notes on the staff and avoids a pile of ledger lines.'),
-    p('You count in alto and tenor clef exactly as you do in treble and bass. Only the anchor is different.'),
+    p('You count in alto and tenor clef exactly as you do in treble and bass. Only the line the clef fixes is different.'),
 
     h('What you need to know first'),
     p('The **staff** has five lines and four spaces, counted **from the bottom up**. Notes are named with the letters A B C D E F G, and every line and space is one step: up the staff is forwards in the alphabet, down is backwards.'),
     p('A **ledger line** is a short extra line for a note above or below the staff. You count ledger lines outwards from the staff.'),
-    p('**Middle C** is the C nearest the middle of a piano. Its full name is **C4** (the 4 is the octave number, which goes up by one each time you pass a C). A clef is built around one **anchor** note that you count from. In the C clefs the anchor is middle C.'),
+    p('**Middle C** is the C nearest the middle of a piano. Its full name is **C4** (the 4 is the octave number, which goes up by one each time you pass a C). A clef fixes one line to one note that you count from. The C clefs fix a line to middle C, which is why they are called C clefs.'),
 
     h('The facts'),
     p('The C clef sign is a pair of curves joined to a vertical bar. The two curves meet at a point in the **centre of the sign**, and that **point is aimed at a line: that line is middle C**. The sign is the same in alto and tenor clef. The only difference is which line it points at.'),
@@ -211,7 +211,7 @@ const ALTO_TENOR_LESSON: LibraryLesson = {
     h('The method: naming a note in alto or tenor clef'),
     steps(
       'Look at the clef sign. Which line does its **centre point at**? In alto clef it is the middle line. In tenor clef it is the 4th line.',
-      'That line is **middle C**. This is your anchor.',
+      'That line is **middle C**. This is the line you count from.',
       'Look at where your note sits, and count the **steps** from middle C to the note. Every line and every space is one step. Count **up** if the note is higher, **down** if it is lower.',
       'Say the letters as you count: forwards through the alphabet going up, backwards going down.',
       'The last letter you say is the name of the note. Check it against the table.',
@@ -255,7 +255,7 @@ const ACCIDENTALS_LESSON: LibraryLesson = {
     p('There are five signs: the **sharp**, the **flat**, the **natural**, the **double sharp** and the **double flat**.'),
 
     h('What you need to know first'),
-    p('You need to be able to name a plain note on the staff by counting from the clef\'s anchor (see **Naming notes in treble and bass clef**).'),
+    p('You need to be able to name a note with no sharp or flat on the staff by counting from the line the clef fixes (see **Naming notes in treble and bass clef**).'),
     p('A **semitone** is the smallest step in Western music: from one piano key to the very next key, whether black or white. A **tone** is two semitones. The plain letter names are the white keys, and the notes in between are the black keys. (The lesson **Tones and semitones** goes into this properly.)'),
 
     h('The five signs'),
@@ -294,7 +294,7 @@ const ACCIDENTALS_LESSON: LibraryLesson = {
 
     h('Naming a note that has a sign'),
     steps(
-      'Ignore the sign for now. Find the **letter** by counting from the clef\'s anchor, as in the earlier lessons.',
+      'Ignore the sign for now. Find the **letter** by counting from the line the clef fixes, as in the earlier lessons.',
       'Look at the sign in front of the note: ♯, ♭, a double sign, or ♮.',
       'Write the **letter first, then the sign**: for example F♯.',
       'Check: is the sign on the same line or space as the note head? Then the sign belongs to that note.',
@@ -345,7 +345,7 @@ const OCTAVES_LESSON: LibraryLesson = {
 
     h('What you need to know first'),
     list(
-      'Every clef has an **anchor** line you count from: treble clef, the 2nd line is **G**. Bass clef, the 4th line is **F**. Alto clef, the middle line is **middle C**. Tenor clef, the 4th line is **middle C**.',
+      'Every clef fixes one line you count from: treble clef, the 2nd line is **G**. Bass clef, the 4th line is **F**. Alto clef, the middle line is **middle C**. Tenor clef, the 4th line is **middle C**.',
       'Every line and every space is one step. Count up through the alphabet A B C D E F G for higher notes and down for lower notes.',
       'A **ledger line** is a short extra line for a note above or below the staff.',
     ),
@@ -374,10 +374,10 @@ const OCTAVES_LESSON: LibraryLesson = {
 
     h('The method: writing a note in another clef'),
     steps(
-      'Name the note in the first clef, with its **octave number**. Count from that clef\'s anchor, adding 1 to the octave number each time you pass a C going up (or taking 1 off each time you step down from a C).',
+      'Name the note in the first clef, with its **octave number**. Count from the line that clef fixes, adding 1 to the octave number each time you pass a C going up (or taking 1 off each time you step down from a C).',
       'Keep that name. It is the pitch, and it does not change.',
-      'Go to the new clef. Find its anchor and the anchor\'s octave number.',
-      'Count from the new anchor to your note, again changing the octave number at each C. Stop at the right letter **and** the right octave number.',
+      'Go to the new clef. Find the line it fixes and that note\'s octave number.',
+      'Count from that line to your note, again changing the octave number at each C. Stop at the right letter **and** the right octave number.',
       'Take the same number of steps on the staff. Draw ledger lines if the place is outside the staff.',
       'Check: name your new note with the naming method. You should get the same letter and the same octave number.',
     ),

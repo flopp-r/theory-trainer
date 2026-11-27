@@ -1,4 +1,4 @@
-import type { WorkedExample, WorkedStep } from '../types'
+import type { WorkedExample, WorkedStep, WorkedTerm } from '../types'
 import {
   NOTE_VALUES,
   type NoteValueName,
@@ -68,83 +68,201 @@ function andList(items: readonly string[]): string {
   return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
 }
 
-const unitMeaning = 'The bottom number says which note value is one unit: 2 is a minim, 4 is a crotchet, 8 is a quaver, 16 is a semiquaver.'
-
 /** A picture of a bar: the time signature, and notes if there are any. */
 export function timeSignatureStaff(ts: TimeSignature, figures: readonly Figure[]) {
   return { ...figuresOnStaff(figures), time: ts }
 }
 
+const withArticle = (phrase: string) => `${/^[aeiou]/i.test(phrase) ? 'an' : 'a'} ${phrase}`
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+const ORDINAL_WORDS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth', 'Eleventh', 'Twelfth']
+const NUMBER_WORDS: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' }
+
+/* "Words you need" for the time signature builders. */
+const TIME_SIGNATURE_TERM: WorkedTerm = {
+  term: 'Time signature',
+  meaning: 'The two numbers at the start of the music. The bottom number names a note value; the top number says how many of them fill a bar.',
+}
+const BAR_TERM: WorkedTerm = { term: 'Bar', meaning: 'A short section of music between two bar lines (thin upright lines). Every bar in a piece has the same length.' }
+const BEAT_TERM: WorkedTerm = { term: 'Beat', meaning: 'The steady pulse of the music, the one you would tap your foot to. The main beats are the beats you tap.' }
+const SEMIBREVE_TERM: WorkedTerm = { term: 'Semibreve', meaning: 'A note that lasts 4 crotchet beats. The bottom number of a time signature counts how many of a note fill one semibreve.' }
+const SIMPLE_TERM: WorkedTerm = { term: 'Simple time', meaning: 'Time in which each beat splits into two equal halves. The top number is 2, 3 or 4.' }
+const COMPOUND_TERM: WorkedTerm = { term: 'Compound time', meaning: 'Time in which each beat splits into three equal parts. The top number is 6, 9 or 12, and each beat is a dotted note.' }
+const DOTTED_TERM: WorkedTerm = { term: 'Dotted', meaning: "A dot after a note adds half of the note's own length. A dotted crotchet lasts as long as 3 quavers." }
+const SEMIQUAVER_TERM: WorkedTerm = { term: 'Semiquaver', meaning: 'The shortest note in this lesson, ¼ of a crotchet beat. 16 semiquavers fill a semibreve.' }
+const GROUPING_TERMS: Record<string, WorkedTerm> = {
+  duple: { term: 'Duple', meaning: 'Two main beats in each bar. Triple means three, and quadruple means four.' },
+  triple: { term: 'Triple', meaning: 'Three main beats in each bar. Duple means two, and quadruple means four.' },
+  quadruple: { term: 'Quadruple', meaning: 'Four main beats in each bar. Duple means two, and triple means three.' },
+}
+
+/** "4 crotchets fill a semibreve (4 × 1 = 4 beats), so 4 means a crotchet." */
+function bottomNumberText(ts: TimeSignature, w: Working): string {
+  const each = beatsText(4 / ts.unit)
+  if (NOTE_VALUES.find((v) => v.name === w.unit)!.semiquavers * ts.unit !== 16) throw new Error('The bottom number must fill a semibreve')
+  return `The bottom number names a note by how many of it fill a semibreve (a note of 4 crotchet beats). ${ts.unit} ${w.unit}s fill a semibreve (${ts.unit} × ${each} = 4 beats), so ${ts.unit} means ${withArticle(w.unit)}.`
+}
+
+/** "simple or compound?", as a step. */
+function kindStep(ts: TimeSignature, w: Working): WorkedStep {
+  return {
+    title: 'Decide: simple or compound time',
+    text: `A top number of 2, 3 or 4 means simple time (each beat splits into two). A top number of 6, 9 or 12 means compound time (each beat splits into three). The top number here is ${ts.beats}, so this is ${w.kind} time.`,
+    result: `${capital(w.kind)} time`,
+  }
+}
+
+/** The beat note in compound time: three bottom-number notes make one dotted note. Worked out by hand and checked. */
+function compoundBeatText(w: Working): string {
+  const unit = NOTE_VALUES.find((v) => v.name === w.unit)!
+  const longer = NOTE_VALUES.find((v) => v.semiquavers === unit.semiquavers * 2)
+  if (!longer || `dotted ${longer.name}` !== w.pulseNote || unit.semiquavers * 3 !== w.pulseSemis) throw new Error('The compound beat note disagrees with the theory engine')
+  return `Three ${w.unit}s last as long as a ${w.pulseNote}: a ${longer.name} is 2 ${w.unit}s, and its dot (a dot adds half of a note's length) adds 1 more ${w.unit}. 2 + 1 = 3.`
+}
+
+/** The semiquaver check: bar length ÷ length of one beat = number of beats. Used for compound time. */
+function lengthCheck(ts: TimeSignature, w: Working): string {
+  const unit = NOTE_VALUES.find((v) => v.name === w.unit)!
+  const longer = NOTE_VALUES.find((v) => v.semiquavers === unit.semiquavers * 2)!
+  if (w.bar / w.pulseSemis !== w.pulses) throw new Error('Bar length divided by the beat does not give the beats')
+  return `Measure in semiquavers (16 fill a semibreve). A ${w.unit} is ${w.unitSemis}, so the bar is ${ts.beats} × ${w.unitSemis} = ${w.bar}. A ${w.pulseNote} is ${longer.semiquavers} + ${w.unitSemis} = ${w.pulseSemis}. ${w.bar} ÷ ${w.pulseSemis} = ${w.pulses} beats.`
+}
+
+/** "1 & 2 & 3 &": counting a bar of simple time aloud in half-beats. */
+function countAloud(w: Working): { text: string; halves: number; half: string } {
+  const half = NOTE_VALUES.find((v) => v.semiquavers * 2 === w.pulseSemis)
+  const halves = w.pulses * 2
+  if (halves * w.pulseSemis / 2 !== w.bar) throw new Error('Half-beats do not fill the bar')
+  const words = Array.from({ length: w.pulses }, (_, i) => `${i + 1} &`).join(' ')
+  return { text: words, halves, half: half ? half.name : 'half-beat' }
+}
+
 function beatsExample(ts: TimeSignature, w: Working): WorkedExample {
   const top = ts.beats
   const steps: WorkedStep[] = [
-    { text: `Look at the time signature: **${w.name}**. The top number is **${top}** and the bottom number is **${ts.unit}**.`, staff: timeSignatureStaff(ts, []) },
-    { text: `${unitMeaning} So the bottom number ${ts.unit} means **${w.unit}s**.` },
-    w.kind === 'simple'
-      ? { text: `A top number of 2, 3 or 4 means **simple time**, and ${top} is one of those. So the top number is the number of beats in a bar: **${top}**. Each beat is one ${w.unit}.` }
-      : {
-          text: `A top number of 6, 9 or 12 means **compound time**, and ${top} is one of those. In compound time the ${w.unit}s are counted in **threes**. Each group of three is one main beat, a **${w.pulseNote}**. Divide by 3: ${top} ÷ 3 = **${w.pulses}** main beats.`,
-        },
     {
-      text: `Check: ${w.pulses} beats × ${w.pulseSemis} semiquavers in each ${w.pulseNote} = ${w.bar}. A bar of ${top} ${w.unit}s is ${top} × ${w.unitSemis} = ${w.bar} semiquavers. They match.`,
+      title: 'Read the two numbers',
+      text: `The time signature (the two numbers at the start of the music) is ${w.name}. The top number is ${top} and the bottom number is ${ts.unit}.`,
+      result: `Top ${top}, bottom ${ts.unit}`,
+      staff: timeSignatureStaff(ts, []),
     },
+    { title: 'Turn the bottom number into a note', text: bottomNumberText(ts, w), result: `${ts.unit} means ${withArticle(w.unit)}` },
+    kindStep(ts, w),
   ]
+  if (w.kind === 'simple') {
+    steps.push({
+      title: 'Read the beats from the top number',
+      text: `In simple time the top number is the number of beats (the pulse you tap) in a bar (the music between two bar lines). Each beat is one ${w.unit}. So there are ${top} beats.`,
+      result: `${top} ${w.unit} beats in a bar`,
+    })
+    const aloud = countAloud(w)
+    steps.push({
+      title: 'Check by counting the bar aloud',
+      text: `Each beat splits into two ${aloud.half}s, so count the bar in ${aloud.half}s, saying "&" for the second half of each beat: ${aloud.text}. That is ${aloud.halves} ${aloud.half}s, and ${aloud.halves} ÷ 2 = ${w.pulses} beats.`,
+      result: `${w.pulses} beats again`,
+    })
+  } else {
+    steps.push(
+      {
+        title: `Group the ${w.unit}s in threes`,
+        text: `In compound time the top number counts ${w.unit}s, not beats. A bar (the music between two bar lines) holds ${top} ${w.unit}s, grouped in threes: ${top} ÷ 3 = ${w.pulses} groups. Each group is one main beat (a beat you tap).`,
+        result: `${w.pulses} main beats`,
+      },
+      { title: 'Name the beat note', text: compoundBeatText(w), result: `Each beat is a ${w.pulseNote}` },
+      { title: 'Check by measuring in semiquavers', text: lengthCheck(ts, w), result: `${w.pulses} beats again` },
+    )
+  }
+  const terms: WorkedTerm[] = [TIME_SIGNATURE_TERM, BAR_TERM, BEAT_TERM, SEMIBREVE_TERM, w.kind === 'simple' ? SIMPLE_TERM : COMPOUND_TERM]
+  if (w.kind === 'compound') terms.push(DOTTED_TERM, SEMIQUAVER_TERM)
   return {
     title: 'Beats in a bar',
     task: `How many main beats are in each bar of ${w.name}? (The beats you would tap.)`,
+    terms,
     steps,
-    answer: `There ${w.pulses === 1 ? 'is' : 'are'} ${w.pulses} main beats in each bar.`,
+    answer: `There ${w.pulses === 1 ? 'is' : 'are'} ${plural(w.pulses, 'main beat')} in each bar.`,
   }
 }
 
 function classifyExample(ts: TimeSignature, w: Working): WorkedExample {
   const top = ts.beats
-  const half = NOTE_VALUES.find((v) => v.semiquavers === w.pulseSemis / 2)
-  const halves = half ? `two ${half.name}s` : 'two shorter notes'
   const steps: WorkedStep[] = [
-    { text: `Look at the time signature: **${w.name}**. The top number is **${top}**.`, staff: timeSignatureStaff(ts, []) },
     {
-      text:
-        w.kind === 'simple'
-          ? `**Step 1: simple or compound?** A top number of 2, 3 or 4 means **simple** time. ${top} is one of those, so this is simple time. Each beat splits into **two**.`
-          : `**Step 1: simple or compound?** A top number of 6, 9 or 12 means **compound** time. ${top} is one of those, so this is compound time. Each beat splits into **three**.`,
+      title: 'Read the top number',
+      text: `The time signature (the two numbers at the start of the music) is ${w.name}. The top number is ${top}.`,
+      result: `Top number ${top}`,
+      staff: timeSignatureStaff(ts, []),
+    },
+    kindStep(ts, w),
+    w.kind === 'simple'
+      ? {
+          title: 'Find the number of main beats',
+          text: `In simple time the top number is the number of beats (the pulses you tap) in each bar: ${top}.`,
+          result: `${plural(w.pulses, 'main beat')}`,
+        }
+      : {
+          title: 'Find the number of main beats',
+          text: `In compound time the top number counts ${w.unit}s (from the bottom number ${ts.unit}), grouped in threes. Each group is one beat (a pulse you tap). Divide by 3: ${top} ÷ 3 = ${w.pulses}.`,
+          result: `${plural(w.pulses, 'main beat')}`,
+        },
+    {
+      title: 'Name the number of beats',
+      text: `Two main beats in a bar is duple, three is triple, four is quadruple. Here there ${w.pulses === 1 ? 'is' : 'are'} ${NUMBER_WORDS[w.pulses] ?? w.pulses}, so it is ${w.grouping}.`,
+      result: capital(w.grouping),
     },
     {
-      text:
-        w.kind === 'simple'
-          ? `**Step 2: how many beats?** In simple time the top number is the number of beats: **${w.pulses}**.`
-          : `**Step 2: how many beats?** In compound time divide the top number by 3: ${top} ÷ 3 = **${w.pulses}**.`,
-    },
-    { text: `**Step 3: name the number of beats.** 2 beats is **duple**, 3 beats is **triple**, 4 beats is **quadruple**. ${w.pulses} beats is **${w.grouping}**.` },
-    { text: `**Step 4: put the two words together:** ${w.kind} + ${w.grouping} = **${w.kind} ${w.grouping}**.` },
-    {
-      text:
-        w.kind === 'simple'
-          ? `Check: the beat is a ${w.pulseNote} (${w.pulseSemis} semiquavers) and it splits into ${halves}. ${w.pulses} beats × ${w.pulseSemis} = ${w.bar} semiquavers, the length of the bar.`
-          : `Check: the beat is a ${w.pulseNote} (${w.pulseSemis} semiquavers) and it splits into three ${w.unit}s (3 × ${w.unitSemis} = ${w.pulseSemis}). ${w.pulses} beats × ${w.pulseSemis} = ${w.bar} semiquavers, the length of the bar.`,
+      title: 'Put the two words together',
+      text: `Say the kind of time first and the number of beats second: ${w.kind} and ${w.grouping}.`,
+      result: capital(`${w.kind} ${w.grouping}`),
     },
   ]
+  if (w.kind === 'simple') {
+    const aloud = countAloud(w)
+    steps.push({
+      title: 'Check by counting the bar aloud',
+      text: `The beat is ${withArticle(w.pulseNote)}, and it splits into two ${aloud.half}s, not three: that is simple time. Count aloud with "&" on each second half: ${aloud.text}. That is ${NUMBER_WORDS[w.pulses] ?? w.pulses} beats, so ${w.grouping}.`,
+      result: capital(`${w.kind} ${w.grouping} again`),
+    })
+  } else {
+    steps.push({
+      title: 'Check by measuring in semiquavers',
+      text: `${lengthCheck(ts, w)} That is ${w.grouping}. Each beat is three ${w.unit}s (3 × ${w.unitSemis} = ${w.pulseSemis}), so it is compound.`,
+      result: capital(`${w.kind} ${w.grouping} again`),
+    })
+  }
+  const terms: WorkedTerm[] = [TIME_SIGNATURE_TERM, BEAT_TERM, w.kind === 'simple' ? SIMPLE_TERM : COMPOUND_TERM, GROUPING_TERMS[w.grouping]!]
+  if (w.kind === 'compound') terms.push(SEMIQUAVER_TERM)
   return {
     title: 'The type of a time signature',
     task: `What type of time signature is ${w.name}?`,
+    terms,
     steps,
     answer: `${w.name} is ${w.kind} ${w.grouping}.`,
   }
 }
 
 /** Length in semiquavers built by hand: the note, plus half of it for the first dot, plus half of that for the second. */
-function lengthByHand(figure: Figure): number {
+function lengthByHand(figure: Figure): { length: number; text: string } {
   const dots = figure.dots ?? 0
-  const base = NOTE_VALUES.find((v) => v.name === figure.name)!.semiquavers
+  const value = NOTE_VALUES.find((v) => v.name === figure.name)!
+  const fit = 16 / value.semiquavers // how many of this note fill a semibreve
+  const base = 16 / fit
   let length = base
   let add = base
+  const adds: number[] = []
   for (let i = 0; i < dots; i++) {
     add /= 2
+    adds.push(add)
     length += add
   }
   if (!Number.isInteger(length)) throw new RangeError(`A ${noteValueLabel(figure.name, dots)} is not a whole number of semiquavers`)
   if (length !== dottedSemiquavers(figure.name, dots)) throw new Error('Note length disagrees with the theory engine')
-  return length
+  const baseText = fit === 1 ? `A ${figure.name} is 16 semiquavers.` : `${fit} ${figure.name}s fill a semibreve, so a ${figure.name} is 16 ÷ ${fit} = ${base} semiquaver${base === 1 ? '' : 's'}.`
+  const dotText =
+    dots === 0
+      ? ''
+      : ` The ${dots === 1 ? 'dot adds half of that' : 'dots add half, then half again'}: ${adds.map((a, i) => `${i === 0 ? base : adds[i - 1]!} ÷ 2 = ${a}`).join(', then ')}. ${[base, ...adds].join(' + ')} = ${length}.`
+  return { length, text: `${baseText}${dotText}` }
 }
 
 /** The notes that fill a bar one main beat at a time (used when no notes are given). */
@@ -156,57 +274,87 @@ function defaultFill(w: Working): Figure[] {
   return Array.from({ length: w.pulses }, () => figure)
 }
 
+/** Groups notes into whole beats for the check: "the minim (8) covers beats 1 and 2". Throws if the notes do not line up with the beats. */
+function beatGroups(labels: readonly string[], lengths: readonly number[], w: Working): string[] {
+  const groups: string[] = []
+  let start = 0
+  let members: number[] = []
+  let sum = 0
+  lengths.forEach((length, i) => {
+    members.push(i)
+    sum += length
+    if (sum % w.pulseSemis === 0) {
+      const first = start / w.pulseSemis + 1
+      const last = (start + sum) / w.pulseSemis
+      const beats = first === last ? `beat ${first}` : last === first + 1 ? `beats ${first} and ${last}` : `beats ${first} to ${last}`
+      const same = members.every((m) => labels[m] === labels[members[0]!])
+      const names = members.length === 1 ? `the ${labels[i]}` : same && NUMBER_WORDS[members.length] ? `the ${NUMBER_WORDS[members.length]} ${labels[i]}s` : `the ${andList(members.map((m) => labels[m]!))}`
+      const lengthText = members.length === 1 ? `${sum}` : `${members.map((m) => lengths[m]).join(' + ')} = ${sum}`
+      groups.push(`${names} (${lengthText}) ${members.length === 1 && first === last ? 'fills' : first === last ? 'fill' : members.length === 1 ? 'covers' : 'cover'} ${beats}`)
+      start += sum
+      members = []
+      sum = 0
+    }
+  })
+  if (members.length > 0) throw new RangeError('The notes do not line up with the beats')
+  return groups
+}
+
 function fillExample(ts: TimeSignature, w: Working, notes: readonly Figure[]): WorkedExample {
   if (notes.some((n) => n.rest)) throw new RangeError('Fill the bar with notes, not rests')
-  const lengths = notes.map(lengthByHand)
+  if (notes.length > ORDINAL_WORDS.length) throw new RangeError('Too many notes for one example')
+  const works = notes.map(lengthByHand)
+  const lengths = works.map((x) => x.length)
   const total = lengths.reduce((a, b) => a + b, 0)
   if (total !== w.bar) throw new RangeError(`These notes add up to ${total} semiquavers, but a bar of ${w.name} is ${w.bar}`)
   const labels = notes.map((n) => noteValueLabel(n.name, n.dots ?? 0))
-  const workings = notes.map((n, i) => {
-    const base = NOTE_VALUES.find((v) => v.name === n.name)!.semiquavers
-    const dots = n.dots ?? 0
-    if (dots === 0) return `${labels[i]} = ${lengths[i]}`
-    const parts = [base]
-    let add = base
-    for (let d = 0; d < dots; d++) {
-      add /= 2
-      parts.push(add)
-    }
-    return `${labels[i]} = ${parts.join(' + ')} = ${lengths[i]}`
-  })
+  const groups = beatGroups(labels, lengths, w)
 
-  // Where each note starts, in beats.
-  let start = 0
-  const where = notes.map((_, i) => {
-    const beat = Math.floor(start / w.pulseSemis) + 1
-    const exact = start % w.pulseSemis === 0
-    const text = `the ${labels[i]} starts ${exact ? 'on' : 'part-way through'} beat ${beat}`
-    start += lengths[i]!
-    return text
-  })
-
-  const running = lengths.map((_, i) => lengths.slice(0, i + 1).reduce((a, b) => a + b, 0))
+  const running: string[] = []
+  let sum = lengths[0]!
+  for (const length of lengths.slice(1)) {
+    running.push(`${sum} + ${length} = ${sum + length}`)
+    sum += length
+  }
+  const hasDot = notes.some((n) => (n.dots ?? 0) > 0)
+  const fit = ts.unit
   const steps: WorkedStep[] = [
-    { text: `Here is an empty bar of **${w.name}**. We need to fill it exactly.`, staff: timeSignatureStaff(ts, []) },
     {
-      text: `**Length of the bar.** The bottom number ${ts.unit} means ${w.unit}s, and one ${w.unit} is ${w.unitSemis} semiquaver${w.unitSemis === 1 ? '' : 's'}. The top number ${ts.beats} says how many fit in the bar: ${ts.beats} × ${w.unitSemis} = **${w.bar} semiquavers**.`,
+      title: 'Read the time signature',
+      text: `The time signature (the two numbers at the start) is ${w.name}. The bottom number ${ts.unit} means ${w.unit}s (${ts.unit} of them fill a semibreve). The top number says a bar holds ${ts.beats} of them.`,
+      result: `A bar holds ${ts.beats} ${w.unit}s`,
+      staff: timeSignatureStaff(ts, []),
     },
     {
-      text: `**Length of each note we will use**, in semiquavers (a dot adds half): ${workings.join('; ')}.`,
+      title: 'Work out the bar length in semiquavers',
+      text: `Measure in semiquavers (the shortest note here; 16 fill a semibreve), so every length is a whole number. ${fit} ${w.unit}s fill a semibreve, so a ${w.unit} is 16 ÷ ${fit} = ${w.unitSemis}. The bar holds ${ts.beats}: ${ts.beats} × ${w.unitSemis} = ${w.bar}.`,
+      result: `The bar is ${w.bar} semiquavers`,
     },
+    ...notes.map((_, i) => ({
+      title: `${ORDINAL_WORDS[i]} note: the ${labels[i]}`,
+      text: labels.indexOf(labels[i]!) < i ? `Another ${labels[i]}, the same length as note ${labels.indexOf(labels[i]!) + 1}: ${lengths[i]} semiquaver${lengths[i] === 1 ? '' : 's'}.` : works[i]!.text,
+      result: `${lengths[i]} semiquaver${lengths[i] === 1 ? '' : 's'}`,
+    })),
     {
-      text: `**Add them up** in order: ${lengths.join(' + ')} = **${total}**. Running totals: ${running.join(', ')}. The bar needs ${w.bar}, so the bar is exactly full.`,
+      title: 'Add the lengths with a running total',
+      text: `Add one note at a time: ${running.join(', then ')}. The bar needs ${w.bar}, so it is exactly full: nothing missing, nothing spilling over.`,
+      result: `${total} semiquavers: the bar is full`,
     },
-    { text: `Write the notes in the bar.`, staff: timeSignatureStaff(ts, notes) },
+    { title: 'Write the notes in the bar', text: `Write the notes in order after the time signature: ${labels.join(', ')}.`, result: capital(labels.join(', ')), staff: timeSignatureStaff(ts, notes) },
     {
-      text: `Check: ${total} = ${w.bar}, so nothing is missing and nothing spills over. The beats are ${w.pulseNote}s (${w.pulseSemis} semiquavers each), ${w.pulses} in the bar: ${where.join('; ')}.`,
+      title: 'Check beat by beat',
+      text: `Now check against the beats instead of the total. ${w.name} has ${plural(w.pulses, 'beat')}, each ${withArticle(w.pulseNote)} (${w.pulseSemis} semiquavers). ${capital(groups.join('; '))}. Every beat is filled.`,
+      result: w.pulses === 2 ? 'Both beats are filled' : `All ${w.pulses} beats are filled`,
     },
   ]
+  const terms: WorkedTerm[] = [TIME_SIGNATURE_TERM, BAR_TERM, SEMIBREVE_TERM, SEMIQUAVER_TERM, BEAT_TERM]
+  if (hasDot) terms.push(DOTTED_TERM)
   return {
     title: `Fill a bar of ${w.name}`,
     task: `Fill one bar of ${w.name} using note values that add up exactly to the bar.`,
+    terms,
     steps,
-    answer: `A bar of ${w.name} can be filled with ${andList(labels.map((l) => `a ${l}`))}: ${lengths.join(' + ')} = ${w.bar} semiquavers (${beatsText(w.bar / 4)} crotchet beats).`,
+    answer: `A bar of ${w.name} can be filled with ${andList(labels.map((l) => withArticle(l)))}: ${lengths.join(' + ')} = ${w.bar} semiquavers (${beatsText(w.bar / 4)} crotchet beats).`,
   }
 }
 

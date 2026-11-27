@@ -55,17 +55,30 @@ describe('cadenceExample', () => {
     })
   }
 
-  it('identify: numbers the scale, names both chords, pairs the numerals, matches the pattern and checks', () => {
+  it('identify: numbers the scale, names both chords, matches the pair and checks with the bass line', () => {
     const e = cadenceExample(parseKey('C major'), 'perfect', 'identify')
-    expect(e.steps).toHaveLength(7)
+    const by = (title: string) => e.steps.find((x) => x.title === title)!
     expect(e.steps[0]!.staff!.items).toHaveLength(2)
     expect(e.steps[0]!.staff!.key).toBeDefined()
-    expect(e.steps[1]!.text).toContain('1 C, 2 D, 3 E, 4 F, 5 G, 6 A, 7 B')
-    expect(e.steps[2]!.text).toContain('note 5')
-    expect(e.steps[3]!.text).toContain('note 1')
-    expect(e.steps[4]!.text).toContain('**V then I**')
-    expect(e.steps[5]!.text).toContain('is a **perfect** cadence')
-    expect(e.steps[6]!.text.startsWith('Check')).toBe(true)
+    expect(by('Number the notes as scale degrees').result).toBe('1 C, 2 D, 3 E, 4 F, 5 G, 6 A, 7 B')
+    expect(by('Read the first chord from the bottom up').result).toBe('G B D: root G')
+    expect(by('Find the root, G, in the scale').result).toBe('Scale degree 5: the dominant')
+    expect(by('Find the root, C, in the scale').result).toBe('Scale degree 1: the tonic')
+    const results = e.steps.map((x) => x.result)
+    expect(results).toContain('First chord: V')
+    expect(results).toContain('Second chord: I')
+    expect(by('Match the pair to a cadence').result).toBe('V then I: a perfect cadence')
+    expect(e.steps.at(-1)!.title).toBe('Check another way: follow the bass line')
+    expect(e.steps.at(-1)!.result).toBe('Bass 5 to 1: a perfect cadence, as found')
+  })
+
+  it('bass-line check: every cadence type in every key gives the right pair of scale degrees', () => {
+    const expected: Record<CadenceType, string> = { perfect: '5 to 1', imperfect: 'to 5', plagal: '4 to 1', interrupted: '5 to 6' }
+    for (const k of ['C major', 'G major', 'A minor', 'C minor']) {
+      for (const type of CADENCE_TYPES) {
+        expect(cadenceExample(parseKey(k), type, 'identify').steps.at(-1)!.result, `${k} ${type}`).toContain(expected[type])
+      }
+    }
   })
 
   it('plays the key chord at 0 s, then the two chords at 2.1 s and 3.5 s', () => {

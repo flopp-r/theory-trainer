@@ -20,7 +20,21 @@ import {
 import { noteLabel } from '../../../questions/pitchTools'
 import { listenMelody } from './audio'
 import { notesOnStaff } from './common'
-import { SEMITONES_TO_NEXT_LETTER, lettersDown, lettersUp, mod12, semitones, signWords, spellOnLetter } from './working'
+import {
+  SEMITONES_TO_NEXT_LETTER,
+  type TermId,
+  Words,
+  article,
+  blackKeyReason,
+  keyWalkText,
+  lettersDown,
+  lettersUp,
+  mod12,
+  prefersFlats,
+  semitones,
+  signPhrase,
+  spellOnLetter,
+} from './working'
 
 /** What an interval of each size is called when it has its smallest "natural" form. Written out by hand. */
 const BASE: Record<number, { perfect: boolean; semitones: number; word: string }> = {
@@ -78,48 +92,64 @@ export function intervalTableRows(): string[][] {
   })
 }
 
-/** A sentence for the table lookup: which sizes this number can have and which one this is. */
-function lookupSentence(number: number, size: number): string {
+
+const QUALITY_TERM: Record<QualityName, TermId> = { major: 'major', minor: 'minor', perfect: 'perfect', augmented: 'augmented', diminished: 'diminished' }
+const capital = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1)
+const numberWord = (number: number): string => (number === 8 ? 'an octave (8th)' : `${article(BASE[number]!.word)} ${BASE[number]!.word}`)
+
+/** The quality step: which sizes this number can have, and which one these semitones give. */
+function qualityText(number: number, size: number, w: Words): string {
   const base = BASE[number]!
   const quality = qualityFromSemitones(number, size)
+  const say = (q: QualityName) => w.say(QUALITY_TERM[q], q)
+  const lead = `The ${w.say('quality', 'quality')} comes from the semitones.`
   if (base.perfect) {
-    const head = `A ${base.word} is **perfect** when it has ${base.semitones} semitones.`
-    if (quality === 'perfect') return `${head} Yours has ${size}, so it is **perfect**.`
-    return `${head} Yours has ${size}, which is one ${size > base.semitones ? 'more' : 'fewer'} than perfect, so it is **${quality}**.`
+    const head = `${lead} ${capital(numberWord(number))} is ${say('perfect')} with ${semitones(base.semitones)}.`
+    if (quality === 'perfect') return `${head} Yours has ${size}, so it is perfect.`
+    return `${head} Yours has ${size}, one ${size > base.semitones ? 'more' : 'fewer'}, so it is ${say(quality)}.`
   }
-  const head = `A ${base.word} is **minor** with ${base.semitones - 1} semitones or **major** with ${base.semitones}.`
+  const head = `${lead} ${capital(numberWord(number))} is ${say('minor')} with ${semitones(base.semitones - 1)} or ${say('major')} with ${base.semitones}.`
   switch (quality) {
     case 'major':
-      return `${head} Yours has ${size}, so it is **major**.`
     case 'minor':
-      return `${head} Yours has ${size}, so it is **minor**.`
+      return `${head} Yours has ${size}, so it is ${quality}.`
     case 'augmented':
-      return `${head} Yours has ${size}, which is one more than major, so it is **augmented**.`
+      return `${head} Yours has ${size}, one more than major, so it is ${say('augmented')}.`
     default:
-      return `${head} Yours has ${size}, which is one fewer than minor, so it is **diminished**.`
+      return `${head} Yours has ${size}, one fewer than minor, so it is ${say('diminished')}.`
   }
 }
 
-/** The semitones from the letter name of `from` up `count` letter-name steps, written as "C to D is 2, D to E is 2". */
-function walkUp(fromLetter: NoteName['letter'], count: number): { total: number; text: string } {
-  const letters = lettersUp(fromLetter, count + 1)
-  const parts = letters.slice(0, -1).map((l, i) => ({ from: l, to: letters[i + 1]!, size: SEMITONES_TO_NEXT_LETTER[l] }))
-  return { total: parts.reduce((a, p) => a + p.size, 0), text: parts.map((p) => `${p.from} to ${p.to} is ${p.size}`).join(', ') }
+/**
+ * One step per pair of neighbouring natural letters, with a running total: "From C up to D is 2 semitones (...). 2 + 2 = 4."
+ * Going down, the size of each pair is the size of the pair going up from the lower letter.
+ */
+function letterGapSteps(from: NoteName['letter'], count: number, direction: 'up' | 'down', intro: string): { total: number; steps: WorkedStep[] } {
+  const letters = direction === 'up' ? lettersUp(from, count + 1) : lettersDown(from, count + 1)
+  let total = 0
+  const steps = letters.slice(0, -1).map((a, i): WorkedStep => {
+    const b = letters[i + 1]!
+    const size = SEMITONES_TO_NEXT_LETTER[direction === 'up' ? a : b]
+    const before = total
+    total += size
+    const sentence = `From ${a} ${direction} to ${b} is ${semitones(size)} (${blackKeyReason(size)}).`
+    return {
+      title: `Count ${a} ${direction} to ${b}`,
+      text: i === 0 ? `${intro} ${sentence}` : `${sentence} Add it on: ${before} + ${size} = ${total}.`,
+      result: `Total so far: ${semitones(total)}`,
+    }
+  })
+  return { total, steps }
 }
 
-/** The same going down: from F down to E is 1 (E to F is a semitone), E down to D is 2. */
-function walkDown(fromLetter: NoteName['letter'], count: number): { total: number; text: string } {
-  const letters = lettersDown(fromLetter, count + 1)
-  const parts = letters.slice(0, -1).map((l, i) => ({ from: l, to: letters[i + 1]!, size: SEMITONES_TO_NEXT_LETTER[letters[i + 1]!] }))
-  return { total: parts.reduce((a, p) => a + p.size, 0), text: parts.map((p) => `${p.from} down to ${p.to} is ${p.size}`).join(', ') }
-}
-
-const accidentalNote = (n: NoteName): string => (n.accidental === 0 ? '' : ` (${n.accidental > 0 ? 'higher' : 'lower'} than the plain ${n.letter} by ${semitones(Math.abs(n.accidental))})`)
+/** "B♭ has a flat (...), so it is 1 semitone lower than B." */
+const signSentence = (n: NoteName, w: Words): string =>
+  `${noteLabel(n)} has ${signPhrase(n.accidental, w)}, so it is ${semitones(Math.abs(n.accidental))} ${n.accidental > 0 ? 'higher' : 'lower'} than ${n.letter}.`
 
 /**
- * Name the interval between two notes, with the two-step method: count letter names for the number, count semitones for the quality.
- * The semitones are counted by walking up the letters with the piano's pattern (E to F and B to C are one, the rest two),
- * then adjusting for sharps and flats. The count is checked against MIDI numbers and the answer against the engine; this throws on disagreement.
+ * Name the interval between two notes, with the two-part method: count letter names for the number, count semitones for the quality.
+ * The semitones are counted one pair of natural letters at a time (E to F and B to C are one, the rest two),
+ * then adjusted for sharps and flats. The count is checked against MIDI numbers and the answer against the engine; this throws on disagreement.
  */
 export function intervalNameExample(lower: Pitch, upper: Pitch, clef: ClefName = 'treble'): WorkedExample {
   const number = diatonicStep(upper) - diatonicStep(lower) + 1
@@ -127,56 +157,79 @@ export function intervalNameExample(lower: Pitch, upper: Pitch, clef: ClefName =
   const lowerName = noteLabel(lower)
   const upperName = noteLabel(upper)
   const letters = lettersUp(lower.letter, number)
-  const walk = walkUp(lower.letter, number - 1)
-  const adjust = upper.accidental - lower.accidental
-  const size = walk.total + adjust
+  const w = new Words()
+  const hasSigns = lower.accidental !== 0 || upper.accidental !== 0
+
+  const steps: WorkedStep[] = [
+    {
+      title: 'Find the lower and upper notes',
+      text: `An ${w.say('interval', 'interval')} is measured from the lower note up. Here the lower note is ${lowerName} and the upper note is ${upperName}.`,
+      result: `${lowerName} up to ${upperName}`,
+      staff: notesOnStaff(clef, [lower, upper]),
+    },
+    {
+      title: 'Count the letter names',
+      text: `Count the letter names from ${lower.letter} up to ${upper.letter}, counting both notes: ${letters.join(', ')}. That is ${number} letter names, so the ${w.named('number', 'number')} of the interval is ${numberWord(number)}. A ♯ or ♭ never changes the letter, so it never changes the number.`,
+      result: `Number: ${number === 8 ? 'octave' : BASE[number]!.word}`,
+    },
+  ]
+  const intro = hasSigns
+    ? `Now count the ${w.say('semitone', 'semitones')} between the ${w.say('natural', 'natural')} letters ${lower.letter} and ${upper.letter}, leaving the signs until later.`
+    : `Now count the ${w.say('semitone', 'semitones')}, one pair of neighbouring letters at a time.`
+  const walk = letterGapSteps(lower.letter, number - 1, 'up', intro)
+  steps.push(...walk.steps)
+
+  let size = walk.total
+  if (lower.accidental !== 0) {
+    const change = -lower.accidental // a sharp on the lower note brings it nearer the upper note
+    const after = size + change
+    steps.push({
+      title: `Adjust for the ${lower.accidental > 0 ? 'sharp' : 'flat'} on ${lowerName}`,
+      text: `${signSentence(lower, w)} Moving the bottom note ${lower.accidental > 0 ? 'up makes the interval narrower' : 'down makes the interval wider'}, so ${change > 0 ? 'add' : 'subtract'} ${Math.abs(change)}: ${size} ${change > 0 ? '+' : '−'} ${Math.abs(change)} = ${after}.`,
+      result: `Total: ${semitones(after)}`,
+    })
+    size = after
+  }
+  if (upper.accidental !== 0) {
+    const change = upper.accidental // a sharp on the upper note takes it further away
+    const after = size + change
+    steps.push({
+      title: `Adjust for the ${upper.accidental > 0 ? 'sharp' : 'flat'} on ${upperName}`,
+      text: `${signSentence(upper, w)} Moving the top note ${upper.accidental > 0 ? 'up makes the interval wider' : 'down makes the interval narrower'}, so ${change > 0 ? 'add' : 'subtract'} ${Math.abs(change)}: ${size} ${change > 0 ? '+' : '−'} ${Math.abs(change)} = ${after}.`,
+      result: `Total: ${semitones(after)}`,
+    })
+    size = after
+  }
   if (size !== midiNumber(upper) - midiNumber(lower)) throw new Error('Semitone count disagrees with the MIDI numbers')
+
   const quality = qualityFromSemitones(number, size)
   const engine = intervalBetween(lower, upper)
   if (engine.direction !== 'up' || intervalShortName(engine.interval) !== shortNameOf(number, quality) || intervalName(engine.interval) !== longNameOf(number, quality)) {
     throw new Error(`Interval ${lowerName} to ${upperName}: long-hand ${shortNameOf(number, quality)}, engine ${intervalShortName(engine.interval)}`)
   }
-
-  const adjustments: string[] = []
-  if (lower.accidental !== 0) {
-    adjustments.push(
-      `The lower note ${lowerName} has ${signWords(lower.accidental)}${accidentalNote(lower)}, so it starts ${semitones(Math.abs(lower.accidental))} ${lower.accidental > 0 ? 'nearer to' : 'further from'} the upper note: ${lower.accidental > 0 ? 'subtract' : 'add'} ${Math.abs(lower.accidental)}.`,
-    )
-  }
-  if (upper.accidental !== 0) {
-    adjustments.push(
-      `The upper note ${upperName} has ${signWords(upper.accidental)}${accidentalNote(upper)}, so it ends ${semitones(Math.abs(upper.accidental))} ${upper.accidental > 0 ? 'further from' : 'nearer to'} the lower note: ${upper.accidental > 0 ? 'add' : 'subtract'} ${Math.abs(upper.accidental)}.`,
-    )
-  }
-  const staff = notesOnStaff(clef, [lower, upper])
   const answerShort = shortNameOf(number, quality)
   const answerName = longNameOf(number, quality)
-  const baseWord = BASE[number]!.word
+  steps.push({ title: 'Look up the quality', text: qualityText(number, size, w), result: `${capital(answerName)} (${answerShort})` })
+  steps.push({
+    title: 'Check another way: count piano keys',
+    text: `Count up one piano key at a time from ${lowerName} to ${upperName}, without using the letter pairs. Count the steps, not the key you start on: ${keyWalkText(lower, upper, size, 'up', prefersFlats(lower, upper))}.`,
+    result: `${semitones(size)} again, so ${article(answerName)} ${answerName}`,
+    listen: listenMelody(`Hear ${lowerName} then ${upperName}`, [lower, upper]),
+  })
   return {
     title: `Name the interval from ${lowerName} to ${upperName}`,
     task: `What is the interval from ${lowerName} up to ${upperName}?`,
-    steps: [
-      { text: `Look at the picture. The lower note is **${lowerName}** and the upper note is **${upperName}**.`, staff },
-      {
-        text: `**Step 1: the number.** Count the letter names from ${lower.letter} up to ${upper.letter}, counting **both** ends: ${letters.join(', ')}. That is ${number} letter names, so the interval is ${baseWord === 'octave' ? 'an' : 'a'} **${baseWord}**. Signs (♯ and ♭) do not change the letters, so they do not change the number.`,
-      },
-      {
-        text: `**Step 2: count the semitones.** Walk up the plain letters, remembering that E to F and B to C are 1 semitone and every other neighbouring pair is 2: ${walk.text}. Add them up: **${walk.total}**.${adjustments.length === 0 ? ' Neither note has a sharp or flat, so there is nothing to adjust.' : ` Now adjust for the signs. ${adjustments.join(' ')} The total is ${semitones(size)}.`}`,
-      },
-      { text: `**Step 3: the quality.** ${lookupSentence(number, size)}` },
-      {
-        text: `Check by saying the answer as a recipe: a ${answerName} is ${number} letter names and ${size} semitones. The letters are ${number} (${letters.join(', ')}) and the semitones are ${size}. ✓ Here are the two notes, one after the other.`,
-        listen: listenMelody(`Hear ${lowerName} then ${upperName}`, [lower, upper]),
-      },
-    ],
-    answer: `The interval from ${lowerName} to ${upperName} is ${/^[aeiou]/.test(answerName) ? 'an' : 'a'} ${answerName} (${answerShort}).`,
+    steps,
+    terms: w.terms(),
+    answer: `The interval from ${lowerName} to ${upperName} is ${article(answerName)} ${answerName} (${answerShort}).`,
   }
 }
 
 /**
  * Build the note a given interval above (or below) a starting note.
- * The working counts letter names for the note's letter, then fixes the sign so the semitones match, then checks by counting back.
- * The result is checked against the engine's `transpose` and `intervalBetween`; this throws on disagreement.
+ * The working counts letter names for the note's letter, counts semitones to the natural letter one pair at a time,
+ * adjusts for the start's own sign, then fixes the new note's sign. Checked against the engine's `transpose`
+ * and `intervalBetween`; this throws on disagreement.
  */
 export function buildIntervalExample(start: Pitch, shortName: string, direction: Direction, clef: ClefName = 'treble'): WorkedExample {
   const interval: Interval = parseInterval(shortName)
@@ -184,76 +237,86 @@ export function buildIntervalExample(start: Pitch, shortName: string, direction:
   const base = BASE[number]
   if (!base) throw new RangeError('This example covers intervals from a 2nd to an octave')
   const quality = interval.quality as QualityName
-  const wantedSemitones = semitonesOf(number, quality)
-  if (wantedSemitones !== intervalSemitones(interval)) throw new Error('The table and the engine disagree about the size of the interval')
+  const wanted = semitonesOf(number, quality)
+  if (wanted !== intervalSemitones(interval)) throw new Error('The table and the engine disagree about the size of the interval')
   const startName = noteLabel(start)
   const name = longNameOf(number, quality)
-  const article = /^[aeiou]/.test(name) ? 'an' : 'a'
+  const art = article(name)
   const dirWord = direction === 'up' ? 'above' : 'below'
+  const w = new Words()
 
-  // Letter: count letter names, counting the start as 1.
   const letterList = direction === 'up' ? lettersUp(start.letter, number) : lettersDown(start.letter, number)
   const letter = letterList[number - 1]!
-  // Distance from the start to the plain letter, by the piano's pattern, adjusted for the start's own sign.
-  const walk = direction === 'up' ? walkUp(start.letter, number - 1) : walkDown(start.letter, number - 1)
-  const adjust = direction === 'up' ? -start.accidental : start.accidental
-  const plainDistance = walk.total + adjust
-  const fix = direction === 'up' ? wantedSemitones - plainDistance : plainDistance - wantedSemitones
-  const target: NoteName = spellOnLetter(letter, mod12(pitchClass(start) + (direction === 'up' ? 1 : -1) * wantedSemitones))
-  if (target.accidental !== fix) throw new Error('The sign worked out by counting disagrees with the sign worked out from pitch classes')
-
+  const target: NoteName = spellOnLetter(letter, mod12(pitchClass(start) + (direction === 'up' ? 1 : -1) * wanted))
   const result = transpose(start, interval, direction)
   if (result.letter !== target.letter || result.accidental !== target.accidental) {
     throw new Error(`Build ${shortName} ${direction} from ${startName}: long-hand ${noteLabel(target)}, engine ${noteLabel(result)}`)
   }
   const [low, high] = direction === 'up' ? [start, result] : [result, start]
-  const back = intervalBetween(low, high)
-  if (intervalShortName(back.interval) !== shortName) throw new Error('Counting back does not give the interval we started with')
-
-  const startAdjust =
-    start.accidental === 0
-      ? ''
-      : ` ${startName} has ${signWords(start.accidental)}, so the distance to the plain ${letter} is ${adjust > 0 ? 'longer' : 'shorter'} by ${Math.abs(adjust)}: ${walk.total} ${adjust > 0 ? '+' : '−'} ${Math.abs(adjust)} = ${plainDistance} semitones in all.`
-  const lowName = noteLabel(low)
-  const highName = noteLabel(high)
-  const checkLetters = lettersUp(low.letter, number)
-  const directionFix =
-    fix === 0
-      ? `The plain ${letter} is ${semitones(plainDistance)} ${dirWord} ${startName}, and we need ${wantedSemitones}. They match, so ${letter} needs **no sign**. The note is **${noteLabel(target)}**.`
-      : direction === 'up'
-        ? `The plain ${letter} is ${semitones(plainDistance)} above ${startName}, and we need ${wantedSemitones}. That is ${semitones(Math.abs(fix))} ${fix > 0 ? 'too few' : 'too many'}, so ${fix > 0 ? 'raise' : 'lower'} ${letter} by ${semitones(Math.abs(fix))}: it needs **${signWords(fix)}**. The note is **${noteLabel(target)}**.`
-        : `The plain ${letter} is ${semitones(plainDistance)} below ${startName}, and we need ${wantedSemitones}. That is ${semitones(Math.abs(fix))} ${fix > 0 ? 'too far down' : 'not far enough down'}, so ${fix > 0 ? 'raise' : 'lower'} ${letter} by ${semitones(Math.abs(fix))}: it needs **${signWords(fix)}**. The note is **${noteLabel(target)}**.`
+  if (intervalShortName(intervalBetween(low, high).interval) !== shortName) throw new Error('Counting back does not give the interval we started with')
 
   const steps: WorkedStep[] = [
     {
-      text: `Look up the interval. From the table, ${article} ${name} is **${number} letter names** and **${wantedSemitones} semitones**. We start on **${startName}** and go **${direction}**.`,
+      title: 'Look up the interval',
+      text: `${capital(art)} ${name} is an ${w.say('interval', 'interval')} of ${number} letter names, counting both notes. Its quality, ${w.say(QUALITY_TERM[quality], quality)}, sets its size: ${w.say('semitone', semitones(wanted))}. You start on ${startName} and go ${direction}.`,
+      result: `${number} letter names, ${semitones(wanted)}`,
       staff: notesOnStaff(clef, [start]),
     },
     {
-      text: `**Step 1: the letter.** Count ${number} letter names ${direction}, counting ${startName}'s letter as 1: ${letterList.join(', ')}. The letter of the new note is **${letter}**.`,
-    },
-    {
-      text: `**Step 2: the semitones.** Walk ${direction} along the plain letters (E to F and B to C are 1 semitone, every other neighbouring pair is 2): ${walk.text}. That is ${walk.total}.${startAdjust}`,
-    },
-    { text: `**Step 3: fix the sign.** ${directionFix}` },
-    {
-      text: `Write the answer: ${article} ${name} ${dirWord} ${startName} is **${noteLabel(target)}**. Here are the two notes on the staff, with the sound.`,
-      staff: notesOnStaff(clef, [start, result]),
-      listen: listenMelody(`Hear ${startName} then ${noteLabel(target)}`, [start, result]),
-    },
-    {
-      text: `Check by counting back. From ${lowName} up to ${highName} the letters are ${checkLetters.join(', ')}: ${number} letter names ✓. The semitones are ${midiNumber(high) - midiNumber(low)} ✓. That is ${article} ${name}, as asked.`,
+      title: `Count ${number} letter names ${direction}`,
+      text: `Count ${direction} from ${start.letter}, counting ${start.letter} as 1: ${letterList.join(', ')}. The new note must use the letter ${letter}, whatever sign it needs.`,
+      result: `Letter: ${letter}`,
     },
   ]
+  const walk = letterGapSteps(
+    start.letter,
+    number - 1,
+    direction,
+    `Now count the semitones from ${start.letter} ${direction} to ${letter}, using the ${w.say('natural', 'natural')} letters first.`,
+  )
+  steps.push(...walk.steps)
+
+  // How far the start note is from the natural letter, once the start's own sign is counted.
+  let have = walk.total
+  if (start.accidental !== 0) {
+    const change = direction === 'up' ? -start.accidental : start.accidental
+    const after = have + change
+    steps.push({
+      title: `Adjust for the ${start.accidental > 0 ? 'sharp' : 'flat'} on ${startName}`,
+      text: `${signSentence(start, w)} That makes the distance ${direction} to ${letter} ${semitones(Math.abs(change))} ${change > 0 ? 'bigger' : 'smaller'}: ${have} ${change > 0 ? '+' : '−'} ${Math.abs(change)} = ${after}.`,
+      result: `${startName} ${direction} to ${letter}: ${semitones(after)}`,
+    })
+    have = after
+  }
+  // up: too few semitones means the letter is too low, so raise it. down: too few means not far enough down, so lower it.
+  const fix = direction === 'up' ? wanted - have : have - wanted
+  if (fix !== target.accidental) throw new Error('The sign worked out by counting disagrees with the sign worked out from pitch classes')
+  const fixText =
+    fix === 0
+      ? `They match, so ${letter} stays a natural: **${noteLabel(target)}**.`
+      : `${letter} is ${semitones(Math.abs(have - wanted))} ${have < wanted ? 'too close' : 'too far'}, so ${fix > 0 ? 'raise' : 'lower'} it with ${signPhrase(fix, w)}: **${noteLabel(target)}**.`
+  steps.push({
+    title: `Fix the sign on ${letter}`,
+    text: `You need ${semitones(wanted)}, and ${startName} ${direction} to ${letter} is ${have}. ${fixText}`,
+    result: `The note is ${noteLabel(target)}`,
+    staff: notesOnStaff(clef, [start, result]),
+    listen: listenMelody(`Hear ${startName} then ${noteLabel(target)}`, [start, result]),
+  })
+  steps.push({
+    title: 'Check another way: count piano keys',
+    text: `Count ${direction} one piano key at a time from ${startName} to ${noteLabel(target)}, without using the letter pairs. Count the steps, not the key you start on: ${keyWalkText(start, target, wanted, direction, prefersFlats(start, target))}.`,
+    result: `${semitones(wanted)}, as ${art} ${name} needs`,
+  })
   return {
-    title: `Build ${article} ${name} ${dirWord} ${startName}`,
-    task: `What note is ${article} ${name} ${dirWord} ${startName}?`,
+    title: `Build ${art} ${name} ${dirWord} ${startName}`,
+    task: `What note is ${art} ${name} ${dirWord} ${startName}?`,
     steps,
-    answer: `${article === 'an' ? 'An' : 'A'} ${name} ${dirWord} ${startName} is ${noteLabel(target)}.`,
+    terms: w.terms(),
+    answer: `${capital(art)} ${name} ${dirWord} ${startName} is ${noteLabel(target)}.`,
   }
 }
 
-/** Invert an interval: the lower note goes up an octave. The number and the size are worked out by the rules, and checked against the engine. */
+/** Invert an interval: the lower note goes up an octave. The number and the size are worked out by the rules, checked by counting, and against the engine. */
 export function invertIntervalExample(lower: Pitch, shortName: string, clef: ClefName = 'treble'): WorkedExample {
   const interval = parseInterval(shortName)
   const number = interval.number
@@ -276,35 +339,51 @@ export function invertIntervalExample(lower: Pitch, shortName: string, clef: Cle
   const upperName = noteLabel(upper)
   const name = longNameOf(number, quality)
   const newName = longNameOf(newNumber, newQuality)
-  const art = (s: string) => (/^[aeiou]/.test(s) ? 'an' : 'a')
   const letters = lettersUp(upper.letter, newNumber)
-  const walk = walkUp(upper.letter, newNumber - 1)
-  if (lower.accidental === 0 && upper.accidental === 0 && walk.total !== newSize) throw new Error('Counting the inverted interval does not give 12 minus the original')
+  if (letters[newNumber - 1] !== lower.letter) throw new Error('Counting letters up from the upper note must reach the moved note')
+  if (midiNumber(moved) - midiNumber(upper) !== newSize) throw new Error('Counting the inverted interval does not give 12 minus the original')
+  const w = new Words()
+  const rule =
+    quality === 'major' || quality === 'minor' ? 'major and minor swap' : quality === 'perfect' ? 'perfect stays perfect' : 'augmented and diminished swap'
   return {
-    title: `Invert ${art(name)} ${name}`,
+    title: `Invert ${article(name)} ${name}`,
     task: `Invert the ${name} from ${lowerName} up to ${upperName}. What interval do you get?`,
     steps: [
-      { text: `Start with the interval: ${lowerName} up to ${upperName} is ${art(name)} **${name}** (${number} letter names, ${size} semitones).`, staff: notesOnStaff(clef, [lower, upper]) },
       {
-        text: `To **invert** it, take the lower note and move it up an **octave**, so that it becomes the upper note. ${lowerName} moves up to the next ${lowerName} above. Now the notes are ${upperName} (lower) and ${lowerName} (upper).`,
+        title: 'Write the interval you start with',
+        text: `${lowerName} up to ${upperName} is an ${w.say('interval', 'interval')} of ${number} letter names and ${w.say('semitone', semitones(size))}: ${article(name)} ${name}.`,
+        result: `${lowerName} up to ${upperName}: ${name}, ${semitones(size)}`,
+        staff: notesOnStaff(clef, [lower, upper]),
+      },
+      {
+        title: 'Move the lower note up an octave',
+        text: `To make the ${w.say('inversion', 'inversion')}, move the lower note ${lowerName} up ${w.say('octave', 'an octave')} to the next ${lowerName}. ${upperName} stays where it is. Now ${upperName} is the lower note and ${lowerName} is the upper note.`,
+        result: `${upperName} up to ${lowerName}`,
         staff: notesOnStaff(clef, [upper, moved]),
       },
       {
-        text: `**The number.** Count the letters from ${upper.letter} up to ${moved.letter}: ${letters.join(', ')}. That is **${newNumber}**. (Check: ${number} + ${newNumber} = ${number + newNumber}. The two numbers of an interval and its inversion always add up to 9.)`,
+        title: 'Find the new number',
+        text: `An interval and its inversion always have ${w.say('number', 'numbers')} that add up to 9. Together they span an octave, 8 letter names, and ${upperName} is counted in both, so 8 + 1 = 9. Here 9 − ${number} = ${newNumber}.`,
+        result: `Number: ${BASE[newNumber]!.word}`,
       },
       {
-        text: `**The semitones.** An interval and its inversion fill one octave, which is 12 semitones. So the inversion has 12 − ${size} = **${newSize} semitones**.${
-          lower.accidental === 0 && upper.accidental === 0
-            ? ` (Check by counting up the plain letters: ${walk.text}. That is ${walk.total}.)`
-            : ''
-        }`,
+        title: 'Find the new number of semitones',
+        text: `Together the two intervals fill one octave, which is 12 semitones. So the inversion has 12 − ${size} = **${semitones(newSize)}**.`,
+        result: semitones(newSize),
       },
-      { text: `**The quality.** ${lookupSentence(newNumber, newSize)}` },
       {
-        text: `Check against the rule: ${quality === 'major' || quality === 'minor' ? 'major and minor swap' : quality === 'perfect' ? 'perfect stays perfect' : 'augmented and diminished swap'}. ${art(name) === 'an' ? 'An' : 'A'} ${name} turns into ${art(newName)} ${newName}. ✓ Here are the inverted notes, with the sound.`,
+        title: 'Look up the quality',
+        text: `${qualityText(newNumber, newSize, w)} This fits the rule for inversions: ${rule}.`,
+        result: `${capital(newName)} (${shortNameOf(newNumber, newQuality)})`,
+      },
+      {
+        title: 'Check another way: count the new interval',
+        text: `Count the letter names from ${upper.letter} up to ${lower.letter}, counting both: ${letters.join(', ')}. That is ${newNumber}. Count piano keys up from ${upperName}: ${keyWalkText(upper, moved, newSize, 'up', prefersFlats(upper, moved))}.`,
+        result: `${newNumber} letter names and ${semitones(newSize)}: ${article(newName)} ${newName}`,
         listen: listenMelody(`Hear ${upperName} then ${noteLabel(moved)}`, [upper, moved]),
       },
     ],
-    answer: `The inversion of ${art(name)} ${name} is ${art(newName)} ${newName} (${shortNameOf(newNumber, newQuality)}).`,
+    terms: w.terms(),
+    answer: `The inversion of ${article(name)} ${name} is ${article(newName)} ${newName} (${shortNameOf(newNumber, newQuality)}).`,
   }
 }

@@ -909,6 +909,20 @@ legend {
 .worked-steps { margin: var(--space-3) 0; padding-left: var(--space-6); line-height: 1.55; }
 .worked-steps li { margin: var(--space-3) 0; }
 .worked-steps li p { margin: 0 0 var(--space-2); }
+/* Words you need: the musical terms the example uses, explained before the working starts. */
+.worked-terms { margin: var(--space-3) 0; padding: var(--space-1) var(--space-4) var(--space-3); border-radius: 0.6rem; background: var(--bg); border: 1px solid var(--line); }
+.worked-terms-title { font-family: var(--serif); font-size: 1.05rem; cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; }
+.worked-terms-title::-webkit-details-marker { display: none; }
+.worked-terms-title::after { content: ''; width: 0.5rem; height: 0.5rem; margin: 0 var(--space-1) 0 auto; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform var(--dur-med) var(--ease-out); }
+.worked-terms[open] .worked-terms-title { margin-bottom: var(--space-2); }
+.worked-terms[open] .worked-terms-title::after { transform: rotate(-135deg); }
+.worked-terms dl { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.worked-terms dt { font-weight: 600; }
+.worked-terms dd { margin: 0; color: var(--muted); line-height: 1.5; }
+/* Each step: what to do, how, and what it gives you. */
+.worked-steps .step-title { margin: 0 0 var(--space-1); font-weight: 600; }
+.worked-steps .step-result { display: flex; align-items: baseline; gap: var(--space-2); margin: var(--space-2) 0 0; font-weight: 600; color: var(--accent); }
+.worked-steps .step-result .icon { align-self: flex-start; margin-top: 0.2em; color: var(--muted); }
 .worked-answer { margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); border-radius: 0.6rem; background: var(--bg); border: 1px solid var(--line); }
 .worked-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .worked-plain { margin-top: var(--space-2); font-size: 0.85rem; color: var(--muted); }
@@ -1086,7 +1100,8 @@ legend {
   }
 
   .progress-fill,
-  .disclosure summary::after {
+  .disclosure summary::after,
+  .worked-terms-title::after {
     transition: none;
   }
 }

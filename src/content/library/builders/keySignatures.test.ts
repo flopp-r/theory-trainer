@@ -53,28 +53,34 @@ describe('keyFromSignatureExample', () => {
   it('states the right number and names of signs', () => {
     for (const { key, name, fifths } of KEYS) {
       const e = keyFromSignatureExample(key)
-      const text = ascii(e.steps.map((s) => s.text).join(' '))
-      if (fifths !== 0) expect(text, name).toContain(handSigns(fifths))
-      else expect(text, name).toContain('no sharps or flats')
+      const results = ascii(e.steps.map((s) => s.result).join(' | '))
+      if (fifths !== 0) expect(results, name).toContain(handSigns(fifths))
+      else expect(results, name).toContain('No sharps or flats')
     }
   })
 
   it('uses the one-flat exception and the second-to-last-flat rule', () => {
-    expect(keyFromSignatureExample(parseKey('F major')).steps.map((s) => s.text).join(' ')).toContain('has to be learned')
+    expect(keyFromSignatureExample(parseKey('F major')).steps.map((s) => s.text).join(' ')).toContain('learn this one')
     expect(keyFromSignatureExample(parseKey('Eb major')).steps.map((s) => s.text).join(' ')).toContain('second-to-last')
   })
 
-  it('says one signature belongs to two keys, and finds the minor key 3 semitones below the major', () => {
-    const text = keyFromSignatureExample(parseKey('F# minor'), 'alto').steps.map((s) => s.text).join(' ')
-    expect(text).toContain('A major')
-    expect(text).toContain('F♯ minor')
-    expect(text).toContain('3 semitones below')
-    expect(text).toContain('Count 3 letter names down from A: A, G, F')
+  it('finds the major key first, then the relative minor 3 letter names and 3 semitones below it', () => {
+    const e = keyFromSignatureExample(parseKey('F# minor'), 'alto')
+    const text = e.steps.map((s) => s.text).join(' ')
+    const results = e.steps.map((s) => s.result)
+    expect(results).toContain('Major key: A major')
+    expect(results).toContain('Minor key: F♯ minor')
+    expect(text).toContain('relative minor')
+    expect(text).toContain('Count 3 letter names down from A, counting A as 1: A, G, F')
+    expect(text).toContain('A, G♯, G, F♯: 3 steps, so 3 semitones')
   })
 
-  it('has a check that writes the scale', () => {
+  it('checks by the circle of fifths, or by the scale when there are no signs', () => {
     const e = keyFromSignatureExample(parseKey('D major'))
-    expect(ascii(e.steps.find((s) => s.text.startsWith('Check'))!.text)).toContain('D E F# G A B C#')
+    expect(e.steps.at(-1)!.title).toBe('Check another way: the circle of fifths')
+    expect(e.steps.at(-1)!.text).toContain('C (0), G (1), D (2)')
+    expect(keyFromSignatureExample(parseKey('Bb minor')).steps.at(-1)!.text).toContain('A (0), D (1), G (2), C (3), F (4), B♭ (5)')
+    expect(keyFromSignatureExample(parseKey('C major')).steps.at(-1)!.text).toContain('C D E F G A B')
   })
 })
 
@@ -91,22 +97,24 @@ describe('signatureFromKeyExample', () => {
   it('draws the answer in the clef asked for', () => {
     for (const clef of CLEF_NAMES) {
       const e = signatureFromKeyExample(parseKey('D major'), clef)
-      expect(e.steps.at(-1)!.staff).toEqual({ clef, key: parseKey('D major'), items: [] })
+      expect(e.steps.find((s) => s.title === 'Write the signs after the clef')!.staff).toEqual({ clef, key: parseKey('D major'), items: [] })
     }
   })
 
   it('checks with the circle of fifths, counting one sign per step from C', () => {
     const text = signatureFromKeyExample(parseKey('D major')).steps.map((s) => s.text).join(' ')
-    expect(text).toContain('C major (none) → G major (1 sharp) → D major (2 sharps)')
+    expect(text).toContain('C (0), G (1), D (2)')
     const flats = signatureFromKeyExample(parseKey('Ab major')).steps.map((s) => s.text).join(' ')
-    expect(flats).toContain('C major (none) → F major (1 flat) → B♭ major (2 flats) → E♭ major (3 flats) → A♭ major (4 flats)')
+    expect(flats).toContain('C (0), F (1), B♭ (2), E♭ (3), A♭ (4)')
+    expect(flats).toContain('Find A in the order: B (1), E (2), A (3)')
+    expect(signatureFromKeyExample(parseKey('Ab major')).steps.map((s) => s.result)).toContain('4 flats: B♭ E♭ A♭ D♭')
   })
 
   it('works with the relative major for a minor key', () => {
-    const text = signatureFromKeyExample(parseKey('F# minor')).steps[0]!.text
-    expect(text).toContain('minor')
-    expect(text).toContain('A major')
-    expect(text).toContain('F, G, A')
+    const e = signatureFromKeyExample(parseKey('F# minor'))
+    expect(e.steps[0]!.text).toContain('relative major')
+    expect(e.steps[0]!.text).toContain('F, G, A')
+    expect(e.steps[1]!.result).toBe('Relative major: A major')
   })
 
   it('refuses a theoretical key', () => {

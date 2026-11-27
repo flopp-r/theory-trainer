@@ -7,25 +7,55 @@ import {
   chordFromRoman,
   chordNotes,
   keyScaleNotes,
+  keySignature,
   letterAt,
   letterIndex,
   note,
   primaryChords,
   romanNumeral,
   sameNote,
+  withoutOctave,
 } from '../../../theory'
 import { chordWords } from '../../../questions/chords'
 import { keyLabel, noteLabel, notesLabel } from '../../../questions/pitchTools'
-import type { WorkedExample } from '../types'
+import type { WorkedExample, WorkedStep, WorkedTerm } from '../types'
 import { listenChord } from './audio'
 import { chordsOnStaff } from './common'
-import { assertSameNotes, chordPicture, chordSequenceAudio, qualityFromSemitones, semitoneWorking, sharedPictures } from './chords'
+import {
+  type Role,
+  Explained,
+  ROLES,
+  TERM,
+  TRIAD_TABLE_TEXT,
+  andList,
+  assertSameNotes,
+  capital,
+  chordPicture,
+  countsText,
+  spokenNote,
+  chordSequenceAudio,
+  chordTypeTerm,
+  countStep,
+  finish,
+  fit,
+  intervalTerm,
+  nameNotesStep,
+  neighbourWalks,
+  walkCheck,
+  qualityFromSemitones,
+  qualityPhrase,
+  semitoneWorking,
+  sharedPictures,
+  signTerms,
+  stackedStep,
+} from './chords'
 import { handChordSymbol } from './inversions'
 
 /*
  * Worked examples for Roman numerals.
- * The long-hand working builds the key's scale by counting semitones, finds the chord's root in the scale,
- * and reads the numeral from its position and type. The engine's `romanNumeral` and `chordFromRoman` check it.
+ * The long-hand working writes the key's scale from its key signature, finds the chord's root in the scale,
+ * and reads the numeral from its scale degree and type. The scale is cross-checked by counting tones and semitones,
+ * and the numerals by the engine's `romanNumeral` and `chordFromRoman`.
  */
 
 const mod = (n: number, m: number) => ((n % m) + m) % m
@@ -33,6 +63,28 @@ const mod = (n: number, m: number) => ((n % m) + m) % m
 const MAJOR_PATTERN = [2, 2, 1, 2, 2, 2, 1] as const
 const NATURAL_MINOR_PATTERN = [2, 1, 2, 2, 1, 2, 2] as const
 export const NUMERAL_LETTERS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'] as const
+const NUMBERS_TEXT = 'I = 1, II = 2, III = 3, IV = 4, V = 5, VI = 6, VII = 7'
+
+/** Hand-written names of the scale degrees. Degree 7 of the natural minor scale is the subtonic. */
+const DEGREE_NAME = ['tonic', 'supertonic', 'mediant', 'subdominant', 'dominant', 'submediant', 'leading note'] as const
+const DEGREE_TERM: Record<string, WorkedTerm> = {
+  tonic: TERM.tonic,
+  supertonic: TERM.supertonic,
+  mediant: TERM.mediant,
+  subdominant: TERM.subdominant,
+  dominant: TERM.dominant,
+  submediant: TERM.submediant,
+  'leading note': TERM.leadingNote,
+  subtonic: TERM.subtonic,
+}
+
+/** The name of a scale degree (1 to 7). `raised` is for degree 7 of a minor key raised to a leading note. */
+export function degreeName(key: Key, degree: number, raised = false): string {
+  if (degree === 7 && key.mode === 'minor' && !raised) return 'subtonic'
+  return DEGREE_NAME[degree - 1]!
+}
+
+export const degreeTerm = (name: string): WorkedTerm => DEGREE_TERM[name]!
 
 /**
  * The scale of a key, built by counting semitones from the key note with the tone and semitone pattern
@@ -58,7 +110,43 @@ export function numberedScale(scale: readonly NoteName[]): string {
   return scale.map((n, i) => `${i + 1} ${noteLabel(n)}`).join(', ')
 }
 
-const scaleName = (key: Key) => (key.mode === 'major' ? `${keyLabel(key)}` : `${keyLabel(key)} (natural minor scale)`)
+/**
+ * Two steps: write the scale of the key from its key signature, then number the notes as scale degrees.
+ * The scale is worked out from the key signature here and checked against `scaleByCounting` (a different route).
+ */
+export function scaleSteps(key: Key, ex: Explained): { scale: NoteName[]; steps: WorkedStep[] } {
+  const kName = keyLabel(key)
+  const letters = Array.from({ length: 7 }, (_, i) => letterAt(letterIndex(key.tonic.letter) + i))
+  const signature = keySignature(key)
+  const scale = letters.map((l) => signature.accidentals.find((a) => a.letter === l) ?? note(l, 0))
+  assertSameNotes(`${kName} scale from the key signature`, scale, scaleByCounting(key))
+  const signs = signature.accidentals.map(noteLabel)
+  const kind = signature.kind === 'sharps' ? 'sharp' : 'flat'
+  const sigText =
+    signs.length === 0
+      ? 'no sharps or flats, so every note is a natural'
+      : signs.length === 7
+        ? `7 ${kind}s, so every letter takes a ${kind}`
+        : signs.length <= 3
+          ? `${signs.length} ${kind}${signs.length === 1 ? '' : 's'}: ${andList(signs)}. So ${andList(signature.accidentals.map((a) => a.letter))} ${signs.length === 1 ? 'becomes' : 'become'} ${andList(signs)}`
+          : `${signs.length} ${kind}s: ${andList(signs)}. Add a ${kind} to each of those letters`
+  const minorText = key.mode === 'minor' ? ' This gives the natural minor scale.' : ''
+  return {
+    scale,
+    steps: [
+      {
+        title: `Write out the scale of ${kName}`,
+        text: `Write seven letter names from the tonic${ex.once('tonic', ' (the key note)')}, ${noteLabel(key.tonic)}: ${letters.join(', ')}. The key signature of ${kName} has ${sigText}.${minorText}`,
+        result: notesLabel(scale),
+      },
+      {
+        title: 'Number the notes as scale degrees',
+        text: `A scale degree${ex.once('degree', " (a note's number in the scale)")} counts up from the tonic, ${noteLabel(key.tonic)}, which is 1.`,
+        result: numberedScale(scale),
+      },
+    ],
+  }
+}
 
 /** Hand-written: the chord types a numeral can stand for here. */
 function numeralSuffix(quality: ChordQuality): { lower: boolean; suffix: string } {
@@ -74,6 +162,16 @@ function numeralSuffix(quality: ChordQuality): { lower: boolean; suffix: string 
     default:
       throw new Error(`Numeral working does not cover ${quality} chords`)
   }
+}
+
+/** Why the numeral has capitals or small letters, for each chord type. */
+const CASE_RULE = 'Capital letters mean a major chord. Small letters mean a minor chord. Small letters with ° (a small circle) mean a diminished chord. A capital with 7 after it means a dominant 7th chord.'
+
+const CASE_RESULT: Record<string, string> = {
+  major: 'a major chord, so use capital letters',
+  minor: 'a minor chord, so use small letters',
+  diminished: 'a diminished chord, so use small letters and °',
+  dominant7: 'a dominant 7th chord, so use capitals and 7',
 }
 
 export interface NumeralAnalysis {
@@ -105,72 +203,129 @@ export function numeralLongHand(key: Key, chord: Chord): NumeralAnalysis {
   return { scale, degree: index + 1, numeral, outside, leadingNote }
 }
 
-const NUMBERS_TEXT = 'I is 1, II is 2, III is 3, IV is 4, V is 5, VI is 6, VII is 7'
+/** The raised 7th explained, for a note of a minor-key chord that is not in the natural minor scale. */
+function raisedText(key: Key, scale: readonly NoteName[], raised: NoteName): string {
+  return `The natural minor scale of ${keyLabel(key)} has ${noteLabel(scale[6]!)}, not ${spokenNote(raised)}. ${noteLabel(raised)} is scale degree 7 raised by a semitone, which makes it a leading note (1 semitone below the tonic). Minor keys raise degree 7 in chords V and vii°.`
+}
 
-function quickName(counts: readonly number[], root: NoteName, quality: ChordQuality, notes: readonly NoteName[]): string {
-  const parts = notes
-    .slice(1)
-    .map((n, i) => `${noteLabel(n)} is ${counts[i]}`)
-    .join(', ')
-  const rule =
-    counts.length === 2
-      ? 'For the 3rd and 5th: major is 4 and 7; minor is 3 and 7; diminished is 3 and 6'
-      : 'For the 3rd, 5th and 7th: dominant 7th is 4, 7 and 10'
-  return `From the root ${noteLabel(root)} count the semitones up to each other note: ${parts} (semitones above the root). ${rule}. So the chord is **${chordWords({ root, quality })}**.`
+export interface ChordNumeralSteps {
+  readonly steps: WorkedStep[]
+  /** The counting and naming steps (the first part of `steps`). */
+  readonly nameSteps: WorkedStep[]
+  /** The scale degree and numeral steps (the rest of `steps`). */
+  readonly degreeSteps: WorkedStep[]
+  readonly analysis: NumeralAnalysis
+  readonly counts: number[]
+  readonly names: string[]
+  readonly terms: WorkedTerm[]
 }
 
 /**
- * "What is the Roman numeral of this chord in this key?" for a root-position chord.
- * Working: scale by counting, find the root's number, read the numeral from its type.
- * Cross-check: the engine's `romanNumeral`.
+ * The steps that name a root-position chord and find its Roman numeral in a key, given the scale already written:
+ * count from the root, match the type, find the scale degree, write the numeral.
+ * `which` is "" for a single chord, or "first" / "second" in a cadence.
  */
-export function romanNumeralExample(key: Key, chord: Chord, clef: ClefName = 'treble'): WorkedExample {
+export function numeralSteps(key: Key, chord: Chord, ex: Explained, which = ''): ChordNumeralSteps {
   const a = numeralLongHand(key, chord)
   const notes = chordNotes(chord)
-  const counts = notes.slice(1).map((n) => semitoneWorking(chord.root, n).total)
+  const root = chord.root
+  const own = which ? `${which} chord` : 'chord'
+  const counted = notes.slice(1).map((n, i) => countStep(root, n, ex, `Count from ${noteLabel(root)} up to the ${ROLES[i] as Role}, ${noteLabel(n)}`))
+  const counts = counted.map((c) => c.total)
   if (qualityFromSemitones(counts) !== chord.quality) throw new Error('Semitone counts do not give the chord type')
-  const pitches = chordPicture(chord, clef)
-  const kName = keyLabel(key)
   const symbol = handChordSymbol(chord, 0)
   const words = chordWords(chord)
-  const ordinalWord = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][a.degree - 1]!
-  const { lower, suffix } = numeralSuffix(chord.quality)
-  const caseText =
-    chord.quality === 'major'
-      ? 'The chord is **major**, so the numeral is in **capital letters**.'
-      : chord.quality === 'minor'
-        ? 'The chord is **minor**, so the numeral is in **small letters** (lower case).'
-        : chord.quality === 'diminished'
-          ? 'The chord is **diminished**, so the numeral is in **small letters** with a little circle **°** after it.'
-          : 'The chord is a **dominant 7th**, so the numeral is in **capital letters** with a **7** after it.'
-  const rootText = a.leadingNote
-    ? `The root is ${noteLabel(chord.root)}. The scale has ${noteLabel(a.scale[6]!)} as its note 7, and ${noteLabel(chord.root)} is one semitone higher: the **raised 7th**. Minor keys use this raised note (the *leading note*) all the time, and it still counts as note **7**. The numeral letters are **${NUMERAL_LETTERS[6]}**. (${NUMBERS_TEXT}.)`
-    : `The root is ${noteLabel(chord.root)}. In the scale, **${noteLabel(chord.root)} is note ${a.degree}**, the ${ordinalWord} note. The Roman numeral letters match the note number (${NUMBERS_TEXT}). So the letters are **${NUMERAL_LETTERS[a.degree - 1]}**.`
-  const checkText =
-    a.outside.length === 0
-      ? `Check: every note of the chord, ${notesLabel(notes)}, appears in the scale of ${kName}. Chords made from a key's own notes are the ones numerals are for. ✓`
-      : `Check: ${notesLabel(notes.filter((n) => !a.outside.some((o) => sameNote(o, n))))} are all in the scale. The one other note, ${noteLabel(a.outside[0]!)}, is the raised 7th, which minor keys borrow on purpose to make this chord. ✓`
-  return {
+  const letters = NUMERAL_LETTERS[a.degree - 1]!
+  const dName = degreeName(key, a.degree, a.leadingNote)
+  const raisedNote = a.outside[0]
+  const findText = a.leadingNote
+    ? `${raisedText(key, a.scale, root)} It still counts as degree 7.`
+    : `${noteLabel(root)} is scale degree ${a.degree}, the ${dName}.`
+  const nameSteps: WorkedStep[] = [
+    ...counted.flatMap((c) => c.steps),
+    {
+      title: `Name the ${own} from its counts`,
+      text: countsText(notes.length, counts, chord.quality, ex),
+      result: `${capital(qualityPhrase(chord.quality))}: ${words}, symbol ${symbol}`,
+    },
+  ]
+  const degreeSteps: WorkedStep[] = [
+    {
+      title: `Find the root, ${noteLabel(root)}, in the scale`,
+      text: findText,
+      result: `Scale degree ${a.degree}: the ${dName}`,
+    },
+    ...(raisedNote && !a.leadingNote
+      ? [
+          {
+            title: `Look at ${noteLabel(raisedNote)}, which is not in the scale`,
+            text: raisedText(key, a.scale, raisedNote),
+            result: `${noteLabel(raisedNote)}: degree 7, raised`,
+          },
+        ]
+      : []),
+    {
+      title: `Write degree ${a.degree} as a Roman numeral`,
+      text: ex.has('numbers') ? `Degree ${a.degree} in Roman numerals is ${letters}.` : `Roman numerals${ex.once('roman', ' (chord names by scale degree)')} count ${NUMBERS_TEXT}.${ex.once('numbers', '')} Degree ${a.degree} is ${letters}.`,
+      result: letters,
+    },
+    {
+      title: 'Choose capital or small letters',
+      text: `${ex.once('case-rule', `${CASE_RULE} `)}${words} is ${CASE_RESULT[chord.quality]}.`,
+      result: which ? `${capital(which)} chord: ${a.numeral}` : `Numeral: ${a.numeral}`,
+    },
+  ]
+  const terms: WorkedTerm[] = [
+    TERM.root,
+    ...counted.map((c) => intervalTerm(c.name)),
+    chordTypeTerm(chord.quality),
+    degreeTerm(dName),
+    ...(raisedNote ? [TERM.leadingNote, TERM.naturalMinor] : []),
+  ]
+  return { steps: [...nameSteps, ...degreeSteps], nameSteps, degreeSteps, analysis: a, counts, names: counted.map((c) => c.name), terms }
+}
+
+const KEY_TERMS = [TERM.key, TERM.scale, TERM.keySignature, TERM.tonic, TERM.degree, TERM.roman, TERM.naturalMinor]
+
+/**
+ * "What is the Roman numeral of this chord in this key?" for a root-position chord.
+ * Working: name the chord by counting, write and number the scale, find the root's degree, read the numeral.
+ * Check: build the chord back from the numeral. Cross-check: the engine's `romanNumeral` and `chordFromRoman`.
+ */
+export function romanNumeralExample(key: Key, chord: Chord, clef: ClefName = 'treble'): WorkedExample {
+  const ex = new Explained()
+  const kName = keyLabel(key)
+  const pitches = chordPicture(chord, clef)
+  const symbol = handChordSymbol(chord, 0)
+  const words = chordWords(chord)
+  const names = nameNotesStep(pitches, clef, `Hear ${symbol}`, key)
+  const stacked = stackedStep(pitches.map(withoutOctave), ex)
+  const { steps: scaleWork } = scaleSteps(key, ex)
+  const n = numeralSteps(key, chord, ex)
+  const a = n.analysis
+  // Check by the reverse route: build the chord from the numeral by stacking scale notes.
+  const back = buildFromNumeral(key, a.numeral)
+  assertSameNotes(`${a.numeral} built back`, back.notes, chordNotes(chord))
+  const raised = back.usedRaised ? ` A minor key raises degree 7 in this chord: ${noteLabel(back.scale[6]!)} becomes ${spokenNote(note(back.scale[6]!.letter, back.scale[6]!.accidental + 1))}.` : ''
+
+  return finish({
     title: `Find the Roman numeral of ${words} in ${kName}`,
     task: `The key is ${kName}. What is the Roman numeral of the chord ${words} (symbol ${symbol})?`,
+    terms: [...KEY_TERMS, TERM.rootPosition, TERM.stacked, TERM.semitone, ...n.terms, ...signTerms(chordNotes(chord)).filter((t) => t !== TERM.natural)],
     steps: [
+      names,
+      stacked,
+      ...n.nameSteps,
+      ...scaleWork,
+      ...n.degreeSteps,
       {
-        text: `Name the chord. It is in root position, so the lowest note is the root. The notes are **${notesLabel(notes)}**. ${quickName(counts, chord.root, chord.quality, notes)}`,
-        staff: chordsOnStaff(clef, [pitches], key),
-        listen: listenChord(`Hear ${symbol}`, pitches),
+        title: 'Check another way: build the chord from the numeral',
+        text: `Start on scale degree ${a.degree} and stack 3rds using only scale notes: take a note, skip one, take the next. That gives degrees ${back.numbers.join(', ')}${back.numbers.some((x, i) => i > 0 && x < back.numbers[i - 1]!) ? ex.once('wrap', ' (after 7, start again at 1)') : ''}.${raised} The notes are ${notesLabel(back.notes)}, the chord on the staff.`,
+        result: `${a.numeral} in ${kName} is ${notesLabel(back.notes)}, as given`,
       },
-      {
-        text: `Write out the scale of ${scaleName(key)} and number the notes: **${numberedScale(a.scale)}**. (If you need to, build it with the method in the Major scales or Minor scales lesson.)`,
-      },
-      { text: rootText },
-      { text: `Choose capital or small letters. ${caseText}` },
-      {
-        text: `Put it together: the letters **${NUMERAL_LETTERS[a.degree - 1]}**${lower ? ', in small letters' : ', in capitals'}${suffix ? `, plus **${suffix}**` : ''}. The numeral is **${a.numeral}**.`,
-      },
-      { text: checkText },
     ],
     answer: `In ${kName}, ${words} (${symbol}) is ${a.numeral}.`,
-  }
+  })
 }
 
 const NUMERAL_RE = /^(VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)(°|7)?$/
@@ -214,69 +369,124 @@ export function buildFromNumeral(key: Key, numeral: string): NumeralBuild {
   return { scale, degree, quality, usedRaised, numbers, notes, counts, chord }
 }
 
-const RAISED_TEXT = 'In a minor key, V and vii° are built with the 7th note raised by a semitone (the leading note). Without that, V would be a minor chord.'
+/** Why degree 7 is raised, for the step that stacks the chord. */
+function raisedStackText(b: NumeralBuild, numeral: string, short = false): string {
+  if (!b.usedRaised) return ''
+  const from = b.scale[6]!
+  const to = note(from.letter, from.accidental + 1)
+  const without = short ? '' : b.quality === 'dominant7' ? ' Without it, the 3rd would be too small for a dominant 7th.' : b.degree === 5 ? ' Without it, the chord would be minor (v).' : ' Without it, the chord would be major (VII).'
+  return ` In a minor key, ${numeral} uses scale degree 7 raised by a semitone (the leading note): ${noteLabel(from)} becomes ${spokenNote(to)}.${without}`
+}
+
+/** The steps that build a chord from a numeral: degree, stack, count, match. Used here and for cadences. */
+export function stackSteps(key: Key, numeral: string, ex: Explained, which = '', decoded = false): { build: NumeralBuild; steps: WorkedStep[]; terms: WorkedTerm[] } {
+  const b = buildFromNumeral(key, numeral)
+  const own = which ? `the ${which} chord, ${numeral}` : numeral
+  const wraps = b.numbers.some((n, i) => i > 0 && n < b.numbers[i - 1]!)
+  const root = b.notes[0]!
+  const dName = degreeName(key, b.degree, b.usedRaised && b.degree === 7)
+  const counted = b.notes.slice(1).map((n, i) => countStep(root, n, ex, `Count from ${noteLabel(root)} up to the ${ROLES[i] as Role}, ${noteLabel(n)}`))
+  if (counted.map((c) => c.total).join(',') !== b.counts.join(',')) throw new Error('Counts disagree')
+  const symbol = handChordSymbol(b.chord, 0)
+  const stackBase = `Take the root, skip one scale note, take the next${b.notes.length === 4 ? ', and do it twice more' : ', and do it once more'}: scale degrees ${b.numbers.join(', ')}${wraps ? ex.once('wrap', ' (after 7, start again at 1)') : ''}.`
+  return {
+    build: b,
+    steps: [
+      {
+        title: `Find the root of ${own}`,
+        text: `${decoded ? '' : `${numeral.replace(/[°7]/g, '')} is ${b.degree} in Roman numerals, so the root is scale degree ${b.degree}. `}Scale degree ${b.degree} of ${keyLabel(key)} is ${noteLabel(root)}, the ${dName}.`,
+        result: `Root: ${noteLabel(root)}`,
+      },
+      {
+        title: `Build ${numeral}: stack 3rds on ${noteLabel(root)}`,
+        text: fit(`${stackBase}${raisedStackText(b, numeral)}`, `${stackBase}${raisedStackText(b, numeral, true)}`),
+        result: notesLabel(b.notes),
+      },
+      ...counted.flatMap((c) => c.steps),
+      {
+        title: `Check the counts match ${numeral}`,
+        text: `${b.notes.length === 3 ? ex.once('triad-table', `${TRIAD_TABLE_TEXT} `) : 'A dominant 7th chord is 4, 7 and 10. '}Yours are ${andList(b.counts.map(String))}: a ${qualityPhrase(b.quality)}. ${MATCH_CASE[b.quality]}, so it matches ${numeral}.`,
+        result: `${numeral} = ${symbol}: ${notesLabel(b.notes)}`,
+      },
+    ],
+    terms: [TERM.root, degreeTerm(dName), ...counted.map((c) => intervalTerm(c.name)), chordTypeTerm(b.quality), ...(b.usedRaised ? [TERM.leadingNote] : [])],
+  }
+}
+
+/** The part of the case rule that applies to each type. */
+const MATCH_CASE: Record<string, string> = {
+  major: 'Capital letters mean a major chord',
+  minor: 'Small letters mean a minor chord',
+  diminished: 'Small letters with ° mean a diminished chord',
+  dominant7: 'A capital with 7 means a dominant 7th chord',
+}
+
+/** Words for reading the numeral's case before building. */
+const READ_CASE: Record<string, string> = {
+  major: 'It is in capital letters, so the chord is major.',
+  minor: 'It is in small letters, so the chord is minor.',
+  diminished: 'It is in small letters with °, so the chord is diminished.',
+  dominant7: 'It is in capitals with 7 after it, so the chord is a dominant 7th chord: a major triad with a minor 7th on top.',
+}
 
 /**
  * "Write the chord for this Roman numeral in this key."
- * Working: number the scale, find the root, stack every other scale note, check the type.
- * Cross-check: the engine's `chordFromRoman`.
+ * Working: read the numeral, write and number the scale, stack scale notes in 3rds, count to confirm the type.
+ * Check: the 3rds by piano keys. Cross-check: the engine's `chordFromRoman`.
  */
 export function chordFromNumeralExample(key: Key, numeral: string, clef: ClefName = 'treble'): WorkedExample {
-  const b = buildFromNumeral(key, numeral)
+  const ex = new Explained()
   const kName = keyLabel(key)
+  const { steps: scaleWork } = scaleSteps(key, ex)
+  const s = stackSteps(key, numeral, ex, '', true)
+  const b = s.build
   const symbol = handChordSymbol(b.chord, 0)
   const pitches = chordPicture(b.chord, clef)
-  const root = b.notes[0]!
-  const typeText =
-    b.quality === 'major'
-      ? 'capital letters, so a **major** chord'
-      : b.quality === 'minor'
-        ? 'small letters, so a **minor** chord'
-        : b.quality === 'diminished'
-          ? 'small letters with a **°**, so a **diminished** chord'
-          : 'capital letters with a **7**, so a **dominant 7th** chord'
-  const lettersOnly = numeral.replace(/[°7]/g, '')
-  const stackNames = b.notes.map((n) => noteLabel(n))
-  const roles = b.numbers.map((n, i) => `${n} (${noteLabel(b.notes[i]!)})`).join(', ')
-  return {
+  const walks = neighbourWalks(b.notes, ex)
+  if (walks.sizes.reduce((x, y) => x + y, 0) !== b.counts.at(-1)) throw new Error('The piano-key check does not add up')
+  const [findRoot, stack, ...rest] = s.steps
+  return finish({
     title: `Write the chord for ${numeral} in ${kName}`,
     task: `In ${kName}, write the chord with the Roman numeral ${numeral}.`,
+    terms: [...KEY_TERMS, TERM.stacked, TERM.semitone, ...s.terms, ...signTerms(b.notes).filter((t) => t !== TERM.natural)],
     steps: [
       {
-        text: `Read the numeral **${numeral}**. The letters **${lettersOnly}** are a number: ${NUMBERS_TEXT}. So the root of the chord is **note ${b.degree}** of the scale. The numeral is in ${typeText}.`,
-      },
-      { text: `Write out the scale of ${scaleName(key)} and number the notes: **${numberedScale(b.scale)}**.` },
-      {
-        text: `Find note ${b.degree}: it is **${noteLabel(root)}**. That is the root of the chord.`,
+        title: `Read the letters of ${numeral}`,
+        text: `A Roman numeral${ex.once('roman', ' (a chord named by the scale degree of its root)')} counts ${NUMBERS_TEXT}. ${numeral.replace(/[°7]/g, '')} is ${b.degree}, so the root is scale degree ${b.degree}.`,
+        result: `Root: scale degree ${b.degree}`,
       },
       {
-        text: `Build the chord by stacking thirds **using only the notes of the key**. Start on note ${b.degree}, skip one note, take the next, and so on. The note numbers are ${b.numbers.join(', ')}.${
-          b.usedRaised ? ` ${RAISED_TEXT} Here that means note 7 is ${noteLabel(b.scale[6]!)} raised to **${noteLabel(note(b.scale[6]!.letter, b.scale[6]!.accidental + 1))}**.` : ''
-        } The notes are **${stackNames.join(', ')}**.`,
-        staff: chordsOnStaff(clef, [pitches], key),
-        listen: listenChord(`Hear ${symbol}`, pitches),
+        title: `Read the case of ${numeral}`,
+        text: READ_CASE[b.quality]!,
+        result: `A ${qualityPhrase(b.quality)}`,
       },
-      {
-        text: `Check the type by counting semitones from the root ${noteLabel(root)}: ${b.notes
-          .slice(1)
-          .map((n, i) => `${noteLabel(n)} is ${b.counts[i]}`)
-          .join(', ')}. ${b.quality === 'major' ? '4 and 7 is major' : b.quality === 'minor' ? '3 and 7 is minor' : b.quality === 'diminished' ? '3 and 6 is diminished' : '4, 7 and 10 is a dominant 7th'}, which matches the numeral ✓.`,
-      },
-      {
-        text: `Write the answer: the chord is **${chordWords(b.chord)}**, symbol **${symbol}**, notes **${notesLabel(b.notes)}**. Note numbers used: ${roles}.`,
-      },
+      ...scaleWork,
+      findRoot!,
+      { ...stack!, staff: chordsOnStaff(clef, [pitches], key), listen: listenChord(`Hear ${symbol}`, pitches) },
+      ...rest,
+      ...walkCheck(
+        'Check another way: count the 3rds by piano keys',
+        walks,
+        `Added up: ${walks.sizes.join(' + ')} = ${b.counts.at(-1)}.`,
+        `${b.counts.at(-1)}, as you counted to the top note: ${qualityPhrase(b.quality)}`,
+      ),
     ],
     answer: `In ${kName}, ${numeral} is ${symbol}: ${notesLabel(b.notes)}.`,
-  }
+  })
 }
 
 /**
  * "What are the primary chords in this key?" (I, IV and V; i, iv and V in a minor key).
- * Working: stack scale notes for each. Cross-check: the engine's `primaryChords`.
+ * Working: stack scale notes for each and count to confirm the type.
+ * Check: together the three chords use every scale degree. Cross-check: the engine's `primaryChords`.
  */
 export function primaryChordsExample(key: Key, clef: ClefName = 'treble'): WorkedExample {
+  const ex = new Explained()
   const numerals = key.mode === 'major' ? ['I', 'IV', 'V'] : ['i', 'iv', 'V']
-  const builds = numerals.map((n) => buildFromNumeral(key, n))
+  const kName = keyLabel(key)
+  const { scale, steps: scaleWork } = scaleSteps(key, ex)
+  const built = numerals.map((n) => stackSteps(key, n, ex))
+  const builds = built.map((x) => x.build)
   const engine = primaryChords(key)
   builds.forEach((b, i) => {
     const e = engine[i]!
@@ -284,43 +494,45 @@ export function primaryChordsExample(key: Key, clef: ClefName = 'treble'): Worke
       throw new Error(`Primary chord ${numerals[i]} in ${keyLabel(key)} disagrees with the engine`)
     }
   })
-  const kName = keyLabel(key)
   const symbols = builds.map((b) => handChordSymbol(b.chord, 0))
   const pictures = sharedPictures(
     builds.map((b) => b.chord),
     clef,
   )
-  const scale = builds[0]!.scale
-  const describe = (i: number) => {
-    const b = builds[i]!
-    return `**${numerals[i]}**: start on note ${b.degree}, take every other note: note numbers ${b.numbers.join(', ')}, which are **${notesLabel(b.notes)}**. It is ${symbols[i]}, a ${b.quality} chord.${
-      b.usedRaised ? ` (Note 7, ${noteLabel(scale[6]!)}, is raised to ${noteLabel(b.notes[1]!)} for V in a minor key.)` : ''
-    }`
-  }
-  return {
+  // Check: between them the three chords use every scale degree once or more (with degree 7 raised in a minor key).
+  const used = builds.flatMap((b) => b.notes)
+  const letters = new Set(used.map((n) => n.letter))
+  if (letters.size !== 7) throw new Error('The primary chords should use all seven letter names')
+  const raised = builds[2]!.usedRaised
+  const full = scale.map((n, i) => (raised && i === 6 ? note(n.letter, n.accidental + 1) : n))
+  if (!full.every((n) => used.some((u) => sameNote(u, n)))) throw new Error('The primary chords should use every note of the scale')
+
+  return finish({
     title: `The primary chords in ${kName}`,
     task: `Write the three primary chords of ${kName}, with their Roman numerals.`,
+    terms: [...KEY_TERMS, TERM.primary, TERM.subdominant, TERM.dominant, TERM.stacked, TERM.semitone, ...built.flatMap((x) => x.terms), ...signTerms(used).filter((t) => t !== TERM.natural)],
     steps: [
-      { text: `Write out the scale of ${scaleName(key)} and number the notes: **${numberedScale(scale)}**.` },
+      ...scaleWork,
       {
-        text: `The primary chords are built on notes **1**, **4** and **5** of the scale: ${numerals.join(', ')}. In ${kName} those roots are ${noteLabel(scale[0]!)}, ${noteLabel(scale[3]!)} and ${noteLabel(scale[4]!)}.${
-          key.mode === 'minor' ? ' In a minor key the chord on note 5 is written V in capitals, because it is a major chord here (see the facts above).' : ''
-        }`,
+        title: 'Find the tonic, subdominant and dominant',
+        text: `The primary chords${ex.once('primary', ' (the three most important chords of a key)')} are built on scale degrees 1, 4 and 5: the tonic, the subdominant and the dominant.`,
+        result: `1 ${noteLabel(scale[0]!)}, 4 ${noteLabel(scale[3]!)}, 5 ${noteLabel(scale[4]!)}`,
       },
-      { text: `Build the first chord by stacking thirds from note 1. ${describe(0)}` },
-      { text: `Build the second chord from note 4. ${describe(1)}` },
-      { text: `Build the third chord from note 5. ${describe(2)}` },
+      ...built.flatMap((x) => x.steps.slice(1)),
       {
-        text: `Check the types by counting semitones from each root. ${builds
-          .map((b, i) => `${numerals[i]}: ${b.counts.join(' and ')} ${b.quality === 'major' ? '(major)' : '(minor)'}`)
-          .join('; ')}. ${key.mode === 'major' ? 'All three primary chords of a major key are major, which is why they are all capitals.' : 'In this minor key i and iv are minor (small letters) and V is major (capital).'} ✓`,
-      },
-      {
-        text: `Here are the three chords on the staff with the key signature of ${kName}, followed by the sound (${symbols.join(', ')} one after another).`,
+        title: 'Write the three chords on the staff',
+        text: `Write the key signature of ${kName}, then the three chords one after another. Press the button to hear them in turn.`,
+        result: numerals.map((n, i) => `${n} = ${symbols[i]}`).join(', '),
         staff: chordsOnStaff(clef, pictures, key),
         listen: { label: `Hear ${numerals.join(' ')}`, audio: chordSequenceAudio(pictures) },
       },
+      {
+        title: 'Check another way: look for every scale degree',
+        text: `List the notes of all three chords: ${builds.map((b) => notesLabel(b.notes)).join('; ')}. Between them they use all seven letter names, so every note of the scale appears${raised ? ', with degree 7 raised' : ''}: ${notesLabel(full)}.`,
+        result: 'All seven scale degrees, as the primary chords should give',
+      },
     ],
     answer: `The primary chords of ${kName} are ${numerals.map((n, i) => `${n} = ${symbols[i]}`).join(', ')}.`,
-  }
+  })
 }
+

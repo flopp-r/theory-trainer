@@ -3,7 +3,7 @@ import { note, parseNote, parsePitch } from '../../../theory'
 import { MAJOR_SCALES, ascii } from '../../../questions/handTables'
 import { accidentalCarryExample, enharmonicExample, nameAccidentalExample, signName } from './accidentals'
 
-const text = (steps: readonly { text: string }[]) => steps.map((s) => s.text).join(' ')
+const text = (steps: readonly { title?: string; text: string; result?: string }[]) => steps.map((s) => [s.title, s.text, s.result].join(' ')).join(' ')
 
 describe('signName', () => {
   it('names each sign', () => {
@@ -23,11 +23,12 @@ describe('nameAccidentalExample', () => {
     const e = nameAccidentalExample(clef as 'treble', parsePitch(pitchText))
     expect(e.answer).toBe(`The note is ${label}.`)
     const all = text(e.steps)
-    expect(all).toContain(`**${counted}**`)
+    expect(e.steps.map((s) => s.result)).toContainEqual(expect.stringMatching(new RegExp(`steps? (up|down): ${counted}$`)))
     expect(all).toContain(signText)
     expect(all).toContain(verb)
     expect(e.steps[0]!.staff).toBeDefined()
-    expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+    expect(e.steps.at(-1)!.title!.startsWith('Check')).toBe(true)
+    expect(e.steps.at(-1)!.result).toBe(`${e.steps.at(-1)!.result!.split(' is ')[0]} is ${counted.at(-1)}, so the note is ${label}`)
   })
 
   it('says how many semitones the sign changes the note by', () => {
@@ -42,22 +43,26 @@ describe('nameAccidentalExample', () => {
 
 describe('accidentalCarryExample', () => {
   it('prints a sign on notes 1, 4 and 5 only in F♯4 G4 F♯4 F♯5 F4 F4', () => {
-    // By hand: 1 sharp is new. 2 G is plain. 3 the sharp on F4 still holds. 4 F5 is another pitch, so it needs its own sharp.
-    // 5 F4 is plain again, so a natural cancels the sharp. 6 the natural still holds.
+    // By hand: 1 sharp is new. 2 G is natural. 3 the sharp on F4 still holds. 4 F5 is another pitch, so it needs its own sharp.
+    // 5 F4 is natural again, so a natural cancels the sharp. 6 the natural still holds.
     const bar = ['F#4', 'G4', 'F#4', 'F#5', 'F4', 'F4'].map(parsePitch)
     const e = accidentalCarryExample(bar)
-    expect(e.steps).toHaveLength(1 + 6 + 1)
+    expect(e.steps).toHaveLength(2 + 6 + 1)
     expect(e.answer).toBe('Signs are printed on notes 1 (♯), 4 (♯) and 5 (♮). There is no sign on notes 2, 3 and 6.')
-    const [, n1, n2, n3, n4, n5, n6] = e.steps.map((s) => s.text)
-    expect(n1).toContain('needs a sharp')
-    expect(n2).toContain('**No sign.**')
-    expect(n3).toContain('still in force')
+    const rows = e.steps.slice(2, 8)
+    expect(rows.map((s) => s.title)).toEqual(['Note 1: F♯4', 'Note 2: G4', 'Note 3: F♯4', 'Note 4: F♯5', 'Note 5: F4', 'Note 6: F4'])
+    expect(rows.map((s) => s.result)).toEqual(['Print ♯', 'No sign', 'No sign', 'Print ♯', 'Print ♮', 'No sign'])
+    const [n1, , n3, n4, n5] = rows.map((s) => s.text)
+    expect(n1).toContain('Print a sharp')
+    expect(n3).toContain('still holds')
     expect(n3).toContain('same letter, same octave')
-    expect(n4).toContain('needs a sharp')
-    expect(n4).toContain('does not help here')
+    expect(n4).toContain('does not count here')
     expect(n5).toContain('natural sign')
-    expect(n6).toContain('No sign')
     expect(e.steps[0]!.staff!.items).toHaveLength(6)
+    // the check goes pitch by pitch and finds the same notes
+    expect(e.steps.at(-1)!.title).toBe('Check pitch by pitch')
+    expect(e.steps.at(-1)!.text).toContain('F4 (notes 1, 3, 5 and 6) changes at notes 1 and 5')
+    expect(e.steps.at(-1)!.result).toBe('Signs on notes 1, 4 and 5, as before')
   })
 
   it('handles a flat followed by a sharp on the same pitch, and a repeated flat', () => {
@@ -84,6 +89,7 @@ describe('enharmonicExample', () => {
     expect(all).toContain('D E F♯ G A B C♯')
     expect(all).toContain('D♭ E♭ F G♭ A♭ B♭ C')
     expect(all).toContain('enharmonic equivalents')
+    expect(all).toContain('D E G♭ G A B C♯: two Gs and no F')
     expect(e.steps[0]!.listen).toBeDefined()
   })
 

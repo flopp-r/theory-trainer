@@ -40,9 +40,9 @@ describe('pentatonicExample', () => {
       const expected = `${n[0]} ${n[2]} ${n[3]} ${flatten(n[4]!)} ${n[4]} ${n[6]} ${tonic}`
       const e = pentatonicExample(parseNote(tonic), 'blues')
       expect(ascii(e.answer), tonic).toContain(expected)
-      // the blue note is a semitone above the 4th and a semitone below the 5th
-      expect(e.steps.at(-1)!.text, tonic).toContain('1 semitone above the 4th note')
-      expect(e.steps.at(-1)!.text, tonic).toContain('1 semitone below the 5th note')
+      // the blue note is placed a semitone above the 4th and a semitone below the 5th, and checked 6 semitones above the key note
+      expect(e.steps.find((s) => s.title === 'Put the blue note between notes 4 and 5')!.text, tonic).toContain('a semitone from each')
+      expect(e.steps.at(-1)!.text, tonic).toContain('6 steps, so 6 semitones')
     }
   })
 
@@ -50,7 +50,7 @@ describe('pentatonicExample', () => {
     const text = pentatonicExample(parseNote('C'), 'blues').steps.map((s) => s.text).join(' ')
     expect(text).toContain('G♭')
     expect(text).toContain('F♯')
-    expect(text).toContain('keeps the 5th')
+    expect(text).toContain("it keeps note 5's letter, G")
   })
 
   it('has a picture with the scale and the top key note, and sound', () => {
@@ -59,13 +59,13 @@ describe('pentatonicExample', () => {
       const picture = e.steps.find((s) => s.staff)!
       expect(picture.staff!.items).toHaveLength(type === 'blues' ? 7 : 6)
       expect(picture.listen).toBeDefined()
-      expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+      expect(e.steps.at(-1)!.title!.startsWith('Check another way')).toBe(true)
     }
   })
 
   it('says the pentatonic scales have no semitone step', () => {
-    expect(pentatonicExample(parseNote('C'), 'major-pentatonic').steps.at(-1)!.text).toContain('2, 2, 3, 2, 3')
-    expect(pentatonicExample(parseNote('A'), 'minor-pentatonic').steps.at(-1)!.text).toContain('3, 2, 2, 3, 2')
-    expect(pentatonicExample(parseNote('C'), 'blues').steps.at(-1)!.text).toContain('3, 2, 1, 1, 3, 2')
+    expect(pentatonicExample(parseNote('C'), 'major-pentatonic').steps.at(-1)!.text).toContain('C up to D is 2, D up to E is 2, E up to G is 3, G up to A is 2, A up to C is 3')
+    expect(pentatonicExample(parseNote('A'), 'minor-pentatonic').steps.at(-1)!.text).toContain('A up to C is 3, C up to D is 2, D up to E is 2, E up to G is 3, G up to A is 2')
+    expect(pentatonicExample(parseNote('C'), 'blues').steps.at(-1)!.text).toContain('C, D♭, D, E♭, E, F, G♭: 6 steps')
   })
 })

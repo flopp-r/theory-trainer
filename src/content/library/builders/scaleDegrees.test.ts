@@ -43,12 +43,15 @@ describe('scaleDegreeExample', () => {
   })
 
   it('explains the leading note (a semitone below) and the subtonic (a tone below)', () => {
-    const leading = scaleDegreeExample(parseKey('Eb major'), 7).steps[0]!.text
-    expect(leading).toContain('1 semitone below the key note')
-    expect(leading).toContain('leading note')
-    const subtonic = scaleDegreeExample(parseKey('A minor'), 7).steps[0]!.text
-    expect(subtonic).toContain('2 semitones below the key note')
-    expect(subtonic).toContain('subtonic')
+    const leading = scaleDegreeExample(parseKey('Eb major'), 7).steps.at(-1)!.text
+    expect(leading).toContain('A leading note is a semitone below the key note')
+    expect(leading).toContain('D, E♭: 1 step, so 1 semitone')
+    const subtonic = scaleDegreeExample(parseKey('A minor'), 7).steps.at(-1)!.text
+    expect(subtonic).toContain('A subtonic is a tone below the key note')
+    expect(subtonic).toContain('G, G♯, A: 2 steps, so 2 semitones')
+    // asked for the name of the 7th, the gap to the key note decides it
+    const named = scaleDegreeExample(parseKey('A minor'), 7, 'name')
+    expect(named.steps.find((s) => s.title === 'Measure the gap from note 7 to the key note')!.result).toBe('Degree 7 here: the subtonic')
   })
 
   it('shows the scale with exactly the wanted note picked out, and sound', () => {
@@ -63,9 +66,11 @@ describe('scaleDegreeExample', () => {
     }
   })
 
-  it('ends with a check by letters and semitones (the 5th is 5 letter names and 7 semitones up)', () => {
+  it('builds the scale gap by gap as far as the degree, and checks by counting piano keys (the dominant is 7 semitones up)', () => {
     const e = scaleDegreeExample(major('D'), 5)
-    expect(e.steps.at(-1)!.text).toBe('Check. The 5th note is 5 letter names up from D (D, E, F, G, A), and A is 7 semitones above D. ✓')
+    expect(e.steps.filter((s) => s.title?.startsWith('Gap '))).toHaveLength(4)
+    expect(e.steps.at(-1)!.title).toBe('Check another way: count up from the key note')
+    expect(e.steps.at(-1)!.text).toContain('D, D♯, E, F, F♯, G, G♯, A: 7 steps, so 7 semitones')
   })
 
   it('rejects a degree that does not exist', () => {

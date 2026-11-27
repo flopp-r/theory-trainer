@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { NoteValueName } from '../../../theory'
 import { beatsText, figuresOnStaff, nameNoteValueExample, nameRestExample, noteBeatsExample, sumValuesExample } from './rhythm'
 
-const text = (steps: readonly { text: string }[]) => steps.map((s) => s.text).join(' ')
+const text = (steps: readonly { title?: string; text: string; result?: string }[]) => steps.map((s) => [s.title, s.text, s.result].join(' ')).join(' ')
 
 // Hand-written: beats for each value with 0, 1 and 2 dots. Only the ones that fit in quarters are shown as beats.
 const BEATS: Record<string, string> = {
@@ -34,22 +34,26 @@ describe('noteBeatsExample', () => {
       const dots = label.startsWith('double-dotted') ? 2 : label.startsWith('dotted') ? 1 : 0
       const name = label.replace('double-dotted ', '').replace('dotted ', '') as NoteValueName
       const e = noteBeatsExample(name, dots)
-      expect(e.answer, label).toBe(`A ${label} is worth ${beats} crotchet beat${beats === '1' ? '' : 's'}.`)
+      const unit = beats.startsWith('¼') || beats.startsWith('½') || beats.startsWith('¾') ? 'of a crotchet beat' : beats === '1' ? 'crotchet beat' : 'crotchet beats'
+      expect(e.answer, label).toBe(`A ${label} is worth ${beats} ${unit}.`)
       expect(e.steps[0]!.staff, label).toBeDefined()
-      expect(e.steps.at(-1)!.text.startsWith('Check'), label).toBe(true)
+      expect(e.steps.at(-1)!.title!.startsWith('Check'), label).toBe(true)
+      expect(e.terms!.length, label).toBeGreaterThanOrEqual(2)
     }
   })
 
   it('shows the long-hand sum: dotted minim 2 + 1 = 3, double-dotted minim 2 + 1 + ½ = 3½, dotted crotchet 1 + ½ = 1½', () => {
-    expect(text(noteBeatsExample('minim', 1).steps)).toContain('2 + 1 = **3**')
-    expect(text(noteBeatsExample('minim', 2).steps)).toContain('2 + 1 + ½ = **3½**')
-    expect(text(noteBeatsExample('crotchet', 1).steps)).toContain('1 + ½ = **1½**')
-    expect(text(noteBeatsExample('quaver', 1).steps)).toContain('½ + ¼ = **¾**')
+    expect(text(noteBeatsExample('minim', 1).steps)).toContain('2 + 1 = 3')
+    expect(text(noteBeatsExample('minim', 2).steps)).toContain('2 + 1 + ½ = 3½')
+    expect(text(noteBeatsExample('crotchet', 1).steps)).toContain('1 + ½ = 1½')
+    expect(text(noteBeatsExample('quaver', 1).steps)).toContain('½ + ¼ = ¾')
+    // the length without dots comes from halving the semibreve, every division shown
+    expect(text(noteBeatsExample('quaver', 1).steps)).toContain('semibreve 4, minim 4 ÷ 2 = 2, crotchet 2 ÷ 2 = 1, quaver 1 ÷ 2 = ½')
   })
 
   it('checks in semiquavers (dotted minim 8 + 4 = 12, 12 ÷ 4 = 3)', () => {
-    expect(text(noteBeatsExample('minim', 1).steps)).toContain('8 + 4 = 12 semiquavers, and 12 ÷ 4 = 3')
-    expect(text(noteBeatsExample('crotchet', 0).steps)).toContain('4 semiquavers, and 4 ÷ 4 = 1')
+    expect(text(noteBeatsExample('minim', 1).steps)).toContain('8 + 4 = 12 semiquavers. Then 12 ÷ 4 = 3 beats')
+    expect(text(noteBeatsExample('crotchet', 0).steps)).toContain('A crotchet is 4 semiquavers (16 halved twice: 8, 4). Then 4 ÷ 4 = 1 beat')
   })
 
   it('refuses lengths that are not a whole number of quarter beats, and bad dot counts', () => {
@@ -62,10 +66,13 @@ describe('sentences read well', () => {
   it('says "an eighth note", "½ a beat" and "¼ of a beat"', () => {
     expect(text(nameNoteValueExample('quaver').steps)).toContain('this is an eighth note')
     expect(text(nameNoteValueExample('minim').steps)).toContain('this is a half note')
-    expect(text(noteBeatsExample('quaver', 0).steps)).toContain('A quaver is worth **½ a beat**.')
-    expect(text(noteBeatsExample('semiquaver', 0).steps)).toContain('**¼ of a beat**')
+    expect(text(noteBeatsExample('quaver', 0).steps)).toContain('Quaver: ½ a beat')
+    expect(text(noteBeatsExample('semiquaver', 0).steps)).toContain('¼ of a beat')
+    expect(noteBeatsExample('quaver', 0).answer).toBe('A quaver is worth ½ of a crotchet beat.')
     expect(text(nameRestExample('quaver').steps)).toContain('½ a beat of silence')
-    expect(text(sumValuesExample([{ name: 'quaver' }, { name: 'quaver' }]).steps)).toContain('**A quaver.**')
+    const twoQuavers = sumValuesExample([{ name: 'quaver' }, { name: 'quaver' }])
+    expect(twoQuavers.steps.map((s) => s.title)).toContain('Second: the quaver')
+    expect(text(twoQuavers.steps)).toContain('½ + ½ = 1')
   })
 })
 
@@ -83,8 +90,11 @@ describe('nameNoteValueExample', () => {
     expect(nameNoteValueExample('minim', 1).answer).toBe('It is a dotted minim.')
     expect(text(nameNoteValueExample('minim', 1).steps)).toContain('dotted half note')
     expect(nameNoteValueExample('crotchet', 2).answer).toBe('It is a double-dotted crotchet.')
-    expect(text(nameNoteValueExample('quaver').steps)).toContain('one flag')
-    expect(text(nameNoteValueExample('semiquaver').steps)).toContain('two flags')
+    expect(text(nameNoteValueExample('quaver').steps)).toContain('1 flag')
+    expect(text(nameNoteValueExample('semiquaver').steps)).toContain('2 flags')
+    // the check builds up from the semibreve: a quaver has the first 3 changes, a semibreve none
+    expect(nameNoteValueExample('quaver').steps.at(-1)!.text).toContain('the first 3 changes')
+    expect(nameNoteValueExample('semibreve').steps.at(-1)!.text).toContain('none of these changes')
     expect(text(nameNoteValueExample('semibreve').steps)).toContain('hollow')
   })
 })
@@ -111,8 +121,9 @@ describe('nameRestExample', () => {
 describe('sumValuesExample', () => {
   it('adds minim + dotted crotchet + quaver = 2 + 1½ + ½ = 4', () => {
     const e = sumValuesExample([{ name: 'minim' }, { name: 'crotchet', dots: 1 }, { name: 'quaver' }])
-    expect(text(e.steps)).toContain('2 + 1½ + ½ = **4**')
+    expect(text(e.steps)).toContain('2 + 1½ = 3½, then 3½ + ½ = 4')
     expect(text(e.steps)).toContain('8 + 6 + 2 = 16 semiquavers, and 16 ÷ 4 = 4')
+    expect(e.steps.filter((s) => /^(First|Second|Third): /.test(s.title ?? '')).map((s) => s.result)).toEqual(['2 beats', '1½ beats', '½ a beat'])
     expect(e.answer).toBe('Altogether they last 4 crotchet beats.')
   })
 

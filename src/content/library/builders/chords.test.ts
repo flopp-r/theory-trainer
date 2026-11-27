@@ -87,35 +87,49 @@ describe('buildTriadExample', () => {
     })
   }
 
-  it('has seven steps: root, letters, recipe, 3rd, 5th, check, result with a picture and a sound', () => {
+  it('has nine steps: root, letters, recipe, count and sign for the 3rd, count and sign for the 5th, the triad, and a check', () => {
     const e = buildTriadExample(parseNote('Eb'), 'major')
-    expect(e.steps).toHaveLength(7)
-    expect(e.steps[0]!.text).toContain('**root**')
-    expect(e.steps[1]!.text).toContain('**E, G, B**')
-    expect(e.steps[2]!.text).toContain('4 semitones')
-    expect(e.steps[2]!.text).toContain('**7** semitones')
-    expect(e.steps[5]!.text.startsWith('Check')).toBe(true)
-    expect(e.steps.at(-1)!.staff).toBeDefined()
-    expect(e.steps.at(-1)!.listen).toBeDefined()
+    expect(e.steps).toHaveLength(9)
+    expect(e.steps[0]!.result).toBe('Root: E♭')
+    expect(e.steps[1]!.result).toBe('Letters: E, G, B')
+    expect(e.steps[2]!.result).toBe('3rd: 4 semitones up. 5th: 7 semitones up')
+    expect(e.steps[7]!.result).toBe('E♭ G B♭')
+    expect(e.steps[7]!.staff).toBeDefined()
+    expect(e.steps[7]!.listen).toBeDefined()
+    expect(e.steps.at(-1)!.title!.startsWith('Check another way')).toBe(true)
+    expect(e.terms!.map((t) => t.term)).toEqual(expect.arrayContaining(['Triad', 'Root', 'Semitone', 'Major 3rd', 'Perfect 5th', 'Flat (♭)']))
   })
 
   it('fixes the 5th of E-flat major with a flat, and says why', () => {
     const e = buildTriadExample(parseNote('Eb'), 'major')
-    expect(e.steps[3]!.text).toContain('Total: **4 semitones**')
-    expect(e.steps[3]!.text).toContain('needs no sign')
-    expect(e.steps[4]!.text).toContain('Total: **8 semitones**')
-    expect(e.steps[4]!.text).toContain('1 too many')
-    expect(e.steps[4]!.text).toContain('**B♭**')
+    expect(e.steps[3]!.text).toContain('E to F is 1 semitone (no black key between them), F to G is 2')
+    expect(e.steps[3]!.text).toContain('E♭ is 1 semitone lower than E, so the gap is 1 bigger: 3 + 1 = 4')
+    expect(e.steps[3]!.result).toBe('E♭ up to G: 4 semitones')
+    expect(e.steps[4]!.text).toContain('They match')
+    expect(e.steps[4]!.result).toBe('3rd: G')
+    expect(e.steps[5]!.text).toContain('Running total: 1, 3, 5, 7')
+    expect(e.steps[5]!.result).toBe('E♭ up to B: 8 semitones')
+    expect(e.steps[6]!.text).toContain('1 too many')
+    expect(e.steps[6]!.text).toContain('**B♭**')
+    expect(e.steps[6]!.result).toBe('5th: B♭')
   })
 
   it('raises a note with a sharp when the count is too small (B diminished has no sign, C augmented has G sharp)', () => {
-    expect(buildTriadExample(parseNote('C'), 'augmented').steps[4]!.text).toContain('1 too few')
+    const aug = buildTriadExample(parseNote('C'), 'augmented')
+    expect(aug.steps[6]!.text).toContain('You counted 7. That is 1 too few, so raise G with a sharp')
     expect(buildTriadExample(parseNote('B'), 'diminished').answer).toBe('The B diminished triad is B D F.')
+  })
+
+  it('checks by counting the two 3rds one piano key at a time', () => {
+    const e = buildTriadExample(parseNote('Eb'), 'major')
+    expect(e.steps.at(-1)!.text).toContain('E♭ to G: E♭, E, F, G♭, G: 4 steps')
+    expect(e.steps.at(-1)!.text).toContain('G to B♭: G, A♭, A, B♭: 3 steps')
+    expect(e.steps.at(-1)!.result).toBe('4 then 3: E♭ major, as it should be')
   })
 
   it('plays exactly the notes it writes', () => {
     const e = buildTriadExample(parseNote('F#'), 'minor')
-    const midi = e.steps.at(-1)!.listen!.audio.events[0]!.midi
+    const midi = e.steps.find((s) => s.listen)!.listen!.audio.events[0]!.midi
     expect([...midi].map((m) => m % 12)).toEqual([6, 9, 1]) // F# A C#
     expect(midi[1]! - midi[0]!).toBe(3)
     expect(midi[2]! - midi[1]!).toBe(4)
@@ -127,17 +141,29 @@ describe('identifyTriadExample', () => {
     it(`names every ${quality} triad on the staff`, () => {
       for (const [root, spelling] of Object.entries(table)) {
         const e = identifyTriadExample(ascending(spelling))
-        expect(ascii(e.answer), `${spelling}`).toBe(`It is a ${TRIAD_WORDS[quality]} triad: ${root} ${TRIAD_WORDS[quality]} (${spelling}).`)
+        const article = quality === 'augmented' ? 'an' : 'a'
+        expect(ascii(e.answer), `${spelling}`).toBe(`It is ${article} ${TRIAD_WORDS[quality]} triad: ${root} ${TRIAD_WORDS[quality]} (${spelling}).`)
       }
     })
   }
 
   it('counts both thirds and matches them to the table', () => {
     const e = identifyTriadExample(ascending('Eb G Bb'))
-    expect(e.steps[2]!.text).toContain('Total: **4 semitones**')
-    expect(e.steps[3]!.text).toContain('Total: **3 semitones**')
-    expect(e.steps[4]!.text).toContain('Yours is 4 then 3')
     expect(e.steps[0]!.staff).toBeDefined()
+    expect(e.steps[1]!.result).toBe('Root: E♭')
+    expect(e.steps[2]!.result).toBe('E♭ up to G: 4 semitones, a major 3rd')
+    expect(e.steps[3]!.result).toBe('G up to B♭: 3 semitones, a minor 3rd')
+    expect(e.steps[4]!.text).toContain('Yours is 4 then 3')
+    expect(e.steps[4]!.result).toBe('A major triad: E♭ major')
+    expect(e.steps.at(-1)!.text).toContain('4 + 3 = 7')
+  })
+
+  it('splits a count into letters and then signs when both notes have one (A C♯ E♯)', () => {
+    const e = identifyTriadExample(ascending('A C# E#'))
+    const titles = e.steps.map((s) => s.title)
+    expect(titles).toContain('Allow for the sharps on C♯ and E♯')
+    expect(e.steps.find((s) => s.title === 'Allow for the sharps on C♯ and E♯')!.result).toBe('C♯ up to E♯: 4 semitones, a major 3rd')
+    expect(e.steps.at(-1)!.text).toContain('E♯ is the same piano key as F')
   })
 
   it('refuses notes that are not a root-position triad', () => {
@@ -157,25 +183,33 @@ describe('buildSeventhExample', () => {
     })
   }
 
-  it('has eight steps and a picture and sound at the end', () => {
+  it('has twelve steps, a picture and sound, and two checks', () => {
     const e = buildSeventhExample(parseNote('G'), 'dominant7')
-    expect(e.steps).toHaveLength(8)
-    expect(e.steps[1]!.text).toContain('**G, B, D, F**')
-    expect(e.steps.at(-1)!.staff).toBeDefined()
-    expect(e.steps.at(-1)!.listen).toBeDefined()
+    expect(e.steps).toHaveLength(12)
+    expect(e.steps[1]!.result).toBe('Letters: G, B, D, F')
+    expect(e.steps[2]!.result).toBe('3rd: 4, 5th: 7, 7th: 10 semitones above the root')
+    expect(e.steps[9]!.result).toBe('G B D F')
+    expect(e.steps[9]!.staff).toBeDefined()
+    expect(e.steps[9]!.listen).toBeDefined()
+    expect(e.steps[10]!.title).toBe('Check another way: the triad at the bottom')
+    expect(e.steps[11]!.text).toContain('G, F♯, F: 2 steps')
+    expect(e.steps[11]!.text).toContain('12 − 2 = 10')
   })
 
   it('explains the double flat in C diminished 7th (the 7th is 9 semitones above the root)', () => {
     const e = buildSeventhExample(parseNote('C'), 'diminished7')
-    expect(e.steps[5]!.text).toContain('2 too many')
-    expect(e.steps[5]!.text).toContain('double flat')
-    expect(e.steps[5]!.text).toContain('**B♭♭**')
-    expect(e.steps[2]!.text).toContain('**9** semitones')
+    const fix = e.steps.find((s) => s.title === 'Make the 7th a diminished 7th')!
+    expect(fix.text).toContain('You counted 11. That is 2 too many')
+    expect(fix.text).toContain('double flat')
+    expect(fix.text).toContain('**B♭♭**')
+    expect(fix.text).toContain('Keep the letter B')
+    expect(e.steps[2]!.text).toContain('the 7th is 9')
+    expect(e.steps.at(-1)!.text).toContain('B♭♭ is the same piano key as A')
   })
 
   it('plays the four notes with the right gaps (G7: 4, 3, 3 semitones)', () => {
     const e = buildSeventhExample(parseNote('G'), 'dominant7')
-    const midi = [...e.steps.at(-1)!.listen!.audio.events[0]!.midi]
+    const midi = [...e.steps.find((s) => s.listen)!.listen!.audio.events[0]!.midi]
     expect(midi.slice(1).map((m, i) => m - midi[i]!)).toEqual([4, 3, 3])
   })
 })
@@ -192,10 +226,11 @@ describe('identifySeventhExample', () => {
 
   it('counts from the root to the 3rd, 5th and 7th', () => {
     const e = identifySeventhExample(chordPicture(chord('B', 'half-diminished7'), 'treble'))
-    expect(e.steps[2]!.text).toContain('Total: **3 semitones**')
-    expect(e.steps[3]!.text).toContain('Total: **6 semitones**')
-    expect(e.steps[4]!.text).toContain('Total: **10 semitones**')
+    expect(e.steps[2]!.result).toBe('B up to D: 3 semitones, a minor 3rd')
+    expect(e.steps[3]!.result).toBe('B up to F: 6 semitones, a diminished 5th')
+    expect(e.steps[4]!.result).toBe('B up to A: 10 semitones, a minor 7th')
     expect(e.steps[5]!.text).toContain('Yours are 3, 6, 10')
+    expect(e.steps.at(-1)!.text).toContain('3 + 3 + 4 = 10')
   })
 
   it('refuses a chord that is not in root position', () => {
