@@ -14,4 +14,8 @@ Things that have been asked for but are deliberately not in the current phase.
 
 ## From the original plan, still to do
 - Rhythm and melody dictation (ear training, after Phase 4).
-- Spaced repetition and weak-spot weighting (Phases 5 and 6).
+
+## Done since
+- Spaced repetition and weak-spot weighting: `src/progress/mastery.ts` and `selection.ts`, the review round, and the
+  Your progress screen. Possible next steps: a "due today" reminder (notifications), and per-item history on the
+  progress screen.

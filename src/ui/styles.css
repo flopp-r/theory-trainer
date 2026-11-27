@@ -697,6 +697,8 @@ legend {
 
 .rows li span:last-child {
   color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .btn.wide {
