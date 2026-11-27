@@ -25,6 +25,8 @@ function textsOf(block: Block): string[] {
       return [block.item.label]
     case 'practise':
       return [block.link.label]
+    case 'terms':
+      return block.terms.flatMap((t) => [t.term, t.meaning])
     case 'worked':
       return [
         block.example.title,

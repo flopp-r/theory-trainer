@@ -28,6 +28,8 @@ function textsOf(block: Block): string[] {
       return [block.item.label]
     case 'practise':
       return [block.link.label]
+    case 'terms':
+      return block.terms.flatMap((t) => [t.term, t.meaning])
     case 'worked':
       return [block.example.title, block.example.task, block.example.answer, ...block.example.steps.flatMap((s) => [s.text, ...(s.listen ? [s.listen.label] : [])])]
   }
@@ -156,7 +158,7 @@ describe('the lessons that exist', () => {
         for (const t of b.link.topics) expect(TOPICS.map((x) => x.id), l.id).toContain(t)
         const config = {
           topics: b.link.topics,
-          clefs: b.link.clefs ?? (['alto'] as const),
+          clefs: b.link.clefs ?? (['treble', 'bass'] as const),
           maxLedgerLines: 1,
           difficulty: b.link.level ?? 2,
           vocabCategories: [],

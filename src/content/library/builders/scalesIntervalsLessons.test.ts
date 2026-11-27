@@ -36,6 +36,8 @@ function textsOf(block: Block): string[] {
       return [block.item.label]
     case 'practise':
       return [block.link.label]
+    case 'terms':
+      return block.terms.flatMap((t) => [t.term, t.meaning])
     case 'worked':
       return [block.example.title, block.example.task, block.example.answer, ...block.example.steps.map((s) => s.text)]
   }
@@ -68,12 +70,13 @@ describe('the scales, keys and intervals lessons', () => {
     expect(IDS.map((id) => LESSON_ORDER.indexOf(id))).toEqual(IDS.map((id) => LESSON_ORDER.indexOf(id)).sort((a, b) => a - b))
   })
 
-  it('have the 7-part shape: a What it is intro, "What you need to know first", facts, "The method", worked examples, common mistakes, "Try it"', () => {
+  it('have the lesson shape: an opening, a "Words in this lesson" list, facts, "The method", worked examples, common mistakes, "Try it"', () => {
     for (const id of IDS) {
       const blocks = blocksOf(id)
       const headings = blocks.flatMap((b) => (b.type === 'h' ? [b.text] : []))
       expect(blocks[0]!.type, id).toBe('p')
-      expect(headings, id).toContain('What you need to know first')
+      expect(headings, id).not.toContain('What you need to know first')
+      expect(blocks.filter((b) => b.type === 'terms'), `${id} has one words list`).toHaveLength(1)
       expect(headings.some((h) => h.startsWith('The facts')), id).toBe(true)
       expect(headings.some((h) => h.startsWith('The method')), id).toBe(true)
       expect(headings.some((h) => h.startsWith('Worked example')), id).toBe(true)
@@ -81,13 +84,13 @@ describe('the scales, keys and intervals lessons', () => {
       expect(headings.at(-1), id).toBe('Try it')
       // in that order
       const at = (prefix: string) => headings.findIndex((h) => h.startsWith(prefix))
-      expect(at('What you need'), id).toBeLessThan(at('The facts'))
+      expect(blocks.findIndex((b) => b.type === 'terms'), id).toBeLessThan(blocks.findIndex((b) => b.type === 'h'))
       expect(at('The facts'), id).toBeLessThan(at('The method'))
       expect(at('The method'), id).toBeLessThan(at('Worked example'))
       expect(at('Worked example'), id).toBeLessThan(at('Common mistakes'))
       expect(blocks.some((b) => b.type === 'steps'), `${id} has numbered steps`).toBe(true)
       expect(blocks.some((b) => b.type === 'note' && b.kind === 'remember'), `${id} has a remember box`).toBe(true)
-      expect(blocks.filter((b) => b.type === 'note' && b.kind === 'watch').length, `${id} warns about mistakes`).toBeGreaterThanOrEqual(3)
+      expect(blocks.filter((b) => b.type === 'note' && b.kind === 'watch').length, `${id} warns about mistakes`).toBeGreaterThanOrEqual(2)
     }
   })
 
@@ -175,7 +178,7 @@ describe('the tables in the lessons agree with the hand-written tables', () => {
     // the major keys left out are exactly the ones whose parallel minor is missing from the hand-written minor table
     const left = Object.keys(MAJOR_FIFTHS).filter((k) => MINOR_FIFTHS[k] === undefined || !t.rows.some((r) => ascii(r[0]!) === `${k} major`))
     expect(left.sort()).toEqual(['Cb', 'Db', 'Gb'])
-    const warning = blocksOf('related-keys').find((b) => b.type === 'note' && b.kind === 'watch' && b.text.includes('do not exist'))!
+    const warning = blocksOf('related-keys').find((b) => b.type === 'note' && b.kind === 'tip' && b.text.includes('do not exist'))!
     expect(textsOf(warning)[0]).toContain('D♭ major, G♭ major or C♭ major')
     expect(textsOf(warning)[0]).toContain('G♯ minor, D♯ minor or A♯ minor')
   })

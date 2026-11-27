@@ -1298,3 +1298,8 @@ legend {
   background: var(--accent);
   transform-origin: left center;
 }
+
+/* Practise buttons at the end of a lesson sit one above the other with a gap. */
+.lib-practise {
+  margin-top: var(--space-2);
+}

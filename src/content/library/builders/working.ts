@@ -165,7 +165,7 @@ export const TERMS = {
   subtonic: { term: 'Subtonic', meaning: 'The name for the 7th note when it is a tone below the key note, as in the natural minor scale.', reminder: 'a 7th note a tone below the key note' },
   scaleDegree: { term: 'Scale degree', meaning: "A note's position in the scale, counting the key note as 1. The 5th degree is the 5th note.", reminder: "a note's number in the scale" },
   supertonic: { term: 'Supertonic', meaning: 'The 2nd degree of a scale. "Super" means above: it is one step above the tonic.', reminder: 'degree 2' },
-  mediant: { term: 'Mediant', meaning: 'The 3rd degree of a scale. It is halfway, or in the middle, between the tonic and the dominant.', reminder: 'degree 3' },
+  mediant: { term: 'Mediant', meaning: 'The 3rd degree of a scale. It is halfway between the tonic (note 1) and the dominant (note 5).', reminder: 'degree 3' },
   subdominant: { term: 'Subdominant', meaning: 'The 4th degree of a scale. "Sub" means below: it is a perfect 5th below the tonic, as the dominant is a 5th above.', reminder: 'degree 4' },
   dominant: { term: 'Dominant', meaning: 'The 5th degree of a scale, a perfect 5th above the tonic. After the tonic it is the most important note.', reminder: 'degree 5' },
   submediant: { term: 'Submediant', meaning: 'The 6th degree of a scale. It is a 3rd below the tonic, as the mediant is a 3rd above.', reminder: 'degree 6' },

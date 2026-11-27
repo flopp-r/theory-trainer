@@ -108,7 +108,7 @@ const FLAG_TERM: WorkedTerm = { term: 'Flag', meaning: 'A small tail on the end 
 const DOT_TERM: WorkedTerm = { term: 'Dot', meaning: "A dot just after a note head. It adds half of the note's own length." }
 const DOUBLE_DOT_TERM: WorkedTerm = { term: 'Double dot', meaning: 'Two dots after a note head. The second dot adds half of what the first dot added.' }
 const CROTCHET_BEAT_TERM: WorkedTerm = { term: 'Crotchet beat', meaning: 'The beat that note lengths are measured in here: a crotchet lasts 1 beat. A beat is the steady pulse you tap your foot to.' }
-const SEMIBREVE_TERM: WorkedTerm = { term: 'Semibreve', meaning: 'The longest note in this lesson: a hollow head with no stem. It lasts 4 crotchet beats.' }
+const SEMIBREVE_TERM: WorkedTerm = { term: 'Semibreve', meaning: 'The longest note used here: a hollow head with no stem. It lasts 4 crotchet beats.' }
 const SEMIQUAVER_TERM: WorkedTerm = { term: 'Semiquaver', meaning: 'The shortest note in this lesson, ¼ of a crotchet beat. 4 semiquavers last 1 beat and 16 fill a semibreve.' }
 const REST_TERM: WorkedTerm = { term: 'Rest', meaning: 'A sign for silence. You play nothing but keep counting, for as long as the note with the same name lasts.' }
 

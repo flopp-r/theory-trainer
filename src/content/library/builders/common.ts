@@ -1,7 +1,7 @@
 import type { AudioSpec } from '../../../audio/types'
 import type { StaffSpec } from '../../../questions/types'
 import type { ClefName, Key, Pitch } from '../../../theory'
-import type { Block, ListenItem, PractiseLink, WorkedExample } from '../types'
+import type { Block, ListenItem, PractiseLink, WorkedExample, WorkedTerm } from '../types'
 
 /** Small helpers for writing lessons. Each returns one Block. */
 export const p = (text: string): Block => ({ type: 'p', text })
@@ -15,6 +15,8 @@ export const table = (head: readonly string[], rows: readonly (readonly string[]
 export const staffBlock = (staff: StaffSpec, caption: string): Block => ({ type: 'staff', staff, caption })
 export const listenBlock = (label: string, audio: AudioSpec): Block => ({ type: 'listen', item: { label, audio } })
 export const worked = (example: WorkedExample): Block => ({ type: 'worked', example })
+/** The "Words in this lesson" list: `words({ term: 'Semitone', meaning: 'The smallest step in music…' }, …)`. */
+export const words = (...terms: WorkedTerm[]): Block => ({ type: 'terms', terms })
 export const practise = (link: PractiseLink): Block => ({ type: 'practise', link })
 
 /** A picture: one note per item, in one clef, optionally with a key signature. */
