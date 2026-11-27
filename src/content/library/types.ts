@@ -83,6 +83,8 @@ export type Block =
   /** A button that plays a sound. */
   | { readonly type: 'listen'; readonly item: ListenItem }
   | { readonly type: 'worked'; readonly example: WorkedExample }
+  /** "Words in this lesson": the musical words the lesson uses, each explained once. Near the top of every lesson. */
+  | { readonly type: 'terms'; readonly terms: readonly WorkedTerm[] }
   | { readonly type: 'practise'; readonly link: PractiseLink }
 
 export interface LibraryLesson {

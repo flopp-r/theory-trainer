@@ -3,6 +3,7 @@ import { practiceConfigToQuery } from '../practice/practiceConfig'
 import { StaffStack } from '../staff/StaffStack'
 import { InlineText } from './InlineText'
 import { ListenButton } from './ListenButton'
+import { LessonTerms } from './LessonTerms'
 import { WorkedExampleView } from './WorkedExampleView'
 
 const NOTE_TITLES = { tip: 'Tip', watch: 'Watch out', remember: 'Remember' } as const
@@ -94,6 +95,8 @@ export function BlockView({ block }: { block: Block }) {
       )
     case 'listen':
       return <ListenButton item={block.item} />
+    case 'terms':
+      return <LessonTerms terms={block.terms} />
     case 'worked':
       return <WorkedExampleView example={block.example} />
     case 'practise': {

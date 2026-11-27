@@ -8,16 +8,28 @@ A complete beginner with **no prior knowledge**. They are on a phone. They want 
 Everything must be clear enough that they could do the same working for a different question on their own.
 
 ## The shape of every lesson
-In this order (use `h()` headings; short headings in plain words):
-1. **What it is.** One or two paragraphs in plain words. No unexplained jargon.
-2. **What you need to know first.** Only what this lesson uses. Re-explain tiny prerequisites in one or two sentences (do not just say "see lesson X"); also list lessons in `before`.
-3. **The facts.** The small number of things to learn, as a `table` or `list`, with a `remember` box for the key rule.
-4. **The method.** A numbered `steps()` list the reader can follow for any question of this kind. One action per step.
-5. **Worked examples.** Complete working from the question to the answer, built with the theory engine (see below). Two or more, covering the easy case, a harder case and a tricky case.
-6. **Common mistakes.** `watch()` boxes: the real slips beginners make and how to avoid them.
+In this order (use `h()` headings; short headings in plain words). The model to copy is `lessons/scales-keys-model.ts` (Major scales).
+1. **Opening.** One or two paragraphs that say something about music straight away: what the thing is and why it is useful.
+   Never "In this lesson you will learn…". Define the lesson's main word in the first sentence.
+2. **Words in this lesson** (`words({ term, meaning }, …)`). Every musical word the lesson uses that a beginner might not know, each in one
+   plain sentence (at most 30 words). It replaces the old "What you need to know first" block: do not re-teach earlier lessons here,
+   list them in `before` (they show as "Read first") and explain each word where it is used. Use the same wording as the "Words you need"
+   in the worked examples, so a word never has two definitions.
+3. **The facts.** The small number of things to learn, as a `table` or `list`, with a `remember` box for the key rule. Facts and tables are checked
+   by hand and by tests: change the wording around them, not the facts.
+4. **The method.** A numbered `steps()` list the reader can follow for any question of this kind. One action per step. Each step starts with a
+   bold lead phrase that is the same as the title of the matching step in the worked examples ("**Write the letter names.**"), so the method
+   and the examples line up.
+5. **Worked examples.** See "Worked examples: the format" below. Two or more, covering the easy case, a harder case and a tricky case.
+6. **Common mistakes.** Two to four `watch()` boxes. Each starts with a bold name for the mistake, then shows **the wrong answer and the right
+   answer for the same question** ("Writing G♭ instead of F♯ in D major. The wrong scale is D E G♭ G…, the right one is D E F♯ G…").
 7. **Try it.** A `practise()` link to the right Practice topic and level.
 
 ## Writing rules
+- **Bold is for the word being defined, and the lead of a method step or a mistake.** Not for emphasis: at most one bold phrase per 30 words.
+- Start from the music, not from the lesson: no "In this lesson", "you will learn", "by the end".
+- Say "natural" (and explain it once) for a note with no sharp or flat. Never "plain". Never "anchor": say "the line the clef fixes".
+- `npx vitest run src/content/library/lessonStyle.test.ts -t "<lesson id>"` checks these rules for one lesson.
 - **Define every term the first time you use it**, in bold, in plain words: "A **semitone** is the smallest step on a piano: from one key to the very next."
 - Short sentences. Say "you". One idea per paragraph. No long lists of rules without an example.
 - **Show the numbers.** Do not say "count the notes": say "count: C, D, E, F, G is 5 letter names".
