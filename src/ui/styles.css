@@ -15,14 +15,22 @@
   --paper: #f3eee2;
   --ink: #1c1b18;
   --ink-muted: #5b554a;
-  /* Roles built from those: the main action and a selected choice are paper with ink on the dark desk. */
-  --action-bg: var(--paper);
-  --action-fg: var(--ink);
-  --action-hover: #e6dfcf;
-  --action-pressed: #d8d0bd;
-  --select-bg: var(--paper);
-  --select-fg: var(--ink);
-  --select-muted: var(--ink-muted);
+  /* Roles built from those. In the dark theme nothing is paper-white: the main action and a selected choice
+     are deep ink-blue, and music is light ink on a dark card. The light theme swaps these below. */
+  --action-bg: #34557f;
+  --action-fg: #f3eee2;
+  --action-hover: #3d6190;
+  --action-pressed: #2b4a72;
+  --select-bg: #34557f;
+  --select-fg: #f3eee2;
+  --select-muted: #c9d3e0;
+  --title-bg: var(--surface);
+  --title-fg: var(--text);
+  --title-muted: var(--muted);
+  --staff-bg: #1d1a16;
+  --staff-ink: #ece6da;
+  --staff-good: #8bd3a5;
+  --staff-bad: #f28b7f;
   --surface-hover: #29251f;
   --surface-pressed: #322d26;
   --bg-hover: #1c1a16;
@@ -30,7 +38,7 @@
   --note-watch-line: #6b5422;
   --note-tip-line: #3d4f66;
   --note-tip: #a9c8ec;
-  --error-on-paper: #92400e;
+  --error-on-paper: #e9b949;
   /* Motion: short, decelerating, and only on colour and opacity unless stated. */
   --dur-fast: 120ms;
   --dur-med: 200ms;
@@ -87,20 +95,21 @@ h1 {
   text-wrap: balance;
 }
 
-/* The home screen opens on a title page: ink on paper, with a staff for a rule. */
+/* The home screen opens on a title page with a staff for a rule (a paper page in the light theme). */
 .title-page {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--title-bg);
+  color: var(--title-fg);
+  border: 1px solid var(--line);
   border-radius: 1rem;
   padding: var(--space-7) var(--space-5) var(--space-6);
 }
 
 .title-page h1 {
-  color: var(--ink);
+  color: var(--title-fg);
 }
 
 .title-page .lede {
-  color: var(--ink-muted);
+  color: var(--title-muted);
   font-size: 1.125rem;
 }
 
@@ -542,13 +551,14 @@ legend {
 .staff {
   width: min(100%, 17.5rem);
   align-self: center;
-  background: var(--paper);
+  background: var(--staff-bg);
+  border: 1px solid var(--line);
   border-radius: 0.75rem;
   padding: var(--space-3) var(--space-2);
 }
 
 .staff-drawing {
-  color: var(--ink);
+  color: var(--staff-ink);
 }
 
 .staff-drawing svg {
@@ -1109,8 +1119,16 @@ legend {
     --good: #1d6b45;
     --warn: #7a4f00;
     --bad: #a3261a;
-    /* The staff card is brighter than the page, so music still sits on its own sheet. */
+    /* The staff card and title page are brighter than the page, so music still sits on its own sheet. */
     --paper: #fffdf8;
+    --title-bg: #fffdf8;
+    --title-fg: #1c1b18;
+    --title-muted: #5b554a;
+    --staff-bg: #fffdf8;
+    --staff-ink: #1c1b18;
+    --staff-good: #0f766e;
+    --staff-bad: #b42318;
+    --error-on-paper: #92400e;
     --action-bg: #1c1b18;
     --action-fg: #f8f4ea;
     --action-hover: #37342e;
@@ -1125,10 +1143,5 @@ legend {
     --note-watch-line: #d6b36a;
     --note-tip-line: #a9bfd9;
     --note-tip: #1f4f7f;
-  }
-
-  .title-page,
-  .staff {
-    border: 1px solid var(--line);
   }
 }
