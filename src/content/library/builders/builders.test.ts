@@ -19,30 +19,47 @@ describe('nameNoteExample', () => {
     for (const clef of CLEF_NAMES) {
       for (const p of naturalPitchesInClef(clef, 3)) {
         const e = nameNoteExample(clef, p)
-        expect(e.answer, `${clef} ${p.letter}${p.octave}`).toBe(`The note is ${p.letter}.`)
-        // count by hand: steps from the anchor
-        const [al, ao, ap] = ANCHOR[clef]
+        const where = `${clef} ${p.letter}${p.octave}`
+        expect(e.answer, where).toBe(`The note is ${p.letter}.`)
+        // count by hand: steps from the clef's own line
+        const [al, ao] = ANCHOR[clef]
         const moved = step(p.letter, p.octave) - step(al, ao)
-        const text = e.steps.map((s) => s.text).join(' ')
-        if (moved === 0) expect(text).toContain('nothing to count')
+        const results = e.steps.map((s) => s.result ?? '')
+        if (moved === 0) expect(results.join(' '), where).toContain('0 steps')
         else {
-          expect(text).toContain(`${moved > 0 ? 'up' : 'down'} ${Math.abs(moved)} ${Math.abs(moved) === 1 ? 'step' : 'steps'}`)
-          const letters = /\*\*([A-G](?:, [A-G])*)\*\*/.exec(e.steps[2]!.text)![1]!.split(', ')
-          expect(letters).toHaveLength(Math.abs(moved) + 1)
-          expect(letters[0]).toBe(al)
-          expect(letters.at(-1)).toBe(p.letter)
+          // The counting steps end with "N steps up: G, A, B" and, outside the staff, "M more steps: C, D".
+          const counts = results.flatMap((r) => {
+            const m = /^(\d+) (?:more steps?|steps? (up|down)): ([A-G](?:, [A-G])*)$/.exec(r)
+            return m ? [m] : []
+          })
+          expect(counts.length, where).toBeGreaterThan(0)
+          expect(counts.reduce((sum, m) => sum + Number(m[1]), 0), where).toBe(Math.abs(moved))
+          expect(counts[0]![2], where).toBe(moved > 0 ? 'up' : 'down')
+          expect(counts.slice(1).every((m) => m[2] === undefined), where).toBe(true)
+          const letters = counts.flatMap((m) => m[3]!.split(', '))
+          expect(letters, where).toHaveLength(Math.abs(moved) + 1)
+          expect(letters[0], where).toBe(al)
+          expect(letters.at(-1), where).toBe(p.letter)
         }
-        // the position quoted in the first step is the hand-computed one
-        expect(ap + moved).toBe(ap + step(p.letter, p.octave) - step(al, ao))
+        // the check reaches the same letter by another route
+        expect(e.steps.at(-1)!.result, where).toMatch(new RegExp(` is ${p.letter}, as counted$`))
       }
     }
   })
 
-  it('always has a picture, a counting step and a check', () => {
+  it('has words you need, a picture, a counting step and a check by another route', () => {
     const e = nameNoteExample('alto', { letter: 'E', accidental: 0, octave: 4 })
-    expect(e.steps.length).toBeGreaterThanOrEqual(4)
+    expect(e.terms!.map((t) => t.term)).toEqual(['Staff (or stave)', 'Alto clef', 'Middle C', 'Step', 'Musical alphabet'])
+    expect(e.steps.length).toBeGreaterThanOrEqual(5)
     expect(e.steps[0]!.staff).toBeDefined()
-    expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+    expect(e.steps.at(-1)!.title).toBe('Check with the lines of the alto clef')
+    expect(e.steps.at(-1)!.text).toContain('F A C E G')
+    // a note above the staff is checked by lines only, every other letter (treble A5: lines E G B D F, then A)
+    const high = nameNoteExample('treble', { letter: 'A', accidental: 0, octave: 5 })
+    expect(high.terms!.map((t) => t.term)).toContain('Ledger line')
+    expect(high.steps.at(-1)!.title).toBe('Check using the lines only')
+    expect(high.steps.at(-1)!.text).toContain('Carry on above the staff, every other letter: 1st ledger line A')
+    expect(high.steps.map((s) => s.title)).toContain('Carry on above the staff')
   })
 })
 

@@ -47,6 +47,11 @@ function words(position: number): string {
   return d % 2 === 0 ? `the ${n} ledger line ${side} the staff` : `the space ${side} the ${n} ledger line`
 }
 
+/** "on" a line, "in" a space. */
+const at = (position: number) => `${Math.abs(position) % 2 === 0 ? 'on' : 'in'} ${words(position)}`
+/** Everything a reader sees in the steps: titles, texts and results. */
+const all = (steps: readonly { title?: string; text: string; result?: string }[]) => steps.map((s) => [s.title, s.text, s.result].join(' ')).join(' ')
+
 const ledgers = (position: number) => (position < 0 ? Math.floor(-position / 2) : position > 8 ? Math.floor((position - 8) / 2) : 0)
 
 describe('countPath', () => {
@@ -69,29 +74,34 @@ describe('placeNoteExample', () => {
     for (const clef of CLEF_NAMES) {
       for (const [position, name] of ladder(clef)) {
         const e = placeNoteExample(clef, parsePitch(name))
-        const text = e.steps.map((s) => s.text).join(' ')
-        expect(e.answer, `${clef} ${name}`).toContain(`goes on **${words(position)}**`)
-        if (ledgers(position) === 0) expect(text, `${clef} ${name}`).toContain('no ledger lines')
-        else expect(e.answer, `${clef} ${name}`).toContain(ledgers(position) === 1 ? '(you need 1 ledger line)' : `(you need ${ledgers(position)} ledger lines)`)
-        expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+        const text = all(e.steps)
+        expect(e.answer, `${clef} ${name}`).toBe(`${name} goes ${at(position)}${ledgers(position) === 0 ? '' : ledgers(position) === 1 ? ' (you need 1 ledger line)' : ` (you need ${ledgers(position)} ledger lines)`}.`)
+        if (ledgers(position) === 0) expect(text, `${clef} ${name}`).toContain('No ledger lines')
+        expect(e.steps.at(-1)!.title!.startsWith('Check')).toBe(true)
+        expect(e.steps.at(-1)!.result).toContain(`is ${name}, as counted`)
         expect(e.steps.some((s) => s.staff)).toBe(true)
+        expect(e.terms!.length).toBeGreaterThanOrEqual(2)
       }
     }
   })
 
   it('shows the count with octave numbers (treble C5: G4, A4, B4, C5; treble C4: G4 down to C4)', () => {
-    const up = placeNoteExample('treble', parsePitch('C5')).steps.map((s) => s.text).join(' ')
+    const up = all(placeNoteExample('treble', parsePitch('C5')).steps)
     expect(up).toContain('3 steps up')
-    expect(up).toContain('G4, A4, B4, C5')
-    const down = placeNoteExample('treble', parsePitch('C4')).steps.map((s) => s.text).join(' ')
-    expect(down).toContain('4 steps down')
-    expect(down).toContain('G4, F4, E4, D4, C4')
-    expect(down).toContain('(middle C)')
-    expect(down).toContain('Middle C is C4')
+    expect(up).toContain('2nd line G4, 2nd space A4, middle line B4, 3rd space C5')
+    expect(up).toContain('after B4 comes C5')
+    const down = placeNoteExample('treble', parsePitch('C4'))
+    const downText = all(down.steps)
+    // inside the staff to the bottom line, then on below the staff
+    expect(downText).toContain('2nd line G4, bottom space F4, bottom line E4')
+    expect(downText).toContain('space below the bottom line D4, 1st ledger line C4')
+    expect(downText).toContain('4 steps down in all')
+    expect(down.task).toContain('(middle C)')
+    expect(downText).toContain('middle C is C4')
   })
 
-  it('handles the anchor itself and refuses notes with a sharp or flat', () => {
-    expect(placeNoteExample('treble', parsePitch('G4')).steps.map((s) => s.text).join(' ')).toContain('nothing to count')
+  it('handles the note on the clef line itself and refuses notes with a sharp or flat', () => {
+    expect(all(placeNoteExample('treble', parsePitch('G4')).steps)).toContain('nothing to count')
     expect(() => placeNoteExample('treble', parsePitch('F#4'))).toThrow()
   })
 })
@@ -107,9 +117,10 @@ describe('convertClefExample', () => {
           const toPosition = [...toLadder].find(([, n]) => n === name)?.[0]
           if (toPosition === undefined || ledgers(position) > 3 || ledgers(toPosition) > 3) continue
           const e = convertClefExample(parsePitch(name), from, to)
-          expect(e.answer, `${name} ${from} to ${to}`).toContain(`on ${words(toPosition)}`)
-          expect(e.steps.map((s) => s.text).join(' ')).toContain(`on **${words(position)}**`)
-          expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+          expect(e.answer, `${name} ${from} to ${to}`).toContain(`Write ${name} ${at(toPosition)} in ${to} clef`)
+          expect(all(e.steps)).toContain(`The note is ${at(position)}`)
+          expect(e.steps.at(-1)!.title!.startsWith('Check')).toBe(true)
+          expect(e.steps.at(-1)!.result).toContain(`is ${name}, the same pitch as before`)
         }
       }
     }
@@ -118,9 +129,9 @@ describe('convertClefExample', () => {
   it('shows the trap: the same place in the new clef is a different note (alto E4 to treble)', () => {
     // E4 is on the 4th line of alto. The 4th line of treble is D5, 10 semitones higher (E4 = 64, D5 = 74).
     const e = convertClefExample(parsePitch('E4'), 'alto', 'treble')
-    const trap = e.steps.find((s) => s.text.startsWith('Do not copy'))!.text
+    const trap = e.steps.find((s) => s.title === 'Do not copy the place on the staff')!.text
     expect(trap).toContain('the 4th line')
-    expect(trap).toContain('**D5**')
+    expect(trap).toContain('D5')
     expect(trap).toContain('10 semitones higher')
     expect(e.answer).toBe('Write E4 on the bottom line in treble clef.')
   })
@@ -140,6 +151,10 @@ describe('middleCInClefsExample', () => {
       'Middle C is on treble clef: the 1st ledger line below the staff; bass clef: the 1st ledger line above the staff; alto clef: the middle line; tenor clef: the 4th line.',
     )
     expect(e.steps.slice(0, 4).every((s) => s.staff)).toBe(true)
+    // the check joins the staves: bass top line A3, treble bottom line E4, and B3 C4 D4 between them
+    expect(e.steps.at(-1)!.text).toContain('top line is A3')
+    expect(e.steps.at(-1)!.text).toContain('bottom line is E4')
+    expect(e.steps.at(-1)!.text).toContain('B3, C4, D4')
   })
 })
 
@@ -150,6 +165,9 @@ describe('guitarSoundingExample', () => {
       const e = guitarSoundingExample(p)
       expect(e.answer).toBe(`The written note ${name} sounds as ${p.letter}${p.octave - 1}, one octave lower.`)
       expect(e.steps.some((s) => s.listen)).toBe(true)
+      // the check counts 8 letter names down and ends on the sounding note
+      expect(e.steps.at(-1)!.text).toMatch(new RegExp(`${name}(, [A-G]\\d){7}\\.`))
+      expect(e.steps.at(-1)!.result).toBe(`8 letter names down from ${name} is ${p.letter}${p.octave - 1}`)
     }
   })
 })

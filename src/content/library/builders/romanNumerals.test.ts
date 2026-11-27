@@ -112,29 +112,36 @@ describe('romanNumeralExample', () => {
       for (const row of rows) {
         const e = romanNumeralExample(key, chord(row.root, row.quality))
         expect(ascii(e.answer), `${keyName} ${row.numeral}`).toBe(`In ${keyName}, ${row.root} ${WORDS[row.quality]} (${row.symbol}) is ${row.numeral}.`)
-        expect(ascii(e.steps[0]!.text), `${keyName} ${row.numeral}`).toContain(`**${row.notes}**`)
+        expect(ascii(e.steps[0]!.result!), `${keyName} ${row.numeral}`).toBe(row.notes.split(' ').join(', '))
       }
     }
   })
 
-  it('shows the chord, numbers the scale, finds the root, picks the case and checks', () => {
+  it('shows the chord, counts it, writes and numbers the scale, finds the root, picks the case and checks', () => {
     const e = romanNumeralExample(parseKey('G major'), chord('D', 'major'))
-    expect(e.steps).toHaveLength(6)
+    const by = (title: string) => e.steps.find((x) => x.title === title)!
     expect(e.steps[0]!.staff!.key).toEqual({ tonic: { letter: 'G', accidental: 0 }, mode: 'major' })
-    expect(ascii(e.steps[1]!.text)).toContain('1 G, 2 A, 3 B, 4 C, 5 D, 6 E, 7 F#')
-    expect(e.steps[2]!.text).toContain('D is note 5')
-    expect(e.steps[3]!.text).toContain('capital letters')
-    expect(e.steps[4]!.text).toContain('The numeral is **V**')
-    expect(e.steps[5]!.text.startsWith('Check')).toBe(true)
+    expect(e.steps[1]!.result).toBe('Root: D')
+    expect(by('Count from D up to the 3rd, F♯').result).toBe('D up to F♯: 4 semitones, a major 3rd')
+    expect(by('Write out the scale of G major').text).toContain('1 sharp: F♯. So F becomes F♯')
+    expect(ascii(by('Number the notes as scale degrees').result!)).toBe('1 G, 2 A, 3 B, 4 C, 5 D, 6 E, 7 F#')
+    expect(by('Find the root, D, in the scale').result).toBe('Scale degree 5: the dominant')
+    expect(by('Write degree 5 as a Roman numeral').result).toBe('V')
+    expect(by('Choose capital or small letters').text).toContain('D major is a major chord, so use capital letters')
+    expect(by('Choose capital or small letters').result).toBe('Numeral: V')
+    expect(e.steps.at(-1)!.title!.startsWith('Check another way')).toBe(true)
+    expect(e.steps.at(-1)!.text).toContain('degrees 5, 7, 2 (after 7, start again at 1)')
   })
 
   it('explains the raised 7th for the leading-note chord and the major V in a minor key', () => {
     const lead = romanNumeralExample(parseKey('A minor'), chord('G#', 'diminished'))
-    expect(lead.steps[2]!.text).toContain('raised 7th')
-    expect(lead.steps[4]!.text).toContain('**vii°**')
+    const leadRoot = lead.steps.find((x) => x.title === 'Find the root, G♯, in the scale')!
+    expect(leadRoot.text).toContain('raised by a semitone')
+    expect(leadRoot.result).toBe('Scale degree 7: the leading note')
+    expect(lead.answer).toContain('vii°')
     const dom = romanNumeralExample(parseKey('A minor'), chord('E', 'major'))
-    expect(dom.steps[5]!.text).toContain('G♯')
-    expect(dom.steps[5]!.text).toContain('raised 7th')
+    expect(dom.steps.find((x) => x.title === 'Look at G♯, which is not in the scale')!.text).toContain('has G, not G♯')
+    expect(dom.steps.at(-1)!.text).toContain('G becomes G♯')
   })
 
   it('refuses a chord that is not built on a note of the key', () => {
@@ -153,20 +160,24 @@ describe('chordFromNumeralExample', () => {
     }
   })
 
-  it('stacks every other note of the scale (ii in F major uses notes 2, 4, 6)', () => {
+  it('stacks every other note of the scale (ii in F major uses degrees 2, 4, 6)', () => {
     const e = chordFromNumeralExample(parseKey('F major'), 'ii')
-    expect(e.steps[3]!.text).toContain('The note numbers are 2, 4, 6')
-    expect(ascii(e.steps[3]!.text)).toContain('**G, Bb, D**')
-    expect(e.steps[3]!.staff).toBeDefined()
-    expect(e.steps[3]!.listen).toBeDefined()
-    expect(e.steps[2]!.text).toContain('it is **G**')
+    const build = e.steps.find((x) => x.title === 'Build ii: stack 3rds on G')!
+    expect(build.text).toContain('scale degrees 2, 4, 6')
+    expect(ascii(build.result!)).toBe('G Bb D')
+    expect(build.staff).toBeDefined()
+    expect(build.listen).toBeDefined()
+    expect(e.steps.find((x) => x.title === 'Find the root of ii')!.result).toBe('Root: G')
+    expect(e.steps.at(-1)!.text).toContain('3 + 4 = 7')
   })
 
   it('raises the 7th for V in a minor key and says so', () => {
     const e = chordFromNumeralExample(parseKey('A minor'), 'V')
-    expect(e.steps[3]!.text).toContain('raised to **G♯**')
+    expect(e.steps.find((x) => x.title === 'Build V: stack 3rds on E')!.text).toContain('G becomes G♯')
     const natural = chordFromNumeralExample(parseKey('A minor'), 'v')
-    expect(natural.steps[3]!.text).not.toContain('raised')
+    expect(natural.steps.map((x) => x.text).join(' ')).not.toContain('raised')
+    const cMinor = chordFromNumeralExample(parseKey('C minor'), 'V')
+    expect(cMinor.steps.find((x) => x.title === 'Build V: stack 3rds on G')!.text).toContain('B♭ becomes B natural (B♮)')
   })
 
   it('refuses numerals it does not cover', () => {
@@ -194,10 +205,11 @@ describe('primaryChordsExample', () => {
 
   it('draws all three chords with the key signature and plays them in turn', () => {
     const e = primaryChordsExample(parseKey('Bb major'))
-    const last = e.steps.at(-1)!
+    const last = e.steps.find((x) => x.title === 'Write the three chords on the staff')!
     expect(last.staff!.items).toHaveLength(3)
     expect(last.staff!.key).toBeDefined()
     expect(last.listen!.audio.events).toHaveLength(3)
     expect(last.listen!.audio.events.map((x) => x.start)).toEqual([0, 1.5, 3])
+    expect(e.steps.at(-1)!.text).toContain('every note of the scale appears')
   })
 })

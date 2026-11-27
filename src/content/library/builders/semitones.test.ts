@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseNote } from '../../../theory'
 import { keyNames, semitoneCountExample, semitoneTableRows, toneOrSemitoneExample, toneWords } from './semitones'
 
-const text = (steps: readonly { text: string }[]) => steps.map((s) => s.text).join(' ')
+const text = (steps: readonly { title?: string; text: string; result?: string }[]) => steps.map((s) => [s.title, s.text, s.result].join(' ')).join(' ')
 
 // Hand-written: the twelve keys of an octave, numbered from C.
 const KEYS = ['C', 'C♯/D♭', 'D', 'D♯/E♭', 'E', 'F', 'F♯/G♭', 'G', 'G♯/A♭', 'A', 'A♯/B♭', 'B']
@@ -43,21 +43,24 @@ describe('semitoneCountExample', () => {
     for (const [from, to, n] of COUNTS) {
       const e = semitoneCountExample(parseNote(from), parseNote(to))
       expect(e.answer, `${from} to ${to}`).toMatch(new RegExp(`^There ${n === 1 ? 'is' : 'are'} ${n} semitones? from `))
-      expect(text(e.steps), `${from} to ${to}`).toContain(`**${n}**`)
-      expect(e.steps[0]!.staff!.items).toHaveLength(2)
-      expect(e.steps.some((s) => s.text.startsWith('Check'))).toBe(true)
+      expect(e.steps.map((s) => s.result), `${from} to ${to}`).toContain(`${n} semitone${n === 1 ? '' : 's'}`)
+      expect(e.steps.at(-1)!.result, `${from} to ${to}`).toBe(`${n} key${n === 1 ? '' : 's'}, so ${n} semitone${n === 1 ? '' : 's'}`)
+      expect(e.steps.find((s) => s.staff)!.staff!.items).toHaveLength(2)
+      expect(e.steps.at(-1)!.title!.startsWith('Check')).toBe(true)
     }
   })
 
   it('crosses the B to C gap by adding 12 (B to D♭: 1 + 12 = 13, 13 − 11 = 2)', () => {
     const all = text(semitoneCountExample(parseNote('B'), parseNote('Db')).steps)
-    expect(all).toContain('count D♭ as 1 + 12 = **13**')
-    expect(all).toContain('13 − 11 = **2**')
-    expect(all).toContain('1 C, 2 C♯/D♭')
+    expect(all).toContain('2 − 1 = 1')
+    expect(all).toContain('Count D♭ as 1 + 12 = 13')
+    expect(all).toContain('13 − 11 = 2')
+    expect(all).toContain('1 C, 2 D♭')
   })
 
-  it('counts key by key without the starting key (E to G: F, F♯/G♭, G)', () => {
-    expect(text(semitoneCountExample(parseNote('E'), parseNote('G')).steps)).toContain('1 F, 2 F♯/G♭, 3 G')
+  it('counts key by key without the starting key (E to G: F, F♯, G)', () => {
+    expect(text(semitoneCountExample(parseNote('E'), parseNote('G')).steps)).toContain('1 F, 2 F♯, 3 G')
+    expect(text(semitoneCountExample(parseNote('C'), parseNote('G')).steps)).toContain('7 ÷ 2 = 3, with 1 left over')
   })
 
   it('refuses two names for the same key', () => {
@@ -81,7 +84,8 @@ describe('toneOrSemitoneExample', () => {
     for (const [a, b, kind] of TONE_OR_SEMITONE) {
       const e = toneOrSemitoneExample(parseNote(a), parseNote(b))
       expect(e.answer, `${a} to ${b}`).toBe(`It is a ${kind}.`)
-      expect(e.steps.at(-1)!.text.startsWith('Check')).toBe(true)
+      expect(e.steps.at(-1)!.title!.startsWith('Check')).toBe(true)
+      expect(e.steps.at(-1)!.result, `${a} to ${b}`).toBe(kind === 'semitone' ? 'No key between: a semitone' : 'One key between: a tone')
     }
   })
   it('refuses steps bigger than a tone', () => {

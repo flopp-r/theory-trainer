@@ -27,10 +27,10 @@ describe('earChordExample', () => {
     const dim = earChordExample(parseNote('B'), 'diminished')
     expect(pcs(dim.steps[0]!.listen!.audio.events[0]!.midi)).toEqual([2, 5, 11]) // B D F
     expect(pcs(dim.steps[2]!.listen!.audio.events[0]!.midi)).toEqual([2, 6, 11]) // B D F#
-    expect(dim.steps[4]!.text).toContain('the 5th (F against F♯')
+    expect(dim.steps[4]!.text).toContain('Only the 5th is different (F against F♯')
     const aug = earChordExample(parseNote('C'), 'augmented')
     expect(pcs(aug.steps[0]!.listen!.audio.events[0]!.midi)).toEqual([0, 4, 8]) // C E G#
-    expect(aug.steps[4]!.text).toContain('the 5th (G♯ against G')
+    expect(aug.steps[4]!.text).toContain('Only the 5th is different (G♯ against G')
   })
 
   it('labels how it sounds as a common description and puts the staff after the listening', () => {
@@ -56,25 +56,29 @@ describe('earIntervalExample', () => {
     const e = earIntervalExample(parsePitch('C4'), 'P5', 'P4')
     expect(e.steps[0]!.listen!.audio.events.map((x) => x.midi)).toEqual([[60], [67]])
     expect(e.steps[1]!.listen!.audio.events.map((x) => x.midi)).toEqual([[60], [65]])
-    const text = e.steps.map((s) => s.text).join(' ')
-    expect(text).toContain('perfect 5th is wider (7 semitones)')
-    expect(text).toContain('perfect 4th is narrower (5 semitones)')
+    const results = e.steps.map((s) => s.result)
+    expect(results).toContain('C up to G: 7 semitones, a perfect 5th')
+    expect(results).toContain('C up to F: 5 semitones, a perfect 4th')
+    expect(results).toContain('Interval 1 is wider')
+    expect(e.steps.at(-1)!.text).toContain('F, F♯, G: 2 steps')
+    expect(e.steps.at(-1)!.result).toBe('The perfect 5th is 2 semitones wider, as you heard')
   })
 
   it('plays a major 3rd (4 semitones) and a minor 3rd (3 semitones), with the 3rds spelled E and E-flat', () => {
     const e = earIntervalExample(parsePitch('C4'), 'M3', 'm3')
     expect(e.steps[0]!.listen!.audio.events.map((x) => x.midi)).toEqual([[60], [64]])
     expect(e.steps[1]!.listen!.audio.events.map((x) => x.midi)).toEqual([[60], [63]])
-    const text = e.steps.map((s) => s.text).join(' ')
-    expect(text).toContain('goes up to **E**: 4 semitones')
-    expect(text).toContain('goes up to **E♭**: 3 semitones')
+    const results = e.steps.map((s) => s.result)
+    expect(results).toContain('C up to E: 4 semitones, a major 3rd')
+    expect(results).toContain('C up to E♭: 3 semitones, a minor 3rd')
+    expect(e.steps.at(-1)!.text).toContain('E♭, E: 1 step')
   })
 
   it('offers tune memory aids only when both intervals have one', () => {
-    const withAids = earIntervalExample(parsePitch('C4'), 'P5', 'P4').steps.map((s) => s.text).join(' ')
-    expect(withAids).toContain('A memory aid')
-    const without = earIntervalExample(parsePitch('C4'), 'M6', 'm6').steps.map((s) => s.text).join(' ')
-    expect(without).not.toContain('A memory aid')
+    const withAids = earIntervalExample(parsePitch('C4'), 'P5', 'P4').steps.map((s) => s.title)
+    expect(withAids).toContain('Try a memory aid')
+    const without = earIntervalExample(parsePitch('C4'), 'M6', 'm6').steps.map((s) => s.title)
+    expect(without).not.toContain('Try a memory aid')
   })
 
   it('refuses two intervals of the same size', () => {
@@ -114,10 +118,18 @@ describe('earInversionExample', () => {
   })
 
   it('names the gaps from the bottom: first inversion has a 3rd then a 4th, second inversion a 4th then a 3rd', () => {
-    expect(earInversionExample(chord('C', 'major'), 1).steps[4]!.text).toContain('a minor 3rd then a perfect 4th')
-    expect(earInversionExample(chord('C', 'major'), 2).steps[4]!.text).toContain('a perfect 4th then a major 3rd')
-    expect(earInversionExample(chord('A', 'minor'), 1).steps[4]!.text).toContain('a major 3rd then a perfect 4th')
-    expect(earInversionExample(chord('C', 'major'), 0).steps[4]!.text).toContain('a major 3rd then a minor 3rd')
+    const gaps = (c: string, q: 'major' | 'minor', inversion: number) => {
+      const e = earInversionExample(chord(c, q), inversion)
+      return ['Count the lower gap', 'Count the upper gap'].map((t) => e.steps.find((s) => s.title === t)!.result!.replace(/^.*, an? /, ''))
+    }
+    expect(gaps('C', 'major', 1)).toEqual(['minor 3rd', 'perfect 4th'])
+    expect(gaps('C', 'major', 2)).toEqual(['perfect 4th', 'major 3rd'])
+    expect(gaps('A', 'minor', 1)).toEqual(['major 3rd', 'perfect 4th'])
+    expect(gaps('C', 'major', 0)).toEqual(['major 3rd', 'minor 3rd'])
+  })
+
+  it('checks by turning the root-position chord over', () => {
+    expect(earInversionExample(chord('A', 'minor'), 2).steps.at(-1)!.text).toContain('C E A, then E A C')
   })
 
   it('plays the root-position chord for comparison, and only handles major and minor triads', () => {
