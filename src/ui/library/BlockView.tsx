@@ -1,5 +1,5 @@
 import type { Block } from '../../content/library/types'
-import { practiceConfigToQuery } from '../practice/practiceConfig'
+import { DEFAULT_PRACTICE_CONFIG, practiceConfigToQuery } from '../practice/practiceConfig'
 import { StaffStack } from '../staff/StaffStack'
 import { InlineText } from './InlineText'
 import { ListenButton } from './ListenButton'
@@ -103,13 +103,14 @@ export function BlockView({ block }: { block: Block }) {
       const link = block.link
       const query = practiceConfigToQuery({
         topics: link.topics,
-        clefs: link.clefs ?? ['alto'],
+        // A lesson that does not name a clef practises the app's usual clefs (treble and bass).
+        clefs: link.clefs ?? DEFAULT_PRACTICE_CONFIG.clefs,
         maxLedgerLines: 1,
         difficulty: link.level ?? 2,
         vocabCategories: [],
       })
       return (
-        <a className="btn primary wide" href={`#/practice/play?${query}`}>
+        <a className="btn primary wide lib-practise" href={`#/practice/play?${query}`}>
           {link.label}
         </a>
       )

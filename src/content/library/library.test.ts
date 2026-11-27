@@ -158,7 +158,7 @@ describe('the lessons that exist', () => {
         for (const t of b.link.topics) expect(TOPICS.map((x) => x.id), l.id).toContain(t)
         const config = {
           topics: b.link.topics,
-          clefs: b.link.clefs ?? (['alto'] as const),
+          clefs: b.link.clefs ?? (['treble', 'bass'] as const),
           maxLedgerLines: 1,
           difficulty: b.link.level ?? 2,
           vocabCategories: [],
