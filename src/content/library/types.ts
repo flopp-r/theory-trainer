@@ -33,11 +33,11 @@ export interface WorkedTerm {
 /** One numbered action in a worked example. See "Worked examples" in docs/library.md. */
 export interface WorkedStep {
   /** What to do, as a short instruction with no full stop: "Write the letter names". */
-  readonly title?: string
+  readonly title: string
   /** How to do it, with every count shown. One to three short sentences. */
   readonly text: string
   /** What this step gives you, with no full stop: "D E F G A B C D". */
-  readonly result?: string
+  readonly result: string
   /** A picture that helps with this step. */
   readonly staff?: StaffSpec
   /** Something to listen to at this step. */
@@ -53,7 +53,7 @@ export interface WorkedExample {
   /** The question, in one sentence. */
   readonly task: string
   /** "Words you need": every musical word the working uses, explained. */
-  readonly terms?: readonly WorkedTerm[]
+  readonly terms: readonly WorkedTerm[]
   readonly steps: readonly WorkedStep[]
   /** The final answer, in one sentence. */
   readonly answer: string
@@ -104,15 +104,15 @@ export interface LibraryLesson {
 export function workedToText(example: WorkedExample): string {
   const strip = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
   const lines = [example.title, '', `Question: ${strip(example.task)}`, '']
-  if (example.terms && example.terms.length > 0) {
+  if (example.terms.length > 0) {
     lines.push('Words you need:')
     for (const t of example.terms) lines.push(`- ${strip(t.term)}: ${strip(t.meaning)}`)
     lines.push('')
   }
   example.steps.forEach((step, i) => {
-    const head = [step.title ? `${strip(step.title)}.` : '', strip(step.text)].filter(Boolean).join(' ')
+    const head = `${strip(step.title)}. ${strip(step.text)}`
     lines.push(`${i + 1}. ${head}`)
-    if (step.result) lines.push(`   -> ${strip(step.result)}`)
+    lines.push(`   -> ${strip(step.result)}`)
   })
   lines.push('', `Answer: ${strip(example.answer)}`)
   return lines.join('\n')

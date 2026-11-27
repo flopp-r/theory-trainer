@@ -36,6 +36,7 @@ Every worked example has the same parts, shown in this order. `builders/scales.t
 2. **Words you need** (`terms`): every musical word the working uses that a beginner might not know, each with a meaning
    in one plain sentence (at most 30 words). Use real musical terms (tonic, natural, root, 3rd, interval, simple time...),
    never made-up ones ("anchor note", "plain E"). Each example lists its own words, because readers jump straight to it.
+   Lists of more than 8 words start folded (one tap opens them); the brackets in the steps still explain each word.
 3. **Steps**. Each step has:
    - `title`: what to do, as a short instruction (at most 10 words, no full stop): "Write the letter names".
    - `text`: how, with every count shown (at most about 50 words). The **first time** a term from Words you need appears
